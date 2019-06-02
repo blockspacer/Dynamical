@@ -1,7 +1,7 @@
 #ifndef WINDU_H
 #define WINDU_H
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
 
 class Windu {
 public:
@@ -11,5 +11,5 @@ public:
 private:
     SDL_Window* window;
 };
-    
+   
 #endif
