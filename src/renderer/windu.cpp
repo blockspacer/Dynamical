@@ -1,7 +1,5 @@
 #include "windu.h"
 
-#include <SDL2/SDL.h>
-
 #include <iostream>
 
 Windu::Windu() {
