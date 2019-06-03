@@ -15,8 +15,6 @@ Swapchain::Swapchain(Windu& win, Instance& instance, Device &device) : win(win),
 
 void Swapchain::init() {
     
-    SDL_Vulkan_CreateSurface(win, instance, &surface);
-    
     INST_LOAD(vkGetPhysicalDeviceSurfaceCapabilitiesKHR)
     INST_LOAD(vkGetPhysicalDeviceSurfaceFormatsKHR)
     INST_LOAD(vkGetPhysicalDeviceSurfacePresentModesKHR)
@@ -25,16 +23,16 @@ void Swapchain::init() {
     std::vector<VkSurfaceFormatKHR> formats;
     std::vector<VkPresentModeKHR> presentModes;
     
-    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(static_cast<VkPhysicalDevice> (device), surface, &capabilities);
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(static_cast<VkPhysicalDevice> (device), win.surface, &capabilities);
     
     uint32_t num;
-    vkGetPhysicalDeviceSurfaceFormatsKHR(static_cast<VkPhysicalDevice> (device), surface, &num, nullptr);
+    vkGetPhysicalDeviceSurfaceFormatsKHR(static_cast<VkPhysicalDevice> (device), win.surface, &num, nullptr);
     formats.resize(num);
-    vkGetPhysicalDeviceSurfaceFormatsKHR(static_cast<VkPhysicalDevice> (device), surface, &num, formats.data());
+    vkGetPhysicalDeviceSurfaceFormatsKHR(static_cast<VkPhysicalDevice> (device), win.surface, &num, formats.data());
     
-    vkGetPhysicalDeviceSurfacePresentModesKHR(static_cast<VkPhysicalDevice> (device), surface, &num, nullptr);
+    vkGetPhysicalDeviceSurfacePresentModesKHR(static_cast<VkPhysicalDevice> (device), win.surface, &num, nullptr);
     presentModes.resize(num);
-    vkGetPhysicalDeviceSurfacePresentModesKHR(static_cast<VkPhysicalDevice> (device), surface, &num, presentModes.data());
+    vkGetPhysicalDeviceSurfacePresentModesKHR(static_cast<VkPhysicalDevice> (device), win.surface, &num, presentModes.data());
     
     VkSurfaceFormatKHR surfaceformat = chooseSwapSurfaceFormat(formats, VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR);
     VkPresentModeKHR presentMode = chooseSwapPresentMode(presentModes, VK_PRESENT_MODE_FIFO_KHR);
@@ -48,7 +46,7 @@ void Swapchain::init() {
     
     VkSwapchainCreateInfoKHR createInfo = {};
     createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-    createInfo.surface = surface;
+    createInfo.surface = win.surface;
     createInfo.minImageCount = NUM_FRAMES;
     createInfo.imageFormat = surfaceformat.format;
     createInfo.imageColorSpace = surfaceformat.colorSpace;

@@ -1,6 +1,7 @@
 #include "device.h"
 
 #include "instance.h"
+#include "loader.inl"
 
 #include <iostream>
 #include <set>
@@ -50,10 +51,13 @@ Device::Device(Instance &inst) : instance(inst) {
     std::vector<vk::DeviceQueueCreateInfo> pqinfo(2); // Number of queues
     
     
+    
+    
     // Gets the first available queue family that supports graphics and presentation
     g_i = 1000;
     for(uint32_t i = 0; i < queueFamilies.size(); i++) {
-        if(queueFamilies[i].queueFlags & vk::QueueFlagBits::eGraphics) { // && instance->supportsPresent(static_cast<VkPhysicalDevice> (physical), i, win)) {
+        VkBool32 supportsPresent = VK_FALSE;
+        if(queueFamilies[i].queueFlags & vk::QueueFlagBits::eGraphics && instance.supportsPresent(static_cast<VkPhysicalDevice> (physical), i)) {
             g_i = i;
             countF++;
             pqinfo[0] = {{}, i, 1, priorities.data()};
@@ -153,6 +157,6 @@ uint32_t Device::getMemoryType(uint32_t typeBits, vk::MemoryPropertyFlags proper
 
 
 Device::~Device() {
-    //logical.destroy();
+    logical.destroy();
 }
 

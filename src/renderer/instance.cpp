@@ -6,6 +6,8 @@
 #include <SDL_vulkan.h>
 #include <iostream>
 
+#define LOG_LEVEL VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT
+
 bool checkLayers(std::vector<const char *> layerNames) {
     
     std::vector<vk::LayerProperties> availableLayers = vk::enumerateInstanceLayerProperties();
@@ -57,9 +59,33 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
     VkDebugUtilsMessageTypeFlagsEXT messageType,
     const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
     void* pUserData) {
-
-    std::cerr << "Validation layer: " << pCallbackData->pMessage << std::endl;
-
+    
+    if(messageSeverity < LOG_LEVEL) return VK_FALSE;
+    
+    if(messageType == VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT) {
+        std::cerr << "    General ";
+    } else if(messageType == VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT) {
+        std::cerr << "Performance ";
+    } else if(messageType == VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT) {
+        std::cerr << " Validation ";
+    }
+    
+    if(messageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT) {
+        std::cerr << "Verbose ";
+    } else if(messageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT) {
+        std::cerr << "Info    ";
+    } else if(messageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
+        std::cerr << "Warning ";
+    } else if(messageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
+        std::cerr << "Error   ";
+    }
+    
+    std::cerr << pCallbackData->pMessage << std::endl;
+    
+    if(messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
+        std::cerr << std::endl;
+    }
+    
     return VK_FALSE;
 }
 
@@ -76,9 +102,7 @@ Instance::Instance(Windu& win) : win(win) {
     
     #ifndef NDEBUG
         extensionNames.push_back("VK_EXT_debug_utils");
-        layerNames.push_back("VK_LAYER_LUNARG_standard_validation");
-        layerNames.push_back("VK_LAYER_LUNARG_object_tracker");
-        layerNames.push_back("VK_LAYER_LUNARG_parameter_validation");
+        layerNames.push_back("VK_LAYER_KHRONOS_validation");
         if(!checkLayers(layerNames)) {
             std::vector<vk::LayerProperties> availables = vk::enumerateInstanceLayerProperties();
             
@@ -114,8 +138,31 @@ Instance::Instance(Windu& win) : win(win) {
     
     vkCreateDebugUtilsMessengerEXT(instance, &info, nullptr, &messenger);
     
+    VkSurfaceKHR surf;
+    SDL_Vulkan_CreateSurface(win, instance, &surf);
+    win.surface = surf;
+    
+    INST_LOAD(vkGetPhysicalDeviceSurfaceSupportKHR);
+    this->vkGetPhysicalDeviceSurfaceSupportKHR = vkGetPhysicalDeviceSurfaceSupportKHR;
+    
+}
+
+bool Instance::supportsPresent(VkPhysicalDevice device, int i) {
+    VkBool32 b;
+    vkGetPhysicalDeviceSurfaceSupportKHR(device, i, win, &b);
+    return b == VK_TRUE;
 }
 
 Instance::~Instance() {
+    
+    instance.destroy(win.surface);
+    
+    {
+        Instance &instance = *this;
+        INST_LOAD(vkDestroyDebugUtilsMessengerEXT);
+        
+        vkDestroyDebugUtilsMessengerEXT(instance, messenger, nullptr);
+    }
+    
     instance.destroy();
 }
