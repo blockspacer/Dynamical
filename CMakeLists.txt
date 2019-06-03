@@ -10,3 +10,6 @@ add_executable(dynamical ${sources})
 find_package(SDL2 CONFIG REQUIRED)
 target_link_libraries(dynamical PRIVATE SDL2::SDL2 SDL2::SDL2main)
 include_directories(${SDL2_INCLUDE_DIRS})
+
+find_package(Vulkan REQUIRED)
+target_link_libraries(dynamical PRIVATE Vulkan::Vulkan)

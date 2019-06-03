@@ -1,7 +1,9 @@
 #ifndef GAME_H
 #define GAME_H
 
-#include "renderer/windu.h"
+#include <memory>
+
+class Renderer;
 
 class Game {
 public:
@@ -11,7 +13,7 @@ public:
     ~Game();
     
 private:
-    Windu win;
+    std::unique_ptr<Renderer> renderer;
 };
 
 #endif

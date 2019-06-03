@@ -1,11 +1,13 @@
 #include "game.h"
 
-Game::Game() {
+#include "renderer/renderer.h"
+
+Game::Game() : renderer(std::make_unique<Renderer>()) {
     
 }
 
 void Game::init() {
-    win.init();
+    renderer->init();
 }
 
 void Game::run() {

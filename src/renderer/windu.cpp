@@ -1,6 +1,10 @@
 #include "windu.h"
 
 #include <iostream>
+#include <vector>
+
+#include <SDL_vulkan.h>
+#include <vulkan/vulkan.hpp>
 
 Windu::Windu() {
     
@@ -12,11 +16,22 @@ Windu::Windu() {
                               1920, 1080,
                               SDL_WINDOW_VULKAN | SDL_WINDOW_FULLSCREEN | SDL_WINDOW_SHOWN | SDL_WINDOW_MAXIMIZED);
     
+    SDL_GetWindowSize(window, &width, &height);
+    
 }
 
 void Windu::init() {
     
 }
+
+int Windu::getHeight() {
+    return height;
+}
+
+int Windu::getWidth() {
+    return width;
+}
+
 
 Windu::~Windu() {
     

@@ -1,0 +1,121 @@
+#include "instance.h"
+
+#include "windu.h"
+#include "loader.inl"
+
+#include <SDL_vulkan.h>
+#include <iostream>
+
+bool checkLayers(std::vector<const char *> layerNames) {
+    
+    std::vector<vk::LayerProperties> availableLayers = vk::enumerateInstanceLayerProperties();
+    
+    for (const char* layerName : layerNames) {
+        bool layerFound = false;
+
+        for (const auto& layerProperties : availableLayers) {
+            if (strcmp(layerName, layerProperties.layerName) == 0) {
+                layerFound = true;
+                break;
+            }
+        }
+
+        if (!layerFound) {
+            return false;
+        }
+    }
+
+    return true;
+    
+}
+
+bool checkInstanceExtensions(std::vector<const char *> extensionNames) {
+    
+    std::vector<vk::ExtensionProperties> availableExtensions = vk::enumerateInstanceExtensionProperties();
+    
+    for (const char* extensionName : extensionNames) {
+        bool layerFound = false;
+
+        for (const auto& extensionsProperties : availableExtensions) {
+            if (strcmp(extensionName, extensionsProperties.extensionName) == 0) {
+                layerFound = true;
+                break;
+            }
+        }
+
+        if (!layerFound) {
+            return false;
+        }
+    }
+
+    return true;
+    
+}
+
+static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
+    VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+    VkDebugUtilsMessageTypeFlagsEXT messageType,
+    const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+    void* pUserData) {
+
+    std::cerr << "Validation layer: " << pCallbackData->pMessage << std::endl;
+
+    return VK_FALSE;
+}
+
+Instance::Instance(Windu& win) : win(win) {
+    
+    uint32_t extensionCount;
+    SDL_Vulkan_GetInstanceExtensions(win, &extensionCount, nullptr);
+    std::vector<const char *> extensionNames(extensionCount);
+    SDL_Vulkan_GetInstanceExtensions(win, &extensionCount, extensionNames.data());
+
+    vk::ApplicationInfo appInfo("Test", VK_MAKE_VERSION(1, 0, 0), "Dynamical", VK_MAKE_VERSION(1, 0, 0), VK_MAKE_VERSION(1, 1, 0));
+
+    std::vector<const char *> layerNames {};
+    
+    #ifndef NDEBUG
+        extensionNames.push_back("VK_EXT_debug_utils");
+        layerNames.push_back("VK_LAYER_LUNARG_standard_validation");
+        layerNames.push_back("VK_LAYER_LUNARG_object_tracker");
+        layerNames.push_back("VK_LAYER_LUNARG_parameter_validation");
+        if(!checkLayers(layerNames)) {
+            std::vector<vk::LayerProperties> availables = vk::enumerateInstanceLayerProperties();
+            
+            for (vk::LayerProperties available : availables) {
+                std::cout << available.layerName << "\n";
+            }
+            
+            throw std::runtime_error("Validation layers requested, but not available!");
+        }
+    #endif
+    
+    if(!checkInstanceExtensions(extensionNames)) {
+        
+        std::vector<vk::ExtensionProperties> availables = vk::enumerateInstanceExtensionProperties();
+        
+        for (vk::ExtensionProperties available : availables) {
+            std::cout << available.extensionName << "\n";
+        }
+        
+        throw std::runtime_error("Instance Extensions requested, but not available!");
+    }
+
+    instance = vk::createInstance(vk::InstanceCreateInfo({}, &appInfo, layerNames.size(), layerNames.data(), extensionNames.size(), extensionNames.data()));
+    
+    auto info = static_cast<VkDebugUtilsMessengerCreateInfoEXT> (vk::DebugUtilsMessengerCreateInfoEXT({},
+                                         vk::DebugUtilsMessageSeverityFlagBitsEXT::eError | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning | vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo | vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose, 
+                                         vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance | vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation, 
+                                         &debugCallback, nullptr
+                                        ));
+    
+    Instance &instance = *this;
+    INST_LOAD(vkCreateDebugUtilsMessengerEXT);
+    
+    vkCreateDebugUtilsMessengerEXT(instance, &info, nullptr, &messenger);
+    
+}
+
+Instance::~Instance() {
+    instance.destroy();
+}
