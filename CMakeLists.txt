@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.0)
 project(dynamical)
 
 include_directories("./src")
+include_directories("./3rdparty")
 file(GLOB_RECURSE sources main.cpp src/*.cpp src/*.h)
 
 add_executable(dynamical ${sources})

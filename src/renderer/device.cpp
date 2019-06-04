@@ -56,7 +56,6 @@ Device::Device(Instance &inst) : instance(inst) {
     // Gets the first available queue family that supports graphics and presentation
     g_i = 1000;
     for(uint32_t i = 0; i < queueFamilies.size(); i++) {
-        VkBool32 supportsPresent = VK_FALSE;
         if(queueFamilies[i].queueFlags & vk::QueueFlagBits::eGraphics && instance.supportsPresent(static_cast<VkPhysicalDevice> (physical), i)) {
             g_i = i;
             countF++;

@@ -5,6 +5,7 @@
 #include "instance.h"
 #include "device.h"
 #include "swapchain.h"
+#include "main_render.h"
 
 class Renderer {
 public:
@@ -16,6 +17,8 @@ private:
     Instance instance;
     Device device;
     Swapchain swap;
+    
+    MainRender main_render;
 };
 
 #endif
