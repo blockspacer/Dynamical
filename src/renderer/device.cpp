@@ -107,9 +107,10 @@ Device::Device(Instance &inst) : instance(inst) {
         transfer = logical.getQueue(t_i, t_j);
     }
     
-}
-
-void Device::init() {
+    VmaAllocatorCreateInfo allocatorInfo = {};
+    allocatorInfo.physicalDevice = physical;
+    allocatorInfo.device = logical;
+    vmaCreateAllocator(&allocatorInfo, &allocator);
     
 }
 
@@ -156,6 +157,10 @@ uint32_t Device::getMemoryType(uint32_t typeBits, vk::MemoryPropertyFlags proper
 
 
 Device::~Device() {
+    
+    vmaDestroyAllocator(allocator);
+    
     logical.destroy();
+    
 }
 

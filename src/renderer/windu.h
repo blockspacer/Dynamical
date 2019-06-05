@@ -7,7 +7,6 @@
 class Windu {
 public:
     Windu();
-    void init();
     ~Windu();
     operator SDL_Window*() { return window; }
     operator vk::SurfaceKHR() { return surface; }

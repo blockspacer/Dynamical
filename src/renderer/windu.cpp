@@ -20,10 +20,6 @@ Windu::Windu() {
     
 }
 
-void Windu::init() {
-    
-}
-
 int Windu::getHeight() {
     return height;
 }

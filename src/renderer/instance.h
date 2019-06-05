@@ -13,9 +13,9 @@ public:
     operator vk::Instance() { return instance; }
     operator VkInstance() { return static_cast<VkInstance>(instance); }
     bool supportsPresent(VkPhysicalDevice device, int i);
-    vk::Instance instance;
     VkDebugUtilsMessengerEXT messenger;
 private:
+    vk::Instance instance;
     Windu& win;
     PFN_vkGetPhysicalDeviceSurfaceSupportKHR vkGetPhysicalDeviceSurfaceSupportKHR;
 };
