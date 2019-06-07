@@ -139,11 +139,11 @@ void Swapchain::reset() {
 // RUNTIME //
 /////////////
 
-uint32_t Swapchain::acquire() {
+uint32_t Swapchain::acquire(vk::Semaphore signal) {
     
     VkResult result;
     do {
-        result = vkAcquireNextImageKHR(device, swapchain, 10000000000000L, VK_NULL_HANDLE, VK_NULL_HANDLE, &current);
+        result = vkAcquireNextImageKHR(device, swapchain, 10000000000000L, static_cast<VkSemaphore> (signal), VK_NULL_HANDLE, &current);
         if(result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
             throw std::runtime_error("Swapchain out of date");
         }
@@ -153,7 +153,9 @@ uint32_t Swapchain::acquire() {
     
 }
 
-void Swapchain::present() {
+void Swapchain::present(vk::Semaphore wait) {
+    
+    VkSemaphore waitt = static_cast<VkSemaphore> (wait);
     
     VkPresentInfoKHR info = {};
     info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -161,8 +163,8 @@ void Swapchain::present() {
     info.pSwapchains = &swapchain;
     info.pImageIndices = &current;
     info.pResults = nullptr;
-    info.waitSemaphoreCount = 0;
-    info.pWaitSemaphores = nullptr;
+    info.waitSemaphoreCount = 1;
+    info.pWaitSemaphores = &waitt;
     
     // This will display the image
     VkResult result = vkQueuePresentKHR(static_cast<VkQueue> (device.graphics), &info);

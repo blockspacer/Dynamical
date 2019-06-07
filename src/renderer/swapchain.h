@@ -14,8 +14,8 @@ public :
     ~Swapchain();
     void reset();
     
-    uint32_t acquire();
-    void present();
+    uint32_t acquire(vk::Semaphore signal);
+    void present(vk::Semaphore wait);
     
     Windu& win;
     Instance& instance;

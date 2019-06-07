@@ -8,16 +8,14 @@
 
 struct Vertex {
     int pos;
-    int normals;
-    int texCoord;
 };
 
 BasicPipeline::BasicPipeline(Device& device, Swapchain& swap, Renderpass& renderpass) : device(device), swap(swap), renderpass(renderpass) {
     
     // PIPELINE INFO
     
-    auto vertShaderCode = Util::readFile(":/build/shaders/objrender.vert.glsl.spv");
-    auto fragShaderCode = Util::readFile(":/build/shaders/objrender.frag.glsl.spv");
+    auto vertShaderCode = Util::readFile("./shaders/basic.vert.glsl.spv");
+    auto fragShaderCode = Util::readFile("./shaders/basic.frag.glsl.spv");
     
     VkShaderModuleCreateInfo moduleInfo = {};
     moduleInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -51,16 +49,14 @@ BasicPipeline::BasicPipeline(Device& device, Swapchain& swap, Renderpass& render
     };
     // Inpute attribute bindings describe shader attribute locations and memory layouts
     auto vertexInputAttributs = std::vector<vk::VertexInputAttributeDescription> {
-        {0, 0, vk::Format::eR32G32B32Sfloat, 0},
-        {1, 0, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, normals)},
-        {2, 0, vk::Format::eR32G32Sfloat, offsetof(Vertex, texCoord)}
+        {0, 0, vk::Format::eR32G32B32Sfloat, 0}
     };
-
+    
     auto vertexInputState = vk::PipelineVertexInputStateCreateInfo({}, vertexInputBindings.size(), vertexInputBindings.data(), vertexInputAttributs.size(), vertexInputAttributs.data());
     
     
     
-
+    
     VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
     inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
     inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
@@ -145,9 +141,9 @@ BasicPipeline::BasicPipeline(Device& device, Swapchain& swap, Renderpass& render
     
     
     
-    auto layouts = std::vector<vk::DescriptorSetLayout> {descriptorSetLayout, win->objects.layout};
+    auto layouts = std::vector<vk::DescriptorSetLayout> {};
     
-    pipelineLayout = device->createPipelineLayout(vk::PipelineLayoutCreateInfo(
+    layout = device->createPipelineLayout(vk::PipelineLayoutCreateInfo(
         {}, layouts.size(), layouts.data(), 0, nullptr
     ));
     
@@ -163,7 +159,7 @@ BasicPipeline::BasicPipeline(Device& device, Swapchain& swap, Renderpass& render
     pipelineInfo.pMultisampleState = &multisampling;
     pipelineInfo.pColorBlendState = &colorBlending;
     pipelineInfo.pDynamicState = &dynInfo;
-    pipelineInfo.layout = static_cast<VkPipelineLayout>(pipelineLayout);
+    pipelineInfo.layout = static_cast<VkPipelineLayout>(layout);
     pipelineInfo.renderPass = static_cast<VkRenderPass>(renderpass);
     pipelineInfo.subpass = 0;
     pipelineInfo.pDepthStencilState = &depthStencil;
@@ -178,5 +174,9 @@ BasicPipeline::BasicPipeline(Device& device, Swapchain& swap, Renderpass& render
 }
 
 BasicPipeline::~BasicPipeline() {
+    
+    device->destroy(pipeline);
+    
+    device->destroy(layout);
     
 }

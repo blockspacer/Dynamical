@@ -2,14 +2,17 @@
 #define GAME_H
 
 #include <memory>
+#include <util/game_loop.h>
 
 class Renderer;
 
-class Game {
+class Game : GameLoop {
 public:
     Game();
     void init();
-    void run();
+    void start();
+    virtual void update(float dt) override;
+    virtual void quit() override;
     ~Game();
     
 private:
