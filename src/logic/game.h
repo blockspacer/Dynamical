@@ -2,7 +2,7 @@
 #define GAME_H
 
 #include <memory>
-#include <util/game_loop.h>
+#include "util/game_loop.h"
 
 class Renderer;
 

@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.0)
 
+set(CMAKE_CXX_STANDARD 17)
+
 project(dynamical)
 
 include_directories("./src")
@@ -8,12 +10,12 @@ file(GLOB_RECURSE sources main.cpp src/*.cpp src/*.h)
 
 add_executable(dynamical ${sources})
 
+find_package(Vulkan REQUIRED)
+target_link_libraries(dynamical PRIVATE Vulkan::Vulkan)
+
 find_package(SDL2 CONFIG REQUIRED)
 target_link_libraries(dynamical PRIVATE SDL2::SDL2 SDL2::SDL2main)
 include_directories(${SDL2_INCLUDE_DIRS})
-
-find_package(Vulkan REQUIRED)
-target_link_libraries(dynamical PRIVATE Vulkan::Vulkan)
 
 
 
@@ -41,10 +43,3 @@ add_custom_target(
     )
 
 add_dependencies(dynamical shaders)
-
-add_custom_command(TARGET dynamical POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:dynamical>/shaders/"
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-        "${PROJECT_BINARY_DIR}/shaders"
-        "$<TARGET_FILE_DIR:dynamical>/shaders"
-        )

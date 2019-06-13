@@ -4,17 +4,25 @@
 #include <fstream>
 
 std::vector<char> Util::readFile(const char* filename) {
-    
-    std::ifstream ifs(filename, std::ios::binary|std::ios::ate);
-    std::ifstream::pos_type pos = ifs.tellg();
+	
+	std::ifstream file(filename, std::ios::binary | std::ios::ate);
 
-    std::vector<char>  result(pos);
+	if (!file.good()) {
+		std::cout << "File with name : " << filename << " could not be opened" << std::endl;
+	}
 
-    ifs.seekg(0, std::ios::beg);
-    ifs.read(&result[0], pos);
+	std::streamsize size = file.tellg();
+	file.seekg(0, std::ios::beg);
 
-    return result;
-    
+	std::vector<char> buffer(size);
+	if (file.read(buffer.data(), size)) {
+
+		return buffer;
+
+	}
+
+	std::cout << "File with name : " << filename << " could not be read" << std::endl;
+
 }
 
 

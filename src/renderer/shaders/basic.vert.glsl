@@ -7,5 +7,7 @@ out gl_PerVertex {
 };
 
 void main() {
+	
     vec4 position = vec4(a_pos, 1);
+
 }

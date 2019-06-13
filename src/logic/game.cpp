@@ -35,7 +35,7 @@ void Game::update(float dt) {
     }
     
     renderer->render();
-    
+
 }
 
 void Game::quit() {
