@@ -10,11 +10,16 @@ Windu::Windu() {
     
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS);
     
-    // be sure to initialize your SDL window with the vulkan flag
+    SDL_DisplayMode mode;
+    
+    SDL_GetCurrentDisplayMode(0, &mode);
+    
     window = SDL_CreateWindow("My App",
                               SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-                              600, 400,
-                              SDL_WINDOW_VULKAN | SDL_WINDOW_SHOWN | SDL_WINDOW_MAXIMIZED);
+                              mode.w, mode.h,
+                              SDL_WINDOW_VULKAN | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE // | SDL_WINDOW_FULLSCREEN
+             );
+    
 	if (window == nullptr) {
 		std::cout << "Could not create SDL window: " << SDL_GetError() << std::endl;
 	}
@@ -31,6 +36,21 @@ int Windu::getWidth() {
     return width;
 }
 
+bool Windu::resize() {
+    
+    int w,h;
+    SDL_GetWindowSize(window, &w, &h);
+    
+    if(w == width && h == height) {
+        return false;
+    }
+    
+    width = w;
+    height = h;
+    
+    return true;
+    
+}
 
 Windu::~Windu() {
     

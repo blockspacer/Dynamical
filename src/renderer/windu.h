@@ -13,6 +13,7 @@ public:
     operator VkSurfaceKHR() { return static_cast<VkSurfaceKHR>(surface); }
     int getWidth();
     int getHeight();
+    bool resize();
     vk::SurfaceKHR surface;
     
 private:

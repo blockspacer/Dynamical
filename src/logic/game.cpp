@@ -28,6 +28,10 @@ void Game::update(float dt) {
     SDL_Event e;
     while (SDL_PollEvent(&e)) {
         
+        if(e.type == SDL_WINDOWEVENT && e.window.event == SDL_WINDOWEVENT_RESIZED) {
+            renderer->resize();
+        }
+        
         if(e.type == SDL_QUIT || (e.type == SDL_KEYDOWN && e.key.keysym.scancode == SDL_SCANCODE_ESCAPE)) {
             setQuitting();
         }
@@ -39,8 +43,6 @@ void Game::update(float dt) {
 }
 
 void Game::quit() {
-    
-    renderer->quit();
     
 }
 

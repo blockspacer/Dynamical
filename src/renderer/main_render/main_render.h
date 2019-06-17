@@ -11,7 +11,12 @@ class Swapchain;
 class MainRender {
 public:
     MainRender(Instance& instance, Device& device, Swapchain& swap);
+    void setup();
+    void rsetup();
     void render(uint32_t index, vk::Semaphore wait, vk::Semaphore signal);
+    void cleanup();
+    void rcleanup();
+    void reset();
     ~MainRender();
     
 private:

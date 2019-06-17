@@ -6,9 +6,22 @@
 
 MainRender::MainRender(Instance& instance, Device& device, Swapchain& swap) : renderpass(device, swap), pipeline(device, swap, renderpass), instance(instance), device(device), swap(swap), commandBuffers(swap.NUM_FRAMES), fences(swap.NUM_FRAMES) {
     
-    commandPool = device->createCommandPool(vk::CommandPoolCreateInfo({}, device.g_i));
+    commandPool = device->createCommandPool(vk::CommandPoolCreateInfo(vk::CommandPoolCreateFlagBits::eResetCommandBuffer, device.g_i));
     
     commandBuffers = device->allocateCommandBuffers(vk::CommandBufferAllocateInfo(commandPool, vk::CommandBufferLevel::ePrimary, swap.NUM_FRAMES));
+    
+    for(int i = 0; i < fences.size(); i++) {
+        
+        fences[i] = device->createFence(vk::FenceCreateInfo(vk::FenceCreateFlagBits::eSignaled));
+        
+    }
+    
+    setup();
+    
+    
+}
+
+void MainRender::setup() {
     
     for(int i = 0; i < commandBuffers.size(); i++) {
         
@@ -23,16 +36,24 @@ MainRender::MainRender(Instance& instance, Device& device, Swapchain& swap) : re
         
         command.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline.pipeline);
         
-        command.draw(0, 0, 0, 0);
+        command.setViewport(0, vk::Viewport(0, 0, swap.extent.width, swap.extent.height, 0, 1));
+        
+        command.setScissor(0, vk::Rect2D(vk::Offset2D(), swap.extent));
+        
+        command.draw(1, 1, 0, 0);
         
         command.endRenderPass();
         
         command.end();
         
-        
-        fences[i] = device->createFence(vk::FenceCreateInfo(vk::FenceCreateFlagBits::eSignaled));
-        
     }
+    
+}
+
+void MainRender::rsetup() {
+    
+    renderpass.setup();
+    setup();
     
 }
 
@@ -48,7 +69,27 @@ void MainRender::render(uint32_t index, vk::Semaphore wait, vk::Semaphore signal
     
 }
 
+void MainRender::cleanup() {
+    
+    device->resetCommandPool(commandPool, {});
+    
+}
+
+void MainRender::rcleanup() {
+    
+    cleanup();
+    renderpass.cleanup();
+    
+}
+
+void MainRender::reset() {
+    cleanup();
+    setup();
+}
+
 MainRender::~MainRender() {
+    
+    cleanup();
     
     for(int i = 0; i < commandBuffers.size(); i++) {
         

@@ -10,7 +10,8 @@ class Swapchain;
 class Renderpass {
 public:
     Renderpass(Device& device, Swapchain& swap);
-    void init();
+    void setup();
+    void cleanup();
     ~Renderpass();
     
     operator vk::RenderPass() { return renderpass; }

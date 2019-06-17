@@ -12,14 +12,15 @@ public:
     Renderer();
     void init();
     void render();
-    void quit();
     ~Renderer();
+    
+    void resize();
+    
 private:
     Windu win;
     Instance instance;
     Device device;
     Swapchain swap;
-    
     MainRender main_render;
     
     int semindex = 0;

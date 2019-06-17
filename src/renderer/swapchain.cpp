@@ -10,103 +10,79 @@
 #include <time.h>
 
 Swapchain::Swapchain(Windu& win, Instance& instance, Device &device) : win(win), instance(instance), device(device) {
-    init();
-}
-
-void Swapchain::init() {
     
     INST_LOAD(vkGetPhysicalDeviceSurfaceCapabilitiesKHR)
     INST_LOAD(vkGetPhysicalDeviceSurfaceFormatsKHR)
     INST_LOAD(vkGetPhysicalDeviceSurfacePresentModesKHR)
     
-    VkSurfaceCapabilitiesKHR capabilities;
-    std::vector<VkSurfaceFormatKHR> formats;
-    std::vector<VkPresentModeKHR> presentModes;
-    
-    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(static_cast<VkPhysicalDevice> (device), win.surface, &capabilities);
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(static_cast<VkPhysicalDevice> (device), win.surface, reinterpret_cast<VkSurfaceCapabilitiesKHR*> (&capabilities));
     
     uint32_t num;
     vkGetPhysicalDeviceSurfaceFormatsKHR(static_cast<VkPhysicalDevice> (device), win.surface, &num, nullptr);
     formats.resize(num);
-    vkGetPhysicalDeviceSurfaceFormatsKHR(static_cast<VkPhysicalDevice> (device), win.surface, &num, formats.data());
+    vkGetPhysicalDeviceSurfaceFormatsKHR(static_cast<VkPhysicalDevice> (device), win.surface, &num, reinterpret_cast<VkSurfaceFormatKHR*> (formats.data()));
     
     vkGetPhysicalDeviceSurfacePresentModesKHR(static_cast<VkPhysicalDevice> (device), win.surface, &num, nullptr);
     presentModes.resize(num);
-    vkGetPhysicalDeviceSurfacePresentModesKHR(static_cast<VkPhysicalDevice> (device), win.surface, &num, presentModes.data());
+    vkGetPhysicalDeviceSurfacePresentModesKHR(static_cast<VkPhysicalDevice> (device), win.surface, &num, reinterpret_cast<VkPresentModeKHR*> (presentModes.data()));
     
-    VkSurfaceFormatKHR surfaceformat = chooseSwapSurfaceFormat(formats, VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR);
-    VkPresentModeKHR presentMode = chooseSwapPresentMode(presentModes, VK_PRESENT_MODE_FIFO_KHR);
+    vk::SurfaceFormatKHR surfaceformat = chooseSwapSurfaceFormat(formats, vk::Format::eB8G8R8A8Unorm, vk::ColorSpaceKHR::eSrgbNonlinear);
+    presentMode = chooseSwapPresentMode(presentModes, vk::PresentModeKHR::eFifo);
     extent = chooseSwapExtent(capabilities);
     format = surfaceformat.format;
+    colorSpace = surfaceformat.colorSpace;
      
     NUM_FRAMES = std::max(capabilities.minImageCount, NUM_FRAMES);
     if (capabilities.maxImageCount > 0 && NUM_FRAMES > capabilities.maxImageCount) {
         NUM_FRAMES = capabilities.maxImageCount;
     }
     
-    VkSwapchainCreateInfoKHR createInfo = {};
-    createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-    createInfo.surface = win.surface;
-    createInfo.minImageCount = NUM_FRAMES;
-    createInfo.imageFormat = surfaceformat.format;
-    createInfo.imageColorSpace = surfaceformat.colorSpace;
-    createInfo.imageExtent = extent;
-    createInfo.imageArrayLayers = 1;
-    createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-    createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    createInfo.queueFamilyIndexCount = 1;
-    createInfo.pQueueFamilyIndices = &device.g_i;
-    createInfo.preTransform = capabilities.currentTransform;
-    createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-    createInfo.presentMode = presentMode;
-    createInfo.clipped = VK_TRUE;
-    createInfo.oldSwapchain = swapchain;
+    setup();
     
-    VkSwapchainKHR newSwapchain;
+}
+
+void Swapchain::setup() {
+    
+    vk::SwapchainCreateInfoKHR createInfo({}, win.surface, NUM_FRAMES, format, colorSpace, extent, 1, vk::ImageUsageFlagBits::eColorAttachment, vk::SharingMode::eExclusive,
+        1, &device.g_i, capabilities.currentTransform, vk::CompositeAlphaFlagBitsKHR::eOpaque, presentMode, VK_TRUE, swapchain
+    );
     
     DEV_LOAD(vkCreateSwapchainKHR)
     
-    vkCreateSwapchainKHR(device, &createInfo, nullptr, &newSwapchain);
+    auto info = static_cast<VkSwapchainCreateInfoKHR> (createInfo);
     
-    swapchain = newSwapchain;
+    VkSwapchainKHR newSwapchain;
+    vkCreateSwapchainKHR(device, &info, nullptr, &newSwapchain);
     
-    if(createInfo.oldSwapchain != VK_NULL_HANDLE) {
+    if(swapchain) {
         
         for (auto imageView : imageViews) {
             device->destroy(imageView);
         }
         DEV_LOAD(vkDestroySwapchainKHR)
-        vkDestroySwapchainKHR(device, createInfo.oldSwapchain, nullptr);
+        vkDestroySwapchainKHR(device, static_cast<VkSwapchainKHR> (swapchain), nullptr);
         
     }
     
+    swapchain = newSwapchain;
+    
     DEV_LOAD(vkGetSwapchainImagesKHR)
     
-    vkGetSwapchainImagesKHR(device, swapchain, &num, nullptr);
+    uint32_t num;
+    vkGetSwapchainImagesKHR(device, static_cast<VkSwapchainKHR> (swapchain), &num, nullptr);
     images.resize(num);
-    vkGetSwapchainImagesKHR(device, swapchain, &num, images.data());
+    vkGetSwapchainImagesKHR(device, static_cast<VkSwapchainKHR> (swapchain), &num, reinterpret_cast<VkImage*> (images.data()));
     
-    imageViews.resize(num);
-    for(uint32_t i = 0; i < num; i++) {
+    if(NUM_FRAMES == num) std::cout << "number of frames changed to : " << num << std::endl;
+    
+    NUM_FRAMES = num;
+    
+    imageViews.resize(NUM_FRAMES);
+    for(uint32_t i = 0; i < imageViews.size(); i++) {
         
-        VkImageViewCreateInfo vInfo = {};
-        vInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        vInfo.image = images[i];
-        vInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-        vInfo.format = format;
-        
-        vInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-        vInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-        vInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-        vInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-        
-        vInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        vInfo.subresourceRange.baseMipLevel = 0;
-        vInfo.subresourceRange.levelCount = 1;
-        vInfo.subresourceRange.baseArrayLayer = 0;
-        vInfo.subresourceRange.layerCount = 1;
-        
-        imageViews[i] = device->createImageView(vk::ImageViewCreateInfo(vInfo));
+        imageViews[i] = device->createImageView(vk::ImageViewCreateInfo({}, images[i], vk::ImageViewType::e2D, format,
+                                    vk::ComponentMapping(), vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1)
+        ));
         
     }
     
@@ -117,7 +93,7 @@ void Swapchain::init() {
     
 }
 
-void Swapchain::reset() {
+void Swapchain::cleanup() {
     
     for (auto imageView : imageViews) {
         device->destroy(imageView);
@@ -125,12 +101,13 @@ void Swapchain::reset() {
     
     DEV_LOAD(vkDestroySwapchainKHR)
     vkDestroySwapchainKHR(device, swapchain, nullptr);
-    swapchain = VK_NULL_HANDLE;
+    swapchain = nullptr;
     
 }
 
-
-
+Swapchain::~Swapchain() {
+    cleanup();
+}
 
 
 
@@ -141,13 +118,12 @@ void Swapchain::reset() {
 
 uint32_t Swapchain::acquire(vk::Semaphore signal) {
     
-    VkResult result;
-    do {
-        result = vkAcquireNextImageKHR(device, swapchain, 10000000000000L, static_cast<VkSemaphore> (signal), VK_NULL_HANDLE, &current);
-        if(result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
-            throw std::runtime_error("Swapchain out of date");
-        }
-    } while(result != VK_SUCCESS);
+    auto resultvalue = device->acquireNextImageKHR(swapchain, 100000000000L, signal, nullptr, *this);
+    current = resultvalue.value;
+    
+    if(resultvalue.result == vk::Result::eSuboptimalKHR) {
+        throw vk::OutOfDateKHRError("Suboptimal swapchain");
+    }
 
     return current;
     
@@ -155,23 +131,11 @@ uint32_t Swapchain::acquire(vk::Semaphore signal) {
 
 void Swapchain::present(vk::Semaphore wait) {
     
-    VkSemaphore waitt = static_cast<VkSemaphore> (wait);
-    
-    VkPresentInfoKHR info = {};
-    info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-    info.swapchainCount = 1;
-    info.pSwapchains = &swapchain;
-    info.pImageIndices = &current;
-    info.pResults = nullptr;
-    info.waitSemaphoreCount = 1;
-    info.pWaitSemaphores = &waitt;
-    
     // This will display the image
-    VkResult result = vkQueuePresentKHR(static_cast<VkQueue> (device.graphics), &info);
-    if(result != VK_SUCCESS) {
-        if(result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
-            throw std::runtime_error("Swapchain out of date");
-        }
+    auto result = device.graphics.presentKHR(vk::PresentInfoKHR(1, &wait, 1, &swapchain, &current), *this);
+    
+    if(result == vk::Result::eSuboptimalKHR) {
+        throw vk::OutOfDateKHRError("Suboptimal swapchain");
     }
     
 }
@@ -181,8 +145,8 @@ void Swapchain::present(vk::Semaphore wait) {
 
 
 
-VkSurfaceFormatKHR Swapchain::chooseSwapSurfaceFormat(std::vector<VkSurfaceFormatKHR> &formats, VkFormat wantedFormat, VkColorSpaceKHR wantedColorSpace) {
-    if (formats.size() == 1 && formats[0].format == VK_FORMAT_UNDEFINED) {
+vk::SurfaceFormatKHR Swapchain::chooseSwapSurfaceFormat(std::vector<vk::SurfaceFormatKHR> &formats, vk::Format wantedFormat, vk::ColorSpaceKHR wantedColorSpace) {
+    if (formats.size() == 1 && formats[0].format == vk::Format::eUndefined) {
         return {wantedFormat, wantedColorSpace}; // Just give the format you want
     }
 
@@ -195,7 +159,7 @@ VkSurfaceFormatKHR Swapchain::chooseSwapSurfaceFormat(std::vector<VkSurfaceForma
     return formats[0];
 }
 
-VkPresentModeKHR Swapchain::chooseSwapPresentMode(std::vector<VkPresentModeKHR> &presentModes, VkPresentModeKHR wantedMode) {
+vk::PresentModeKHR Swapchain::chooseSwapPresentMode(std::vector<vk::PresentModeKHR> &presentModes, vk::PresentModeKHR wantedMode) {
 
     for (const auto& availablePresentMode : presentModes) {
         if (availablePresentMode == wantedMode) {
@@ -203,12 +167,12 @@ VkPresentModeKHR Swapchain::chooseSwapPresentMode(std::vector<VkPresentModeKHR> 
         }
     }
 
-    return VK_PRESENT_MODE_FIFO_KHR;
+    return vk::PresentModeKHR::eFifo;
 }
 
-VkExtent2D Swapchain::chooseSwapExtent(VkSurfaceCapabilitiesKHR &capabilities) {
+vk::Extent2D Swapchain::chooseSwapExtent(vk::SurfaceCapabilitiesKHR &capabilities) {
 
-    VkExtent2D actualExtent = {(uint32_t) win.getWidth(), (uint32_t) win.getHeight()};
+    vk::Extent2D actualExtent((uint32_t) win.getWidth(), (uint32_t) win.getHeight());
 
     actualExtent.width = std::max(capabilities.minImageExtent.width, std::min(capabilities.maxImageExtent.width, actualExtent.width));
     actualExtent.height = std::max(capabilities.minImageExtent.height, std::min(capabilities.maxImageExtent.height, actualExtent.height));
@@ -229,8 +193,4 @@ vk::Format Swapchain::findSupportedFormat(const std::vector<vk::Format>& candida
     }
 
     throw std::runtime_error("failed to find supported format!");
-}
-
-Swapchain::~Swapchain() {
-    reset();
 }

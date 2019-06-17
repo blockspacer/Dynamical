@@ -40,6 +40,11 @@ device(device), swap(swap) {
     
     renderpass = device->createRenderPass(vk::RenderPassCreateInfo({}, attachments.size(), attachments.data(), subpasses.size(), subpasses.data(), 0, nullptr));
     
+    setup();
+    
+}
+
+void Renderpass::setup() {
     
     for(int i = 0; i<framebuffers.size(); i++) {
         
@@ -65,14 +70,9 @@ device(device), swap(swap) {
         
     }
     
-    
 }
 
-void Renderpass::init() {
-    
-}
-
-Renderpass::~Renderpass() {
+void Renderpass::cleanup() {
     
     for(int i = 0; i<framebuffers.size(); i++) {
         
@@ -83,6 +83,13 @@ Renderpass::~Renderpass() {
         vmaDestroyImage(device, depthImages[i], depthAllocations[i]);
         
     }
+    
+}
+
+
+Renderpass::~Renderpass() {
+    
+    cleanup();
     
     device->destroy(renderpass);
     
