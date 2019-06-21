@@ -30,15 +30,15 @@ void MainRender::setup() {
         command.begin(vk::CommandBufferBeginInfo({}, nullptr));
         
         auto clearValues = std::vector<vk::ClearValue> {
-            vk::ClearValue(vk::ClearColorValue(std::array<float, 4> { 0.3f, 0.3f, 0.3f, 1.0f })),
+            vk::ClearValue(vk::ClearColorValue(std::array<float, 4> { 0.2f, 0.2f, 0.2f, 1.0f })),
             vk::ClearValue(vk::ClearDepthStencilValue(1.0f, 0))};
         command.beginRenderPass(vk::RenderPassBeginInfo(renderpass, renderpass.framebuffers[i], vk::Rect2D({}, swap.extent), clearValues.size(), clearValues.data()), vk::SubpassContents::eInline);
-        
-        command.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline.pipeline);
         
         command.setViewport(0, vk::Viewport(0, 0, swap.extent.width, swap.extent.height, 0, 1));
         
         command.setScissor(0, vk::Rect2D(vk::Offset2D(), swap.extent));
+        
+        command.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline.pipeline);
         
         command.draw(1, 1, 0, 0);
         

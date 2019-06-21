@@ -73,7 +73,7 @@ void Swapchain::setup() {
     images.resize(num);
     vkGetSwapchainImagesKHR(device, static_cast<VkSwapchainKHR> (swapchain), &num, reinterpret_cast<VkImage*> (images.data()));
     
-    if(NUM_FRAMES == num) std::cout << "number of frames changed to : " << num << std::endl;
+    if(NUM_FRAMES != num) std::cout << "number of frames changed to : " << num << std::endl;
     
     NUM_FRAMES = num;
     

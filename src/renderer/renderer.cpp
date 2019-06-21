@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-Renderer::Renderer() : win(), instance(win), device(instance), swap(win, instance, device), main_render(instance, device, swap),
+Renderer::Renderer() : win(), instance(win), device(instance), swap(win, instance, device), main_render(instance, device, swap), marching_cubes(device),
 waitsems(swap.NUM_FRAMES), signalsems(swap.NUM_FRAMES) {
     
     for(int i = 0; i < waitsems.size(); i++) {
@@ -50,6 +50,8 @@ Renderer::~Renderer() {
 void Renderer::resize() {
     
     if(win.resize()) {
+        
+        std::cout << "resize" << std::endl;
         
         device->waitIdle();
         

@@ -6,6 +6,7 @@
 #include "device.h"
 #include "swapchain.h"
 #include "main_render/main_render.h"
+#include "marching_cubes/marching_cubes.h"
 
 class Renderer {
 public:
@@ -22,6 +23,7 @@ private:
     Device device;
     Swapchain swap;
     MainRender main_render;
+    MarchingCubes marching_cubes;
     
     int semindex = 0;
     std::vector<vk::Semaphore> waitsems;

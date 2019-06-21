@@ -44,11 +44,11 @@ Device::Device(Instance &inst) : instance(inst) {
     extensions = physical.enumerateDeviceExtensionProperties();
     
     // Prepare queue choice data : GRAPHICS / COMPUTE / TRANSFER
-    uint32_t g_j = 0, t_j = 0, countF = 0;
+    uint32_t countF = 0;
     
     std::vector<float> priorities(3); priorities[0] = 0.0f; priorities[1] = 0.0f; priorities[2] = 0.0f; 
     
-    std::vector<vk::DeviceQueueCreateInfo> pqinfo(2); // Number of queues
+    std::vector<vk::DeviceQueueCreateInfo> pqinfo(3); // Number of queues
     
     
     
@@ -65,21 +65,36 @@ Device::Device(Instance &inst) : instance(inst) {
     }
     
     if(g_i == 1000) {
-        throw std::runtime_error("Could not retrieve queue family");
+        throw std::runtime_error("Could not get graphics queue family");
+    }
+    
+    
+    // Gets a transfer queue family different from graphics and compute family if possible, then different queue index if possible, else just the same queue.
+    c_i = 1000;
+    for(uint32_t i = 0; i < queueFamilies.size(); i++) {
+        if(queueFamilies[i].queueFlags & vk::QueueFlagBits::eCompute) {
+            c_i = i;
+            if(c_i != g_i) {
+                countF++;
+                pqinfo[1] = vk::DeviceQueueCreateInfo({}, i, 1, priorities.data());
+                break;
+            }
+        }
+    }
+    
+    if(c_i == 1000) {
+        throw std::runtime_error("Could not get compute queue family");
     }
     
     
     // Gets a transfer queue family different from graphics and compute family if possible, then different queue index if possible, else just the same queue.
     t_i = 1000;
     for(uint32_t i = 0; i < queueFamilies.size(); i++) {
-        if(queueFamilies[i].queueFlags & vk::QueueFlagBits::eTransfer) {
-            t_i = i; t_j = 0;
-            if(t_i != g_i) {
-                countF++;
-                pqinfo[1] = {{}, i, 1, priorities.data()};
-                break;
-            }
-            while((t_i == g_i && t_j == g_j) && queueFamilies[i].queueCount > t_j + 1) t_j++;
+        t_i = i;
+        if(t_i != g_i && t_i != c_i) {
+            countF++;
+            pqinfo[2] = vk::DeviceQueueCreateInfo({}, i, 1, priorities.data());
+            break;
         }
     }
     
@@ -87,24 +102,30 @@ Device::Device(Instance &inst) : instance(inst) {
         throw std::runtime_error("Could not get transfer queue family");
     }
     
-    if(t_i == g_i && t_j != g_j) {pqinfo[0].queueCount++;}
-    
-    
+    /*
     for(const auto &ext : extensions) {
         if(strcmp(VK_EXT_DEBUG_MARKER_EXTENSION_NAME, ext.extensionName) == 0) requiredExtensions.push_back(VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
-    }
+    }*/
     
     // Create Device
     
     logical = physical.createDevice(vk::DeviceCreateInfo({}, countF, pqinfo.data(), 0, nullptr, requiredExtensions.size(), requiredExtensions.data(), &requiredFeatures));
     
-    graphics = logical.getQueue(g_i, g_j);
+    graphics = logical.getQueue(g_i, 0);
     
     
-    if(t_i == g_i && t_j == g_j) {
-        transfer = graphics;
+    if(c_i == g_i) {
+        compute = graphics;
     } else {
-        transfer = logical.getQueue(t_i, t_j);
+        compute = logical.getQueue(c_i, 0);
+    }
+    
+    if(t_i == g_i) {
+        transfer = graphics;
+    } else if(t_i == c_i) {
+        transfer = compute;
+    } else {
+        transfer = logical.getQueue(t_i, 0);
     }
     
     VmaAllocatorCreateInfo allocatorInfo = {};

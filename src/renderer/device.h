@@ -21,8 +21,8 @@ public :
     uint32_t getScore(vk::PhysicalDevice &device);
     uint32_t getMemoryType(uint32_t typeBits, vk::MemoryPropertyFlags properties);
     
-    vk::Queue graphics, transfer;
-    uint32_t g_i = 0, t_i = 0;
+    vk::Queue graphics, compute, transfer;
+    uint32_t g_i = 0, c_i = 0, t_i = 0;
     
     vk::PhysicalDeviceFeatures requiredFeatures;
     std::vector<const char*> requiredExtensions;
