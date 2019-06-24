@@ -7,10 +7,11 @@
 class Instance;
 class Device;
 class Swapchain;
+class Terrain;
 
 class MainRender {
 public:
-    MainRender(Instance& instance, Device& device, Swapchain& swap);
+    MainRender(Instance& instance, Device& device, Swapchain& swap, Terrain& terrain);
     void setup();
     void rsetup();
     void render(uint32_t index, vk::Semaphore wait, vk::Semaphore signal);
@@ -25,6 +26,7 @@ private:
     Instance& instance;
     Device& device;
     Swapchain& swap;
+    Terrain& terrain;
     
     vk::CommandPool commandPool;
     std::vector<vk::CommandBuffer> commandBuffers;

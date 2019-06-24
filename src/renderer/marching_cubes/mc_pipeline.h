@@ -3,11 +3,14 @@
 
 #include "vulkan/vulkan.hpp"
 
+#include "renderer/vmapp.h"
+
 class Device;
+class Terrain;
 
 class MCPipeline {
 public:
-    MCPipeline(Device& device);
+    MCPipeline(Device& device, Terrain& terrain);
     ~MCPipeline();
     
     operator vk::Pipeline() { return pipeline; }
@@ -17,9 +20,9 @@ public:
     operator vk::DescriptorSet() { return descSet; }
     operator VkDescriptorSet() { return static_cast<VkDescriptorSet>(descSet); }
     
-    
 private:
     Device& device;
+    Terrain& terrain;
     
     vk::Pipeline pipeline;
     vk::PipelineLayout layout;
@@ -27,6 +30,9 @@ private:
     vk::DescriptorPool descPool;
     vk::DescriptorSetLayout descLayout;
     vk::DescriptorSet descSet;
+    
+    VmaBuffer lookupBuffer;
+    vk::BufferView lookupView;
     
 };
 

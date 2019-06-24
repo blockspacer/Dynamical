@@ -3,8 +3,9 @@
 #include "renderer/instance.h"
 #include "renderer/device.h"
 #include "renderer/swapchain.h"
+#include "renderer/terrain.h"
 
-MainRender::MainRender(Instance& instance, Device& device, Swapchain& swap) : renderpass(device, swap), pipeline(device, swap, renderpass), instance(instance), device(device), swap(swap), commandBuffers(swap.NUM_FRAMES), fences(swap.NUM_FRAMES) {
+MainRender::MainRender(Instance& instance, Device& device, Swapchain& swap, Terrain& terrain) : renderpass(device, swap), pipeline(device, swap, renderpass), instance(instance), device(device), swap(swap), terrain(terrain), commandBuffers(swap.NUM_FRAMES), fences(swap.NUM_FRAMES) {
     
     commandPool = device->createCommandPool(vk::CommandPoolCreateInfo(vk::CommandPoolCreateFlagBits::eResetCommandBuffer, device.g_i));
     
@@ -40,7 +41,9 @@ void MainRender::setup() {
         
         command.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline.pipeline);
         
-        command.draw(1, 1, 0, 0);
+        command.bindVertexBuffers(0, {terrain.getTriangles()}, {0});
+        
+        command.drawIndirect(terrain.getIndirect(), 0, 1, 0);
         
         command.endRenderPass();
         

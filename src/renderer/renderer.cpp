@@ -2,13 +2,15 @@
 
 #include <iostream>
 
-Renderer::Renderer() : win(), instance(win), device(instance), swap(win, instance, device), main_render(instance, device, swap), marching_cubes(device),
+Renderer::Renderer() : win(), instance(win), device(instance), swap(win, instance, device), terrain(device), marching_cubes(device, terrain), main_render(instance, device, swap, terrain),
 waitsems(swap.NUM_FRAMES), signalsems(swap.NUM_FRAMES) {
     
     for(int i = 0; i < waitsems.size(); i++) {
         waitsems[i] = device->createSemaphore({});
         signalsems[i] = device->createSemaphore({});
     }
+    
+    marching_cubes.compute(nullptr, nullptr);
     
 }
 

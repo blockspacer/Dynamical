@@ -5,8 +5,9 @@
 #include "instance.h"
 #include "device.h"
 #include "swapchain.h"
-#include "main_render/main_render.h"
+#include "terrain.h"
 #include "marching_cubes/marching_cubes.h"
+#include "main_render/main_render.h"
 
 class Renderer {
 public:
@@ -22,8 +23,9 @@ private:
     Instance instance;
     Device device;
     Swapchain swap;
-    MainRender main_render;
+    Terrain terrain;
     MarchingCubes marching_cubes;
+    MainRender main_render;
     
     int semindex = 0;
     std::vector<vk::Semaphore> waitsems;

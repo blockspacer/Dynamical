@@ -4,7 +4,7 @@
 #include "renderer/swapchain.h"
 
 Renderpass::Renderpass(Device& device, Swapchain& swap) :
-depthImages(swap.NUM_FRAMES), depthAllocations(swap.NUM_FRAMES), depthViews(swap.NUM_FRAMES), framebuffers(swap.NUM_FRAMES),
+depthImages(swap.NUM_FRAMES), depthViews(swap.NUM_FRAMES), framebuffers(swap.NUM_FRAMES),
 device(device), swap(swap) {
     
     depthFormat = swap.findSupportedFormat(
@@ -48,20 +48,16 @@ void Renderpass::setup() {
     
     for(int i = 0; i<framebuffers.size(); i++) {
         
-        auto imageInfo = static_cast<VkImageCreateInfo>(vk::ImageCreateInfo(
+        VmaAllocationCreateInfo allocInfo = {};
+        allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+        
+        depthImages[i] = VmaImage(device, &allocInfo, vk::ImageCreateInfo(
             {}, vk::ImageType::e2D, depthFormat, vk::Extent3D(swap.extent.width, swap.extent.height, 1), 
             1, 1, vk::SampleCountFlagBits::e1, vk::ImageTiling::eOptimal, vk::ImageUsageFlagBits::eDepthStencilAttachment, // | vk::ImageUsageFlagBits::eTransferSrc,
             vk::SharingMode::eExclusive, 1, &device.g_i, vk::ImageLayout::eUndefined
         ));
         
-        VmaAllocationCreateInfo allocInfo = {};
-        allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-        
-        VkImage depthImage;
-        vmaCreateImage(device, &imageInfo, &allocInfo, &depthImage, &depthAllocations[i], nullptr);
-        depthImages[i] = depthImage;
-        
-        depthViews[i] = device->createImageView(vk::ImageViewCreateInfo({}, depthImages[i], vk::ImageViewType::e2D, depthFormat, vk::ComponentMapping(),
+        depthViews[i] = device->createImageView(vk::ImageViewCreateInfo({}, depthImages[i].image, vk::ImageViewType::e2D, depthFormat, vk::ComponentMapping(),
                                                                         vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eDepth, 0, 1, 0, 1)));
         
         auto views = std::vector<vk::ImageView> {swap.imageViews[i], depthViews[i]};
@@ -79,8 +75,6 @@ void Renderpass::cleanup() {
         device->destroy(framebuffers[i]);
         
         device->destroy(depthViews[i]);
-        
-        vmaDestroyImage(device, depthImages[i], depthAllocations[i]);
         
     }
     

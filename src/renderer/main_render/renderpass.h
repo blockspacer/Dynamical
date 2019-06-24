@@ -2,7 +2,7 @@
 #define RENDERPASS_H
 
 #include "vulkan/vulkan.hpp"
-#include "vma/vk_mem_alloc.h"
+#include "renderer/vmapp.h"
 
 class Device;
 class Swapchain;
@@ -18,8 +18,7 @@ public:
     operator VkRenderPass() { return static_cast<VkRenderPass>(renderpass); }
     
     vk::Format depthFormat;
-    std::vector<vk::Image> depthImages;
-    std::vector<VmaAllocation> depthAllocations;
+    std::vector<VmaImage> depthImages;
     std::vector<vk::ImageView> depthViews;
     std::vector<vk::Framebuffer> framebuffers;
     vk::RenderPass renderpass;

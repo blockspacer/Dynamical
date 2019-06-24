@@ -1,8 +1,9 @@
 #include "marching_cubes.h"
 
 #include "renderer/device.h"
+#include "renderer/terrain.h"
 
-MarchingCubes::MarchingCubes(Device& device) : device(device), pipeline(device) {
+MarchingCubes::MarchingCubes(Device& device, Terrain& terrain) : device(device), terrain(terrain), pipeline(device, terrain) {
     
     commandPool = device->createCommandPool(vk::CommandPoolCreateInfo(vk::CommandPoolCreateFlagBits::eResetCommandBuffer, device.c_i));
     
@@ -14,9 +15,15 @@ void MarchingCubes::compute(vk::Semaphore wait, vk::Semaphore signal) {
     
     commandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
     
+    commandBuffer.bindPipeline(vk::PipelineBindPoint::eCompute, pipeline);
     
+    commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eCompute, pipeline, 0, {pipeline}, {});
+    
+    commandBuffer.dispatch(2, 2, 2);
     
     commandBuffer.end();
+    
+    device.compute.submit({vk::SubmitInfo(0, nullptr, nullptr, 1, &commandBuffer, 0, nullptr)}, nullptr);
     
 }
 

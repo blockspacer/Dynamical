@@ -7,7 +7,7 @@
 #include "renderpass.h"
 
 struct Vertex {
-    int pos;
+    float x,y,z,w;
 };
 
 BasicPipeline::BasicPipeline(Device& device, Swapchain& swap, Renderpass& renderpass) : device(device), swap(swap), renderpass(renderpass) {
@@ -49,7 +49,7 @@ BasicPipeline::BasicPipeline(Device& device, Swapchain& swap, Renderpass& render
     };
     // Inpute attribute bindings describe shader attribute locations and memory layouts
     auto vertexInputAttributs = std::vector<vk::VertexInputAttributeDescription> {
-        {0, 0, vk::Format::eR32G32B32Sfloat, 0}
+        {0, 0, vk::Format::eR32G32B32A32Sfloat, 0}
     };
     
     auto vertexInputState = vk::PipelineVertexInputStateCreateInfo({}, vertexInputBindings.size(), vertexInputBindings.data(), vertexInputAttributs.size(), vertexInputAttributs.data());
