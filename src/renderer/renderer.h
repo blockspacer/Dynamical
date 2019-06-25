@@ -9,11 +9,13 @@
 #include "marching_cubes/marching_cubes.h"
 #include "main_render/main_render.h"
 
+#include "entt/entt.hpp"
+
 class Renderer {
 public:
     Renderer();
-    void init();
-    void render();
+    void init(entt::registry& reg);
+    void render(entt::registry& reg);
     ~Renderer();
     
     void resize();

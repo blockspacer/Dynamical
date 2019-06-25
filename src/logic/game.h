@@ -4,6 +4,10 @@
 #include <memory>
 #include "util/game_loop.h"
 
+#include "entt/entt.hpp"
+
+#include "systems/systems.h"
+
 class Renderer;
 
 class Game : GameLoop {
@@ -16,7 +20,12 @@ public:
     ~Game();
     
 private:
+    entt::registry reg;
+    
+    Systems systems;
+    
     std::unique_ptr<Renderer> renderer;
+    
 };
 
 #endif

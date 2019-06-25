@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include "logic/components/input.h"
+
 Renderer::Renderer() : win(), instance(win), device(instance), swap(win, instance, device), terrain(device), marching_cubes(device, terrain), main_render(instance, device, swap, terrain),
 waitsems(swap.NUM_FRAMES), signalsems(swap.NUM_FRAMES) {
     
@@ -14,11 +16,19 @@ waitsems(swap.NUM_FRAMES), signalsems(swap.NUM_FRAMES) {
     
 }
 
-void Renderer::init() {
+void Renderer::init(entt::registry& reg) {
+    
+    reg.set<SDL_Window*>(win);
     
 }
 
-void Renderer::render() {
+void Renderer::render(entt::registry& reg) {
+    
+    Input& input = reg.ctx<Input>();
+    if(input.on[Action::RESIZE]) {
+        resize();
+        input.on.set(Action::RESIZE, false);
+    }
     
     try {
     
