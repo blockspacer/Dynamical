@@ -22,7 +22,7 @@ std::vector<char> Util::readFile(const char* filename) {
 	}
 
 	std::cout << "File with name : " << filename << " could not be read" << std::endl;
-
+    return {};
 }
 
 

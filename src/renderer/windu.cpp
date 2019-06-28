@@ -20,9 +20,11 @@ Windu::Windu() {
                               SDL_WINDOW_VULKAN | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE // | SDL_WINDOW_FULLSCREEN
              );
     
-	if (window == nullptr) {
-		std::cout << "Could not create SDL window: " << SDL_GetError() << std::endl;
-	}
+    if (window == nullptr) {
+        std::cout << "Could not create SDL window: " << SDL_GetError() << std::endl;
+    }
+    
+    SDL_ShowCursor(SDL_FALSE);
     
     SDL_GetWindowSize(window, &width, &height);
     

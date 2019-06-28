@@ -12,6 +12,13 @@ public:
     BasicPipeline(Device& device, Swapchain& swap, Renderpass& renderpass);
     ~BasicPipeline();
     
+    operator vk::Pipeline() { return pipeline; }
+    operator vk::PipelineLayout() { return layout; }
+    
+    vk::DescriptorPool descPool;
+    vk::DescriptorSetLayout descLayout;
+    std::vector<vk::DescriptorSet> descSets;
+    
     vk::PipelineLayout layout;
     vk::Pipeline pipeline;
     

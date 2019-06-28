@@ -2,9 +2,9 @@
 
 #include <iostream>
 
-#include "logic/components/input.h"
+#include "logic/components/inputc.h"
 
-Renderer::Renderer() : win(), instance(win), device(instance), swap(win, instance, device), terrain(device), marching_cubes(device, terrain), main_render(instance, device, swap, terrain),
+Renderer::Renderer() : win(), instance(win), device(instance), swap(win, instance, device), camera(swap.extent.width, swap.extent.height), terrain(device), marching_cubes(device, terrain), main_render(instance, device, swap, camera, terrain),
 waitsems(swap.NUM_FRAMES), signalsems(swap.NUM_FRAMES) {
     
     for(int i = 0; i < waitsems.size(); i++) {
@@ -24,13 +24,15 @@ void Renderer::init(entt::registry& reg) {
 
 void Renderer::render(entt::registry& reg) {
     
-    Input& input = reg.ctx<Input>();
+    InputC& input = reg.ctx<InputC>();
     if(input.on[Action::RESIZE]) {
         resize();
         input.on.set(Action::RESIZE, false);
     }
     
     try {
+        
+        camera.update(reg);
     
         uint32_t index = swap.acquire(waitsems[semindex]);
         
@@ -72,6 +74,8 @@ void Renderer::resize() {
         swap.cleanup();
         
         swap.setup();
+        
+        camera.setup(swap.extent.width, swap.extent.height);
         
         main_render.rsetup();
     

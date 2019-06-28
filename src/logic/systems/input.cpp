@@ -1,6 +1,6 @@
 #include "system_list.h"
 
-#include "logic/components/input.h"
+#include "logic/components/inputc.h"
 
 #include <SDL.h>
 
@@ -9,23 +9,25 @@
 #include <unordered_map>
 
 std::unordered_map<SDL_Scancode, Action> actionMap = {
-    {SDL_SCANCODE_Z, Action::FORWARD},
+    {SDL_SCANCODE_W, Action::FORWARD},
     {SDL_SCANCODE_S, Action::BACKWARD},
-    {SDL_SCANCODE_Q, Action::LEFT},
-    {SDL_SCANCODE_D, Action::RIGHT}
+    {SDL_SCANCODE_A, Action::LEFT},
+    {SDL_SCANCODE_D, Action::RIGHT},
+    {SDL_SCANCODE_SPACE, Action::UP},
+    {SDL_SCANCODE_LSHIFT, Action::DOWN}
 };
 
 void InputSys::init(entt::registry& reg) {
     
-    reg.set<Input>();
+    reg.set<InputC>();
     
 }
 
 void InputSys::tick(entt::registry& reg) {
     
-    Input& input = reg.ctx<Input>();
+    InputC& input = reg.ctx<InputC>();
     
-    //SDL_Window* win = reg.ctx<SDL_Window*>();
+    SDL_Window* win = reg.ctx<SDL_Window*>();
     
     SDL_Event e;
     while (SDL_PollEvent(&e)) {
@@ -42,7 +44,9 @@ void InputSys::tick(entt::registry& reg) {
             
             try {
                 input.on.set(actionMap.at(e.key.keysym.scancode), e.type == SDL_KEYDOWN);
-            } catch(std::out_of_range e) {}
+            } catch(std::out_of_range err) {
+                std::cout << e.key.keysym.scancode << std::endl;
+            }
             
         } else if(e.type == SDL_MOUSEBUTTONDOWN || e.type == SDL_MOUSEBUTTONUP) {
 
@@ -61,6 +65,12 @@ void InputSys::tick(entt::registry& reg) {
     
     int x, y;
     SDL_GetMouseState(&x, &y);
+    
+    int w, h;
+    SDL_GetWindowSize(win, &w, &h);
+    SDL_WarpMouseInWindow(win, w / 2, h / 2);
+    
     input.mousePos = glm::ivec2(x,y);
+    input.mouseDiff = glm::ivec2(x - w/2, y - h/2);
     
 }

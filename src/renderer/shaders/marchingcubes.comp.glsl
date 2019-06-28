@@ -74,7 +74,7 @@ layout(binding = 2) uniform UBO {
 layout(binding = 2) uniform isamplerBuffer triTable;
 
 float values(uint x, uint y, uint z) {
-    return 3.-y;
+    return 10.-y-0.5*sin(x/2.)-cos(z/2.);
 }
 
 void main() {
@@ -131,7 +131,7 @@ void main() {
             //float density1 = values[int(a1.x * CHUNK_SIZE*CHUNK_SIZE + a1.y * CHUNK_SIZE + a1.z)];
             float density1 = values(uint(a1.x), uint(a1.y), uint(a1.z));
             vec3 vertex = edge >= 0 ? 5.*mix(a1, a2, (-density1)/(values(uint(a2.x), uint(a2.y), uint(a2.z)) - density1)) : vec3(0);
-            tril[global_tri_index + local_tri_index+i] = vec4(vertex, 1.0);
+            tril[global_tri_index + local_tri_index+i] = vec4(vertex/10., 1.0);
         }
         
     }

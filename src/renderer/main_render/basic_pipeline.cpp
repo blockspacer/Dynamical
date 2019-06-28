@@ -12,6 +12,21 @@ struct Vertex {
 
 BasicPipeline::BasicPipeline(Device& device, Swapchain& swap, Renderpass& renderpass) : device(device), swap(swap), renderpass(renderpass) {
     
+    auto poolSizes = std::vector {
+        vk::DescriptorPoolSize(vk::DescriptorType::eUniformBuffer, swap.NUM_FRAMES),
+    };
+    descPool = device->createDescriptorPool(vk::DescriptorPoolCreateInfo({}, swap.NUM_FRAMES, poolSizes.size(), poolSizes.data()));
+    
+    auto bindings = std::vector {
+        vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex)
+    };
+    descLayout = device->createDescriptorSetLayout(vk::DescriptorSetLayoutCreateInfo({}, bindings.size(), bindings.data()));
+    
+    std::vector<vk::DescriptorSetLayout> layouts = Util::nTimes(swap.NUM_FRAMES, descLayout);
+    descSets = device->allocateDescriptorSets(vk::DescriptorSetAllocateInfo(descPool, swap.NUM_FRAMES, layouts.data()));
+    
+    
+    
     // PIPELINE INFO
     
     auto vertShaderCode = Util::readFile("./shaders/basic.vert.glsl.spv");
@@ -141,7 +156,7 @@ BasicPipeline::BasicPipeline(Device& device, Swapchain& swap, Renderpass& render
     
     
     
-    auto layouts = std::vector<vk::DescriptorSetLayout> {};
+    auto playouts = std::vector<vk::DescriptorSetLayout> {descLayout};
     
     layout = device->createPipelineLayout(vk::PipelineLayoutCreateInfo(
         {}, layouts.size(), layouts.data(), 0, nullptr

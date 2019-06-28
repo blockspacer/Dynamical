@@ -4,7 +4,7 @@
 
 #include "renderer/renderer.h"
 
-#include "components/input.h"
+#include "components/inputc.h"
 
 Game::Game() : renderer(std::make_unique<Renderer>()) {
     
@@ -31,7 +31,7 @@ void Game::update(float dt) {
     
     renderer->render(reg);
     
-    Input& input = reg.ctx<Input>();
+    InputC& input = reg.ctx<InputC>();
     if(input.on[Action::EXIT]) {
         setQuitting();
         input.on.set(Action::EXIT, false);

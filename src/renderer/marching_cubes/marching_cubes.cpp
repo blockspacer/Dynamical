@@ -19,7 +19,7 @@ void MarchingCubes::compute(vk::Semaphore wait, vk::Semaphore signal) {
     
     commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eCompute, pipeline, 0, {pipeline}, {});
     
-    commandBuffer.dispatch(2, 2, 2);
+    commandBuffer.dispatch(10, 4, 10);
     
     commandBuffer.end();
     

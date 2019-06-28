@@ -6,7 +6,7 @@
 
 Terrain::Terrain(Device& device) : device(device) {
     
-    uint32_t numTriangles = 800;
+    uint32_t numTriangles = 20000;
     
     VmaAllocationCreateInfo info = {};
     info.usage = VMA_MEMORY_USAGE_GPU_ONLY;

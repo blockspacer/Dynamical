@@ -5,6 +5,7 @@
 #include "instance.h"
 #include "device.h"
 #include "swapchain.h"
+#include "camera.h"
 #include "terrain.h"
 #include "marching_cubes/marching_cubes.h"
 #include "main_render/main_render.h"
@@ -25,6 +26,7 @@ private:
     Instance instance;
     Device device;
     Swapchain swap;
+    Camera camera;
     Terrain terrain;
     MarchingCubes marching_cubes;
     MainRender main_render;

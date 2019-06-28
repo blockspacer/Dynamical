@@ -1,5 +1,5 @@
-#ifndef INPUT_H
-#define INPUT_H
+#ifndef INPUTC_H
+#define INPUTC_H
 
 #include <bitset>
 #include "glm/glm.hpp"
@@ -10,6 +10,8 @@ enum Action : char {
     BACKWARD,
     LEFT,
     RIGHT,
+    UP,
+    DOWN,
     PRIMARY,
     SECONDARY,
     RESIZE,
@@ -17,10 +19,11 @@ enum Action : char {
     END_ENUM
 };
 
-class Input {
+class InputC {
 public:
     std::bitset<Action::END_ENUM> on;
     glm::ivec2 mousePos;
+    glm::ivec2 mouseDiff;
 };
 
 #endif

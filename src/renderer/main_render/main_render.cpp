@@ -3,9 +3,11 @@
 #include "renderer/instance.h"
 #include "renderer/device.h"
 #include "renderer/swapchain.h"
+#include "renderer/camera.h"
 #include "renderer/terrain.h"
 
-MainRender::MainRender(Instance& instance, Device& device, Swapchain& swap, Terrain& terrain) : renderpass(device, swap), pipeline(device, swap, renderpass), instance(instance), device(device), swap(swap), terrain(terrain), commandBuffers(swap.NUM_FRAMES), fences(swap.NUM_FRAMES) {
+MainRender::MainRender(Instance& instance, Device& device, Swapchain& swap, Camera& camera, Terrain& terrain) : renderpass(device, swap), pipeline(device, swap, renderpass), instance(instance), device(device), swap(swap), camera(camera), terrain(terrain),
+commandBuffers(swap.NUM_FRAMES), fences(swap.NUM_FRAMES), ubos(swap.NUM_FRAMES), uboPointers(swap.NUM_FRAMES) {
     
     commandPool = device->createCommandPool(vk::CommandPoolCreateInfo(vk::CommandPoolCreateFlagBits::eResetCommandBuffer, device.g_i));
     
@@ -17,8 +19,28 @@ MainRender::MainRender(Instance& instance, Device& device, Swapchain& swap, Terr
         
     }
     
-    setup();
+    VmaAllocationCreateInfo allocInfo = {};
+    allocInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+    allocInfo.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
     
+    for(int i = 0; i < ubos.size(); i++) {
+        
+        ubos[i] = VmaBuffer(device, &allocInfo, vk::BufferCreateInfo({}, sizeof(UBO), vk::BufferUsageFlagBits::eUniformBuffer, vk::SharingMode::eExclusive, 1, &device.g_i));
+        
+        VmaAllocationInfo inf;
+        vmaGetAllocationInfo(device, ubos[i].allocation, &inf);
+        void* r = inf.pMappedData;
+        uboPointers[i] = static_cast<UBO*> (inf.pMappedData);
+        
+        auto bufInfo = vk::DescriptorBufferInfo(ubos[i], 0, ubos[i].size);
+        
+        device->updateDescriptorSets({
+            vk::WriteDescriptorSet(pipeline.descSets[i], 0, 0, 1, vk::DescriptorType::eUniformBuffer, nullptr, &bufInfo, nullptr)
+        }, {});
+        
+    }
+    
+    setup();
     
 }
 
@@ -39,7 +61,9 @@ void MainRender::setup() {
         
         command.setScissor(0, vk::Rect2D(vk::Offset2D(), swap.extent));
         
-        command.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline.pipeline);
+        command.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
+        
+        command.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline, 0, {pipeline.descSets[i]}, {});
         
         command.bindVertexBuffers(0, {terrain.getTriangles()}, {0});
         
@@ -65,6 +89,8 @@ void MainRender::render(uint32_t index, vk::Semaphore wait, vk::Semaphore signal
     device->waitForFences(fences[index], VK_TRUE, 1000000);
     
     device->resetFences(fences[index]);
+    
+    uboPointers[index]->viewproj = camera.getViewProjection();
     
     vk::PipelineStageFlags stage = vk::PipelineStageFlagBits::eTopOfPipe;
     
