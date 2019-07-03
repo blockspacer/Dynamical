@@ -44,9 +44,7 @@ void InputSys::tick(entt::registry& reg) {
             
             try {
                 input.on.set(actionMap.at(e.key.keysym.scancode), e.type == SDL_KEYDOWN);
-            } catch(std::out_of_range err) {
-                std::cout << e.key.keysym.scancode << std::endl;
-            }
+            } catch(std::out_of_range err) {}
             
         } else if(e.type == SDL_MOUSEBUTTONDOWN || e.type == SDL_MOUSEBUTTONUP) {
 

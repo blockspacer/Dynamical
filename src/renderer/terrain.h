@@ -3,12 +3,10 @@
 
 #include "vmapp.h"
 
-struct vec4 {
-    float x, y, z, w;
-};
+#include "glm/glm.hpp"
 
 struct Triangle {
-    vec4 a,b,c;
+    glm::vec4 a,b,c;
 };
 
 class Device;

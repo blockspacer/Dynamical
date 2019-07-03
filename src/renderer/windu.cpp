@@ -14,10 +14,10 @@ Windu::Windu() {
     
     SDL_GetCurrentDisplayMode(0, &mode);
     
-    window = SDL_CreateWindow("My App",
+    window = SDL_CreateWindow("Dynamical",
                               SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                               mode.w, mode.h,
-                              SDL_WINDOW_VULKAN | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE // | SDL_WINDOW_FULLSCREEN
+                              SDL_WINDOW_VULKAN | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_FULLSCREEN
              );
     
     if (window == nullptr) {

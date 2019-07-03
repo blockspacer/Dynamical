@@ -41,6 +41,22 @@ namespace Util {
         return num;
     }
     
+    template<typename T>
+    int removeElement(std::vector<T> vec, T element) {
+        int index = 0;
+        
+        for(int i = 0; i < vec.size(); i++) {
+            
+            if(vec[i] != element) {
+                if(index != i) vec[index] = vec[i];
+                index++;
+            }
+            
+        }
+        
+        return index;
+    }
+    
 };
 
 #endif

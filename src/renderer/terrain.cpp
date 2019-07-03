@@ -18,8 +18,6 @@ Terrain::Terrain(Device& device) : device(device) {
     
     indirect = VmaBuffer(device, &info, vk::BufferCreateInfo({}, sizeof(VkDrawIndirectCommand), vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eIndirectBuffer, concurrent ? vk::SharingMode::eConcurrent : vk::SharingMode::eExclusive, concurrent ? 2 : 1, &qfs[0]));
     
-    //std::cout << triangles.buffer << std::endl;
-    
 }
 
 Terrain::~Terrain() {

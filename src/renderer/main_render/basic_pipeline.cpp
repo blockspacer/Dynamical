@@ -194,4 +194,8 @@ BasicPipeline::~BasicPipeline() {
     
     device->destroy(layout);
     
+    device->destroy(descLayout);
+    
+    device->destroy(descPool);
+    
 }

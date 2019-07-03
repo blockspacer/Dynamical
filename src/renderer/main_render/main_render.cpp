@@ -5,6 +5,7 @@
 #include "renderer/swapchain.h"
 #include "renderer/camera.h"
 #include "renderer/terrain.h"
+#include "util/util.h"
 
 MainRender::MainRender(Instance& instance, Device& device, Swapchain& swap, Camera& camera, Terrain& terrain) : renderpass(device, swap), pipeline(device, swap, renderpass), instance(instance), device(device), swap(swap), camera(camera), terrain(terrain),
 commandBuffers(swap.NUM_FRAMES), fences(swap.NUM_FRAMES), ubos(swap.NUM_FRAMES), uboPointers(swap.NUM_FRAMES) {
@@ -86,15 +87,24 @@ void MainRender::rsetup() {
 
 void MainRender::render(uint32_t index, vk::Semaphore wait, vk::Semaphore signal) {
     
-    device->waitForFences(fences[index], VK_TRUE, 1000000);
+    device->waitForFences(fences[index], VK_TRUE, std::numeric_limits<uint64_t>::max());
     
     device->resetFences(fences[index]);
     
     uboPointers[index]->viewproj = camera.getViewProjection();
     
-    vk::PipelineStageFlags stage = vk::PipelineStageFlagBits::eTopOfPipe;
     
-    device.graphics.submit({vk::SubmitInfo(1, &wait, &stage, 1, &commandBuffers[index], 1, &signal)}, fences[index]);
+    auto waits = std::vector {wait};
+    
+    auto stages = std::vector<vk::PipelineStageFlags> {vk::PipelineStageFlagBits::eTopOfPipe};
+    
+    auto signals = std::vector {signal};
+    
+    device.graphics.submit({vk::SubmitInfo(
+        Util::removeElement<vk::Semaphore>(waits, nullptr), waits.data(), stages.data(),
+        1, &commandBuffers[index],
+        Util::removeElement<vk::Semaphore>(signals, nullptr), &signal
+    )}, fences[index]);
     
 }
 

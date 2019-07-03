@@ -118,7 +118,7 @@ Swapchain::~Swapchain() {
 
 uint32_t Swapchain::acquire(vk::Semaphore signal) {
     
-    auto resultvalue = device->acquireNextImageKHR(swapchain, 100000000000L, signal, nullptr, *this);
+    auto resultvalue = device->acquireNextImageKHR(swapchain, std::numeric_limits<uint64_t>::max(), signal, nullptr, *this);
     current = resultvalue.value;
     
     if(resultvalue.result == vk::Result::eSuboptimalKHR) {
