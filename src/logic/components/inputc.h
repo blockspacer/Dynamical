@@ -24,6 +24,7 @@ public:
     std::bitset<Action::END_ENUM> on;
     glm::ivec2 mousePos;
     glm::ivec2 mouseDiff;
+	bool focused = true;
 };
 
 #endif

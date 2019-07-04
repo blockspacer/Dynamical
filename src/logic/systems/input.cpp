@@ -28,6 +28,10 @@ void InputSys::tick(entt::registry& reg) {
     InputC& input = reg.ctx<InputC>();
     
     SDL_Window* win = reg.ctx<SDL_Window*>();
+
+	auto flags = SDL_GetWindowFlags(win);
+
+	input.focused = flags & SDL_WINDOW_MOUSE_FOCUS;
     
     SDL_Event e;
     while (SDL_PollEvent(&e)) {
@@ -60,15 +64,17 @@ void InputSys::tick(entt::registry& reg) {
         }
         
     }
-    
-    int x, y;
-    SDL_GetMouseState(&x, &y);
-    
-    int w, h;
-    SDL_GetWindowSize(win, &w, &h);
-    SDL_WarpMouseInWindow(win, w / 2, h / 2);
-    
-    input.mousePos = glm::ivec2(x,y);
-    input.mouseDiff = glm::ivec2(x - w/2, y - h/2);
+   
+	if (input.focused) {
+		int x, y;
+		SDL_GetMouseState(&x, &y);
+
+		int w, h;
+		SDL_GetWindowSize(win, &w, &h);
+		SDL_WarpMouseInWindow(win, w / 2, h / 2);
+
+		input.mousePos = glm::ivec2(x, y);
+		input.mouseDiff = glm::ivec2(x - w / 2, y - h / 2);
+	}
     
 }

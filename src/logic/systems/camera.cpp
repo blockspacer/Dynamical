@@ -1,10 +1,11 @@
 #include "system_list.h"
 
+#define _USE_MATH_DEFINES
+#include <cmath>
+
 #include "logic/components/inputc.h"
 
 #include "logic/components/camerac.h"
-
-#include <cmath>
 
 void CameraSys::init(entt::registry& reg) {
     
