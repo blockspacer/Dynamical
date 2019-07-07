@@ -7,7 +7,7 @@ class ChunkC {
 public:
     
     glm::vec3 pos;
-    int lod;
+    float size;
     
 };
 

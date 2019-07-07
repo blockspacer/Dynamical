@@ -40,10 +40,10 @@ void MarchingCubes::compute(entt::registry& reg, uint32_t index, std::vector<vk:
     
     reg.view<ChunkC, Chunk>().each([&](entt::entity entity, ChunkC& chunk, Chunk& chonk) {
         commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eCompute, pipeline, 1, {chonk.set}, {});
-        MCPushConstants pc {glm::vec4(chunk.pos, t)};
+        MCPushConstants pc {chunk.pos, t, chunk.size};
         commandBuffer.pushConstants(pipeline, vk::ShaderStageFlagBits::eCompute, 0, sizeof(MCPushConstants), &pc);
         
-        commandBuffer.dispatch(10, 10, 10);
+        commandBuffer.dispatch(10, 8, 10);
     });
         
     commandBuffer.end();

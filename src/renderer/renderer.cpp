@@ -28,6 +28,10 @@ void Renderer::tick(entt::registry& reg) {
     
     terrain.update(reg);
     
+    if(frame_num == 0) {
+        marching_cubes.compute(reg, semindex, {}, {});
+    }
+    
     InputC& input = reg.ctx<InputC>();
     if(input.on[Action::RESIZE]) {
         resize();
@@ -36,17 +40,16 @@ void Renderer::tick(entt::registry& reg) {
     
     try {
         
-        marching_cubes.compute(reg, semindex, {}, {computesems[semindex]});
-        
         camera.update(reg);
     
         uint32_t index = swap.acquire(waitsems[semindex]);
         
-        main_render.render(reg, index, {waitsems[semindex], computesems[semindex]}, {signalsems[semindex]});
+        main_render.render(reg, index, {waitsems[semindex]}, {signalsems[semindex]});
         
         swap.present(signalsems[semindex]);
         
         semindex = (semindex+1)%NUM_FRAMES;
+        frame_num++;
         
     } catch(vk::OutOfDateKHRError) {
         

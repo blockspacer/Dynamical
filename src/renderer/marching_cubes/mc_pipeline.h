@@ -8,7 +8,9 @@
 #include "glm/glm.hpp"
 
 struct MCPushConstants {
-    glm::vec4 args;
+    glm::vec3 pos;
+    float time;
+    float size;
 };
 
 class Device;

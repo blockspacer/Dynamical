@@ -33,6 +33,7 @@ private:
     MarchingCubes marching_cubes;
     MainRender main_render;
     
+    int frame_num = 0;
     int semindex = 0;
     std::vector<vk::Semaphore> waitsems;
     std::vector<vk::Semaphore> signalsems;

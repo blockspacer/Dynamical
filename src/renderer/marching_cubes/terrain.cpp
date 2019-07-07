@@ -8,14 +8,16 @@
 
 #include <iostream>
 
+constexpr uint32_t NUM_TRIANGLES = 80000;
+constexpr uint32_t NUM_INDIRECT = 10;
+constexpr uint32_t MAX_CHUNKS = 100;
+
 Terrain::Terrain(Device& device) : device(device) {
     
-    uint32_t maxChunks = 100;
-    
     auto poolSizes = std::vector {
-        vk::DescriptorPoolSize(vk::DescriptorType::eStorageBuffer, maxChunks*2)
+        vk::DescriptorPoolSize(vk::DescriptorType::eStorageBuffer, MAX_CHUNKS*2)
     };
-    descPool = device->createDescriptorPool(vk::DescriptorPoolCreateInfo({}, maxChunks, poolSizes.size(), poolSizes.data()));
+    descPool = device->createDescriptorPool(vk::DescriptorPoolCreateInfo(vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet, MAX_CHUNKS, poolSizes.size(), poolSizes.data()));
     
     auto bindings = std::vector {
         vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eCompute),
@@ -24,10 +26,10 @@ Terrain::Terrain(Device& device) : device(device) {
     descLayout = device->createDescriptorSetLayout(vk::DescriptorSetLayoutCreateInfo({}, bindings.size(), bindings.data()));
     
     
-    triangles.reserve(maxChunks);
-    indirects.reserve(10);
+    triangles.reserve(MAX_CHUNKS);
+    indirects.reserve(NUM_INDIRECT);
     
-    indirects.push_back(IndirectAllocation(make_indirect(10), 10));
+    indirects.push_back(IndirectAllocation(make_indirect(NUM_INDIRECT), NUM_INDIRECT));
     
 }
 
@@ -54,7 +56,7 @@ void Terrain::construction(entt::registry& reg, entt::entity entity, ChunkC& chu
             chonk.indirect_offset = alloc.num;
             alloc.num++;
         } else {
-            indirects.push_back(IndirectAllocation(make_indirect(10), 10));
+            indirects.push_back(IndirectAllocation(make_indirect(NUM_INDIRECT), NUM_INDIRECT));
             auto& new_alloc = indirects.back();
             chonk.indirect = new_alloc.buffer;
             chonk.indirect_offset = new_alloc.num;
@@ -67,15 +69,15 @@ void Terrain::construction(entt::registry& reg, entt::entity entity, ChunkC& chu
         chonk.triangles = triangles[slot];
         triangleSlots.pop();
     } else {
-        triangles.push_back(make_triangles(30000));
+        triangles.push_back(make_triangles(NUM_TRIANGLES));
         chonk.triangles = triangles.back();
     }
     chonk.triangles_offset = 0;
     
     chonk.set = device->allocateDescriptorSets(vk::DescriptorSetAllocateInfo(descPool, 1, &descLayout))[0];
     
-    auto triInfo = vk::DescriptorBufferInfo(chonk.triangles, 0, 30000 * sizeof(Triangle));
-    auto indInfo = vk::DescriptorBufferInfo(chonk.indirect, chonk.indirect_offset * sizeof(vk::DrawIndirectCommand), (10 - chonk.indirect_offset) * sizeof(vk::DrawIndirectCommand));
+    auto triInfo = vk::DescriptorBufferInfo(chonk.triangles, 0, NUM_TRIANGLES * sizeof(Triangle));
+    auto indInfo = vk::DescriptorBufferInfo(chonk.indirect, chonk.indirect_offset * sizeof(vk::DrawIndirectCommand), (NUM_INDIRECT - chonk.indirect_offset) * sizeof(vk::DrawIndirectCommand));
     
     device->updateDescriptorSets({
         vk::WriteDescriptorSet(chonk.set, 0, 0, 1, vk::DescriptorType::eStorageBuffer, nullptr, &triInfo, nullptr),
@@ -87,6 +89,8 @@ void Terrain::construction(entt::registry& reg, entt::entity entity, ChunkC& chu
 void Terrain::destruction(entt::registry& reg, entt::entity entity) {
     
     auto& chonk = reg.get<Chunk>(entity);
+    device->freeDescriptorSets(descPool, chonk.set);
+    
     reg.remove<Chunk>(entity);
     
 }
@@ -113,7 +117,7 @@ VmaBuffer Terrain::make_triangles(uint32_t numTriangles) {
     uint32_t qfs[2] = {device.g_i, device.c_i};
     
     return dy::make_buffer(device, &info, vk::BufferCreateInfo(
-        {}, numTriangles * sizeof(Triangle), 
+        {}, numTriangles * sizeof(Triangle),
         vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eVertexBuffer,
         concurrent ? vk::SharingMode::eConcurrent : vk::SharingMode::eExclusive, concurrent ? 2 : 1, &qfs[0]));
 }

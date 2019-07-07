@@ -63,7 +63,9 @@ layout(std430, set=1, binding = 1) coherent buffer IndirectDraw {
 
 
 layout( push_constant ) uniform Args {
-    vec4 args;
+    vec3 pos;
+    float time;
+    float size;
 };
 
 float sq(float x) {
@@ -72,16 +74,24 @@ float sq(float x) {
 
 const float k = 100.;
 
-float sdf1(uint x, uint y, uint z) {
-    return sq(15) - (sq(x-CHUNK_SIZES.x/2.)+sq(y-CHUNK_SIZES.y/2.)+sq(z-CHUNK_SIZES.z/2.));
+float sdf1(vec3 p) {
+    return sq(18) - (sq(p.x-CHUNK_SIZES.x/2.)+sq(p.y-CHUNK_SIZES.y/2.)+sq(p.z-CHUNK_SIZES.z/2.)) - 30*sin(p.x+p.y+p.z+time/5.) - 20*cos(p.y+2*p.x-p.z+time/5.);
 }
 
-float sdf2(uint x, uint y, uint z) {
-    return 5. - y;
+float sdf2(vec3 p) {
+    return 10. - p.y - 2*sin((p.x+p.z)/20.) - 3*cos((float(p.x)-p.z)/20.);
 }
 
-float values(uint x, uint y, uint z) {
-    return mix(sdf1(x, y, z), sdf2(x,y,z), (sin(args.w/10.)+1)/2.);
+float sdf(vec3 p) {
+    return sdf2(p);
+}
+
+float values(vec3 p) {
+    return sdf(p + pos);
+}
+
+float values(float x, float y, float z) {
+    return values(vec3(x, y, z));
 }
 
 void main() {
@@ -125,9 +135,9 @@ void main() {
             int edge = texelFetch(triTable, int(val) * 16 + i).r * 2;
             vec3 a1 = gl_GlobalInvocationID.xyz + offsets[edge], a2 = gl_GlobalInvocationID.xyz + offsets[edge+1];
             //float density1 = values[int(a1.x * CHUNK_SIZE*CHUNK_SIZE + a1.y * CHUNK_SIZE + a1.z)];
-            float density1 = values(uint(a1.x), uint(a1.y), uint(a1.z));
-            vec3 vertex = edge >= 0 ? 5.*mix(a1, a2, (-density1)/(values(uint(a2.x), uint(a2.y), uint(a2.z)) - density1)) : vec3(0);
-            tril[global_tri_index + local_tri_index+i] = vec4(vertex/10. + args.xyz, 1.0);
+            float density1 = values(a1);
+            vec3 vertex = edge >= 0 ? 5.*mix(a1, a2, (-density1)/(values(a2) - density1)) : vec3(0);
+            tril[global_tri_index + local_tri_index+i] = vec4(vertex*size + pos, 1.0);
         }
         
     }

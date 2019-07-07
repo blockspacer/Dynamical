@@ -23,15 +23,9 @@ public:
     void update(entt::registry& reg);
     ~Terrain();
     
-    void construction(entt::registry&, entt::entity, ChunkC&);
-    void destruction(entt::registry&, entt::entity);
+    void construction(entt::registry& reg, entt::entity entity, ChunkC& chunk);
+    void destruction(entt::registry& reg, entt::entity entity);
     
-    VmaBuffer& getTriangles() {
-        return triangles[0];
-    }
-    VmaBuffer& getIndirect() {
-        return indirects[0].buffer;
-    }
     vk::DescriptorSetLayout getDescLayout() {
         return descLayout;
     }
