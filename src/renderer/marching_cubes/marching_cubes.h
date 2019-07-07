@@ -6,19 +6,21 @@
 
 #include "mc_pipeline.h"
 
+#include "entt/entt.hpp"
+
 class Device;
 class Terrain;
 
 class MarchingCubes {
 public:
     MarchingCubes(Device& device, Terrain& terrain);
-    void compute(vk::Semaphore wait, vk::Semaphore signal);
+    void compute(entt::registry& reg, uint32_t index, std::vector<vk::Semaphore> waits, std::vector<vk::Semaphore> signals);
     ~MarchingCubes();
     
 private:
     vk::CommandPool commandPool;
-    vk::CommandBuffer commandBuffer;
-    vk::Fence fence;
+    std::vector<vk::CommandBuffer> commandBuffers;
+    std::vector<vk::Fence> fences;
     
     Device& device;
     Terrain& terrain;

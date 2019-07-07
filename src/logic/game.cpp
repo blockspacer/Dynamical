@@ -6,7 +6,10 @@
 
 #include "components/inputc.h"
 
-Game::Game() : renderer(std::make_unique<Renderer>()) {
+#include "components/chunkc.h"
+#include "components/positionc.h"
+
+Game::Game() {
     
 }
 
@@ -14,7 +17,19 @@ void Game::init() {
     
     systems.init(reg);
     
-    renderer->init(reg);
+    {
+        auto entity = reg.create();
+        ChunkC& chonk = reg.assign<ChunkC>(entity);
+        chonk.pos = glm::vec3(0.f);
+        chonk.lod = 4;
+    }
+    
+    {
+        auto entity = reg.create();
+        ChunkC& chonk = reg.assign<ChunkC>(entity);
+        chonk.pos = glm::vec3(30.f, 30.f, 30.f);
+        chonk.lod = 4;
+    }
     
 }
 
@@ -24,12 +39,9 @@ void Game::start() {
     
 }
 
-
 void Game::update(float dt) {
     
     systems.tick(reg);
-    
-    renderer->render(reg);
     
     InputC& input = reg.ctx<InputC>();
     if(input.on[Action::EXIT]) {

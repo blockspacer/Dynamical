@@ -35,7 +35,6 @@ public :
     
     vk::Format findSupportedFormat(const std::vector<vk::Format>& candidates, vk::ImageTiling tiling, vk::FormatFeatureFlags features);
 
-    uint32_t NUM_FRAMES = 3;
     uint32_t current = 1000;
     
     PFN_vkAcquireNextImageKHR vkAcquireNextImageKHR;

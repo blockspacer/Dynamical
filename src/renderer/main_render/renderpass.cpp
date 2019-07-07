@@ -2,9 +2,10 @@
 
 #include "renderer/device.h"
 #include "renderer/swapchain.h"
+#include "renderer/num_frames.h"
 
 Renderpass::Renderpass(Device& device, Swapchain& swap) :
-depthImages(swap.NUM_FRAMES), depthViews(swap.NUM_FRAMES), framebuffers(swap.NUM_FRAMES),
+depthImages(NUM_FRAMES), depthViews(NUM_FRAMES), framebuffers(NUM_FRAMES),
 device(device), swap(swap) {
     
     depthFormat = swap.findSupportedFormat(

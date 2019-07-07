@@ -5,6 +5,7 @@
 #include "renderer/device.h"
 #include "renderer/swapchain.h"
 #include "renderpass.h"
+#include "renderer/num_frames.h"
 
 struct Vertex {
     float x,y,z,w;
@@ -13,17 +14,17 @@ struct Vertex {
 BasicPipeline::BasicPipeline(Device& device, Swapchain& swap, Renderpass& renderpass) : device(device), swap(swap), renderpass(renderpass) {
     
     auto poolSizes = std::vector {
-        vk::DescriptorPoolSize(vk::DescriptorType::eUniformBuffer, swap.NUM_FRAMES),
+        vk::DescriptorPoolSize(vk::DescriptorType::eUniformBuffer, NUM_FRAMES),
     };
-    descPool = device->createDescriptorPool(vk::DescriptorPoolCreateInfo({}, swap.NUM_FRAMES, poolSizes.size(), poolSizes.data()));
+    descPool = device->createDescriptorPool(vk::DescriptorPoolCreateInfo({}, NUM_FRAMES, poolSizes.size(), poolSizes.data()));
     
     auto bindings = std::vector {
         vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex)
     };
     descLayout = device->createDescriptorSetLayout(vk::DescriptorSetLayoutCreateInfo({}, bindings.size(), bindings.data()));
     
-    std::vector<vk::DescriptorSetLayout> layouts = Util::nTimes(swap.NUM_FRAMES, descLayout);
-    descSets = device->allocateDescriptorSets(vk::DescriptorSetAllocateInfo(descPool, swap.NUM_FRAMES, layouts.data()));
+    std::vector<vk::DescriptorSetLayout> layouts = Util::nTimes(NUM_FRAMES, descLayout);
+    descSets = device->allocateDescriptorSets(vk::DescriptorSetAllocateInfo(descPool, NUM_FRAMES, layouts.data()));
     
     
     

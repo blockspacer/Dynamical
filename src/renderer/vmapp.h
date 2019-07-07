@@ -14,12 +14,22 @@ public:
     VmaBuffer();
     
     VmaBuffer(Device& device, VmaAllocationCreateInfo* allocInfo, const vk::BufferCreateInfo& bufferInfo);
+    VmaBuffer(VmaBuffer&& buffer) {
+        this->device = buffer.device;
+        this->allocation = buffer.allocation;
+        this->buffer = buffer.buffer;
+        this->size = buffer.size;
+        this->offset = buffer.offset;
+        this->memory = buffer.memory;
+        buffer.device = nullptr;
+    };
     
     ~VmaBuffer();
     
     operator VmaAllocation() { return allocation; };
     operator vk::Buffer() { return buffer; };
     VmaBuffer& operator= (VmaBuffer&& buffer) {
+        this->~VmaBuffer();
         this->device = buffer.device;
         this->allocation = buffer.allocation;
         this->buffer = buffer.buffer;
@@ -47,6 +57,15 @@ public:
     VmaImage();
     
     VmaImage(Device& device, VmaAllocationCreateInfo* allocInfo, const vk::ImageCreateInfo& imageInfo);
+    VmaImage(VmaImage&& image) {
+        this->device = image.device;
+        this->allocation = image.allocation;
+        this->image = image.image;
+        this->size = image.size;
+        this->offset = image.offset;
+        this->memory = image.memory;
+        image.device = nullptr;
+    }
     
     ~VmaImage();
     
@@ -73,6 +92,18 @@ public:
     
 private:
     Device* device;
+};
+
+namespace dy {
+    
+    inline VmaBuffer make_buffer(Device& device, VmaAllocationCreateInfo* allocInfo, const vk::BufferCreateInfo& bufferInfo) {
+        return VmaBuffer(device, allocInfo, bufferInfo);
+    }
+    
+    inline VmaImage make_image(Device& device, VmaAllocationCreateInfo* allocInfo, const vk::ImageCreateInfo& imageInfo) {
+        return VmaImage(device, allocInfo, imageInfo);
+    };
+    
 };
 
 #endif

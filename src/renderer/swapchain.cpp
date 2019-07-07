@@ -4,6 +4,7 @@
 #include "instance.h"
 #include "device.h"
 #include "loader.inl"
+#include "num_frames.h"
 
 #include <SDL_vulkan.h>
 #include <iostream>
@@ -31,7 +32,8 @@ Swapchain::Swapchain(Windu& win, Instance& instance, Device &device) : win(win),
     extent = chooseSwapExtent(capabilities);
     format = surfaceformat.format;
     colorSpace = surfaceformat.colorSpace;
-     
+    
+    NUM_FRAMES = 3;
     NUM_FRAMES = std::max(capabilities.minImageCount, NUM_FRAMES);
     if (capabilities.maxImageCount > 0 && NUM_FRAMES > capabilities.maxImageCount) {
         NUM_FRAMES = capabilities.maxImageCount;

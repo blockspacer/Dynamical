@@ -3,7 +3,7 @@
 #extension GL_KHR_shader_subgroup_arithmetic: enable
 #extension GL_KHR_shader_subgroup_ballot: enable
 
-layout (local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
+layout (local_size_x = 8, local_size_y = 4, local_size_z = 8) in;
 
 const vec3 offsets[24] = {
     // 0
@@ -46,35 +46,42 @@ const vec3 offsets[24] = {
 
 const uint trinum[256] = {0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 2, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 3, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 3, 2, 3, 3, 2, 3, 4, 4, 3, 3, 4, 4, 3, 4, 5, 5, 2, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 3, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 4, 2, 3, 3, 4, 3, 4, 2, 3, 3, 4, 4, 5, 4, 5, 3, 2, 3, 4, 4, 3, 4, 5, 3, 2, 4, 5, 5, 4, 5, 2, 4, 1, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 3, 2, 3, 3, 4, 3, 4, 4, 5, 3, 2, 4, 3, 4, 3, 5, 2, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 4, 3, 4, 4, 3, 4, 5, 5, 4, 4, 3, 5, 2, 5, 4, 2, 1, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 2, 3, 3, 2, 3, 4, 4, 5, 4, 5, 5, 2, 4, 3, 5, 4, 3, 2, 4, 1, 3, 4, 4, 5, 4, 5, 3, 4, 4, 5, 5, 2, 3, 4, 2, 1, 2, 3, 3, 2, 3, 4, 2, 1, 3, 2, 4, 1, 2, 1, 1, 0};
 
-const int CHUNK_SIZE = 64;
+const ivec3 CHUNK_SIZES = ivec3(8*10, 4*10, 8*10);
 
-layout(std430, binding = 0) writeonly buffer Tris {
+layout(set = 0, binding = 0) uniform isamplerBuffer triTable;
+
+layout(std430, set=1, binding = 0) writeonly buffer Tris {
     vec4 tril[];
 };
 
-/*
-layout(std430, binding = 1) buffer Values {
-    float values[];
-};
-*/
-
-layout(std430, binding = 1) coherent buffer IndirectDraw {
+layout(std430, set=1, binding = 1) coherent buffer IndirectDraw {
     uint vertexCount;
     uint instanceCount;
     uint firstVertex;
     uint firstInstance;
 };
 
-/*
-layout(binding = 2) uniform UBO {
-    float a;
-};
-*/
 
-layout(binding = 2) uniform isamplerBuffer triTable;
+layout( push_constant ) uniform Args {
+    vec4 args;
+};
+
+float sq(float x) {
+    return x*x;
+}
+
+const float k = 100.;
+
+float sdf1(uint x, uint y, uint z) {
+    return sq(15) - (sq(x-CHUNK_SIZES.x/2.)+sq(y-CHUNK_SIZES.y/2.)+sq(z-CHUNK_SIZES.z/2.));
+}
+
+float sdf2(uint x, uint y, uint z) {
+    return 5. - y;
+}
 
 float values(uint x, uint y, uint z) {
-    return 10.-y-0.5*sin(x/2.)-cos(z/2.);
+    return mix(sdf1(x, y, z), sdf2(x,y,z), (sin(args.w/10.)+1)/2.);
 }
 
 void main() {
@@ -87,16 +94,6 @@ void main() {
     }
     barrier();
     
-    /*
-    uint val =    (values[((gl_GlobalInvocationID.x  ) * CHUNK_SIZE + gl_GlobalInvocationID.y  ) * CHUNK_SIZE + gl_GlobalInvocationID.z  ]>0 ? 1:0)
-                | (values[((gl_GlobalInvocationID.x+1) * CHUNK_SIZE + gl_GlobalInvocationID.y  ) * CHUNK_SIZE + gl_GlobalInvocationID.z  ]>0 ? 2:0)
-                | (values[((gl_GlobalInvocationID.x+1) * CHUNK_SIZE + gl_GlobalInvocationID.y  ) * CHUNK_SIZE + gl_GlobalInvocationID.z+1]>0 ? 4:0)
-                | (values[((gl_GlobalInvocationID.x  ) * CHUNK_SIZE + gl_GlobalInvocationID.y  ) * CHUNK_SIZE + gl_GlobalInvocationID.z+1]>0 ? 8:0)
-                | (values[((gl_GlobalInvocationID.x  ) * CHUNK_SIZE + gl_GlobalInvocationID.y+1) * CHUNK_SIZE + gl_GlobalInvocationID.z  ]>0 ? 16:0)
-                | (values[((gl_GlobalInvocationID.x+1) * CHUNK_SIZE + gl_GlobalInvocationID.y+1) * CHUNK_SIZE + gl_GlobalInvocationID.z  ]>0 ? 32:0)
-                | (values[((gl_GlobalInvocationID.x+1) * CHUNK_SIZE + gl_GlobalInvocationID.y+1) * CHUNK_SIZE + gl_GlobalInvocationID.z+1]>0 ? 64:0)
-                | (values[((gl_GlobalInvocationID.x  ) * CHUNK_SIZE + gl_GlobalInvocationID.y+1) * CHUNK_SIZE + gl_GlobalInvocationID.z+1]>0 ? 128:0);
-    */
     uint val =    (values(gl_GlobalInvocationID.x  , gl_GlobalInvocationID.y  , gl_GlobalInvocationID.z  )>0 ? 1:0)
                 | (values(gl_GlobalInvocationID.x+1, gl_GlobalInvocationID.y  , gl_GlobalInvocationID.z  )>0 ? 2:0)
                 | (values(gl_GlobalInvocationID.x+1, gl_GlobalInvocationID.y  , gl_GlobalInvocationID.z+1)>0 ? 4:0)
@@ -106,9 +103,8 @@ void main() {
                 | (values(gl_GlobalInvocationID.x+1, gl_GlobalInvocationID.y+1, gl_GlobalInvocationID.z+1)>0 ? 64:0)
                 | (values(gl_GlobalInvocationID.x  , gl_GlobalInvocationID.y+1, gl_GlobalInvocationID.z+1)>0 ? 128:0);
     
-    
     uint num = trinum[val];
-    if(num > 0 && !(gl_GlobalInvocationID.x >= CHUNK_SIZE-1 || gl_GlobalInvocationID.y >= CHUNK_SIZE-1 || gl_GlobalInvocationID.z >= CHUNK_SIZE-1)) {
+    if(num > 0 && !(gl_GlobalInvocationID.x >= CHUNK_SIZES.x-1 || gl_GlobalInvocationID.y >= CHUNK_SIZES.y-1 || gl_GlobalInvocationID.z >= CHUNK_SIZES.z-1)) {
     
         uint local_tri_index = subgroupExclusiveAdd(num*3);
         
@@ -131,7 +127,7 @@ void main() {
             //float density1 = values[int(a1.x * CHUNK_SIZE*CHUNK_SIZE + a1.y * CHUNK_SIZE + a1.z)];
             float density1 = values(uint(a1.x), uint(a1.y), uint(a1.z));
             vec3 vertex = edge >= 0 ? 5.*mix(a1, a2, (-density1)/(values(uint(a2.x), uint(a2.y), uint(a2.z)) - density1)) : vec3(0);
-            tril[global_tri_index + local_tri_index+i] = vec4(vertex/10., 1.0);
+            tril[global_tri_index + local_tri_index+i] = vec4(vertex/10. + args.xyz, 1.0);
         }
         
     }

@@ -5,6 +5,12 @@
 
 #include "renderer/vmapp.h"
 
+#include "glm/glm.hpp"
+
+struct MCPushConstants {
+    glm::vec4 args;
+};
+
 class Device;
 class Terrain;
 

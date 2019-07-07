@@ -6,18 +6,20 @@
 #include "device.h"
 #include "swapchain.h"
 #include "camera.h"
-#include "terrain.h"
+#include "marching_cubes/terrain.h"
 #include "marching_cubes/marching_cubes.h"
 #include "main_render/main_render.h"
 
+#include "logic/systems/system.h"
+
 #include "entt/entt.hpp"
 
-class Renderer {
+class Renderer : public System {
 public:
     Renderer();
-    void init(entt::registry& reg);
-    void render(entt::registry& reg);
-    ~Renderer();
+    virtual void init(entt::registry& reg) override;
+    virtual void tick(entt::registry& reg) override;
+    virtual ~Renderer() override;
     
     void resize();
     
@@ -34,6 +36,7 @@ private:
     int semindex = 0;
     std::vector<vk::Semaphore> waitsems;
     std::vector<vk::Semaphore> signalsems;
+    std::vector<vk::Semaphore> computesems;
 };
 
 #endif

@@ -4,15 +4,18 @@
 #include "renderer/device.h"
 #include "renderer/swapchain.h"
 #include "renderer/camera.h"
-#include "renderer/terrain.h"
+#include "renderer/marching_cubes/terrain.h"
 #include "util/util.h"
+#include "renderer/num_frames.h"
+#include "renderer/marching_cubes/chunk.h"
+#include "logic/components/chunkc.h"
 
 MainRender::MainRender(Instance& instance, Device& device, Swapchain& swap, Camera& camera, Terrain& terrain) : renderpass(device, swap), pipeline(device, swap, renderpass), instance(instance), device(device), swap(swap), camera(camera), terrain(terrain),
-commandBuffers(swap.NUM_FRAMES), fences(swap.NUM_FRAMES), ubos(swap.NUM_FRAMES), uboPointers(swap.NUM_FRAMES) {
+commandBuffers(NUM_FRAMES), fences(NUM_FRAMES), ubos(NUM_FRAMES), uboPointers(NUM_FRAMES) {
     
     commandPool = device->createCommandPool(vk::CommandPoolCreateInfo(vk::CommandPoolCreateFlagBits::eResetCommandBuffer, device.g_i));
     
-    commandBuffers = device->allocateCommandBuffers(vk::CommandBufferAllocateInfo(commandPool, vk::CommandBufferLevel::ePrimary, swap.NUM_FRAMES));
+    commandBuffers = device->allocateCommandBuffers(vk::CommandBufferAllocateInfo(commandPool, vk::CommandBufferLevel::ePrimary, NUM_FRAMES));
     
     for(int i = 0; i < fences.size(); i++) {
         
@@ -47,35 +50,6 @@ commandBuffers(swap.NUM_FRAMES), fences(swap.NUM_FRAMES), ubos(swap.NUM_FRAMES),
 
 void MainRender::setup() {
     
-    for(int i = 0; i < commandBuffers.size(); i++) {
-        
-        vk::CommandBuffer command = commandBuffers[i];
-        
-        command.begin(vk::CommandBufferBeginInfo({}, nullptr));
-        
-        auto clearValues = std::vector<vk::ClearValue> {
-            vk::ClearValue(vk::ClearColorValue(std::array<float, 4> { 0.2f, 0.2f, 0.2f, 1.0f })),
-            vk::ClearValue(vk::ClearDepthStencilValue(1.0f, 0))};
-        command.beginRenderPass(vk::RenderPassBeginInfo(renderpass, renderpass.framebuffers[i], vk::Rect2D({}, swap.extent), clearValues.size(), clearValues.data()), vk::SubpassContents::eInline);
-        
-        command.setViewport(0, vk::Viewport(0, 0, swap.extent.width, swap.extent.height, 0, 1));
-        
-        command.setScissor(0, vk::Rect2D(vk::Offset2D(), swap.extent));
-        
-        command.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
-        
-        command.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline, 0, {pipeline.descSets[i]}, {});
-        
-        command.bindVertexBuffers(0, {terrain.getTriangles()}, {0});
-        
-        command.drawIndirect(terrain.getIndirect(), 0, 1, 0);
-        
-        command.endRenderPass();
-        
-        command.end();
-        
-    }
-    
 }
 
 void MainRender::rsetup() {
@@ -85,7 +59,7 @@ void MainRender::rsetup() {
     
 }
 
-void MainRender::render(uint32_t index, vk::Semaphore wait, vk::Semaphore signal) {
+void MainRender::render(entt::registry& reg, uint32_t index, std::vector<vk::Semaphore> waits, std::vector<vk::Semaphore> signals) {
     
     device->waitForFences(fences[index], VK_TRUE, std::numeric_limits<uint64_t>::max());
     
@@ -93,17 +67,42 @@ void MainRender::render(uint32_t index, vk::Semaphore wait, vk::Semaphore signal
     
     uboPointers[index]->viewproj = camera.getViewProjection();
     
+    vk::CommandBuffer command = commandBuffers[index];
+        
+    command.begin(vk::CommandBufferBeginInfo({}, nullptr));
     
-    auto waits = std::vector {wait};
+    auto clearValues = std::vector<vk::ClearValue> {
+        vk::ClearValue(vk::ClearColorValue(std::array<float, 4> { 0.2f, 0.2f, 0.2f, 1.0f })),
+        vk::ClearValue(vk::ClearDepthStencilValue(1.0f, 0))};
+    command.beginRenderPass(vk::RenderPassBeginInfo(renderpass, renderpass.framebuffers[index], vk::Rect2D({}, swap.extent), clearValues.size(), clearValues.data()), vk::SubpassContents::eInline);
     
-    auto stages = std::vector<vk::PipelineStageFlags> {vk::PipelineStageFlagBits::eTopOfPipe};
+    command.setViewport(0, vk::Viewport(0, 0, swap.extent.width, swap.extent.height, 0, 1));
     
-    auto signals = std::vector {signal};
+    command.setScissor(0, vk::Rect2D(vk::Offset2D(), swap.extent));
+    
+    command.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
+    
+    command.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline, 0, {pipeline.descSets[index]}, {});
+    
+    reg.view<ChunkC, Chunk>().each([&](entt::entity entity, ChunkC& chunk, Chunk& chonk) {
+        
+        command.bindVertexBuffers(0, {chonk.triangles}, {chonk.triangles_offset * sizeof(Triangle)});
+        
+        command.drawIndirect(chonk.indirect, chonk.indirect_offset * sizeof(vk::DrawIndirectCommand), 1, 0);
+        
+    });
+    
+    command.endRenderPass();
+    
+    command.end();
+    
+    
+    auto stages = std::vector<vk::PipelineStageFlags> {vk::PipelineStageFlagBits::eTopOfPipe, vk::PipelineStageFlagBits::eTopOfPipe};
     
     device.graphics.submit({vk::SubmitInfo(
         Util::removeElement<vk::Semaphore>(waits, nullptr), waits.data(), stages.data(),
         1, &commandBuffers[index],
-        Util::removeElement<vk::Semaphore>(signals, nullptr), &signal
+        Util::removeElement<vk::Semaphore>(signals, nullptr), signals.data()
     )}, fences[index]);
     
 }

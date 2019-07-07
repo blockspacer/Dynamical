@@ -8,6 +8,8 @@
 
 #include "glm/glm.hpp"
 
+#include "entt/entt.hpp"
+
 class Instance;
 class Device;
 class Swapchain;
@@ -27,7 +29,7 @@ public:
     MainRender(Instance& instance, Device& device, Swapchain& swap, Camera& camera, Terrain& terrain);
     void setup();
     void rsetup();
-    void render(uint32_t index, vk::Semaphore wait, vk::Semaphore signal);
+    void render(entt::registry& reg, uint32_t index, std::vector<vk::Semaphore> waits, std::vector<vk::Semaphore> signals);
     void cleanup();
     void rcleanup();
     void reset();
