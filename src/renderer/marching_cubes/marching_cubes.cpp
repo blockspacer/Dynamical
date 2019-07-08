@@ -38,14 +38,16 @@ void MarchingCubes::compute(entt::registry& reg, uint32_t index, std::vector<vk:
     
     commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eCompute, pipeline, 0, {pipeline}, {});
     
-    reg.view<ChunkC, Chunk>().each([&](entt::entity entity, ChunkC& chunk, Chunk& chonk) {
+    reg.view<ChunkC, Chunk, entt::tag<"modified"_hs>>().each([&](entt::entity entity, ChunkC& chunk, Chunk& chonk, auto) {
         commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eCompute, pipeline, 1, {chonk.set}, {});
-        MCPushConstants pc {chunk.pos, t, chunk.size};
+        MCPushConstants pc {chunk.pos, t, chunk.cubeSize};
         commandBuffer.pushConstants(pipeline, vk::ShaderStageFlagBits::eCompute, 0, sizeof(MCPushConstants), &pc);
         
-        commandBuffer.dispatch(10, 8, 10);
-    });
+        commandBuffer.dispatch(chunk.gridSize.x/8, chunk.gridSize.y/4, chunk.gridSize.z/8);
         
+        reg.remove<entt::tag<"modified"_hs>>(entity);
+    });
+    
     commandBuffer.end();
     
     

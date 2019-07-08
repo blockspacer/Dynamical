@@ -7,7 +7,8 @@ class ChunkC {
 public:
     
     glm::vec3 pos;
-    float size;
+    float cubeSize;
+    glm::vec3 gridSize;
     
 };
 

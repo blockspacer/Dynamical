@@ -17,12 +17,13 @@ void Game::init() {
     
     systems.init(reg);
     
-    for(int x = 0; x<4; x++) {
-        for(int z = 0; z<4; z++) {
+    for(int x = -3; x<4; x++) {
+        for(int z = -3; z<4; z++) {
             auto entity = reg.create();
-            ChunkC& chonk = reg.assign<ChunkC>(entity);
-            chonk.pos = 79.f * glm::vec3(x, 0, z);
-            chonk.size = 0.2;
+            ChunkC& chunk = reg.assign<ChunkC>(entity);
+            chunk.pos = 40.f * glm::vec3(x, 0, z);
+            chunk.cubeSize = 2.f;
+            chunk.gridSize = glm::vec3(40, 32, 40);
         }
     }
     

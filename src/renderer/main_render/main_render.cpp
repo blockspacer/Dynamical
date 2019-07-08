@@ -84,7 +84,7 @@ void MainRender::render(entt::registry& reg, uint32_t index, std::vector<vk::Sem
     
     command.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline, 0, {pipeline.descSets[index]}, {});
     
-    reg.view<ChunkC, Chunk>().each([&](entt::entity entity, ChunkC& chunk, Chunk& chonk) {
+    reg.view<Chunk>().each([&](entt::entity entity, Chunk& chonk) {
         
         command.bindVertexBuffers(0, {chonk.triangles}, {chonk.triangles_offset * sizeof(Triangle)});
         

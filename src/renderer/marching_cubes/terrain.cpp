@@ -84,6 +84,8 @@ void Terrain::construction(entt::registry& reg, entt::entity entity, ChunkC& chu
         vk::WriteDescriptorSet(chonk.set, 1, 0, 1, vk::DescriptorType::eStorageBuffer, nullptr, &indInfo, nullptr),
     }, {});
     
+    reg.assign<entt::tag<"modified"_hs>>(entity);
+    
 }
 
 void Terrain::destruction(entt::registry& reg, entt::entity entity) {

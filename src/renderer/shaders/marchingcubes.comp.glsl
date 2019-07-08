@@ -46,7 +46,7 @@ const vec3 offsets[24] = {
 
 const uint trinum[256] = {0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 2, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 3, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 3, 2, 3, 3, 2, 3, 4, 4, 3, 3, 4, 4, 3, 4, 5, 5, 2, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 3, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 4, 2, 3, 3, 4, 3, 4, 2, 3, 3, 4, 4, 5, 4, 5, 3, 2, 3, 4, 4, 3, 4, 5, 3, 2, 4, 5, 5, 4, 5, 2, 4, 1, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 3, 2, 3, 3, 4, 3, 4, 4, 5, 3, 2, 4, 3, 4, 3, 5, 2, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 4, 3, 4, 4, 3, 4, 5, 5, 4, 4, 3, 5, 2, 5, 4, 2, 1, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 2, 3, 3, 2, 3, 4, 4, 5, 4, 5, 5, 2, 4, 3, 5, 4, 3, 2, 4, 1, 3, 4, 4, 5, 4, 5, 3, 4, 4, 5, 5, 2, 3, 4, 2, 1, 2, 3, 3, 2, 3, 4, 2, 1, 3, 2, 4, 1, 2, 1, 1, 0};
 
-const ivec3 CHUNK_SIZES = ivec3(8*10, 4*10, 8*10);
+const ivec3 CHUNK_SIZES = ivec3(8*10, 4*8, 8*10);
 
 layout(set = 0, binding = 0) uniform isamplerBuffer triTable;
 
@@ -79,7 +79,7 @@ float sdf1(vec3 p) {
 }
 
 float sdf2(vec3 p) {
-    return 10. - p.y - 2*sin((p.x+p.z)/20.) - 3*cos((float(p.x)-p.z)/20.);
+    return 10. - p.y - 3*sin((p.x+p.z)/20.) - 5*cos((float(p.x)-p.z)/20.);
 }
 
 float sdf(vec3 p) {
@@ -87,7 +87,7 @@ float sdf(vec3 p) {
 }
 
 float values(vec3 p) {
-    return sdf(p + pos);
+    return sdf((p+pos)*size);
 }
 
 float values(float x, float y, float z) {
@@ -136,8 +136,8 @@ void main() {
             vec3 a1 = gl_GlobalInvocationID.xyz + offsets[edge], a2 = gl_GlobalInvocationID.xyz + offsets[edge+1];
             //float density1 = values[int(a1.x * CHUNK_SIZE*CHUNK_SIZE + a1.y * CHUNK_SIZE + a1.z)];
             float density1 = values(a1);
-            vec3 vertex = edge >= 0 ? 5.*mix(a1, a2, (-density1)/(values(a2) - density1)) : vec3(0);
-            tril[global_tri_index + local_tri_index+i] = vec4(vertex*size + pos, 1.0);
+            vec3 vertex = edge >= 0 ? mix(a1, a2, (-density1)/(values(a2) - density1)) : vec3(0);
+            tril[global_tri_index + local_tri_index+i] = vec4((vertex+pos)*size, 1.0);
         }
         
     }
