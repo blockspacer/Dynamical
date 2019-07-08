@@ -25,7 +25,6 @@ Terrain::Terrain(Device& device) : device(device) {
     };
     descLayout = device->createDescriptorSetLayout(vk::DescriptorSetLayoutCreateInfo({}, bindings.size(), bindings.data()));
     
-    
     triangles.reserve(MAX_CHUNKS);
     indirects.reserve(NUM_INDIRECT);
     
@@ -33,16 +32,31 @@ Terrain::Terrain(Device& device) : device(device) {
     
 }
 
-void Terrain::init(entt::registry& reg) {
+void Terrain::preinit(entt::registry& reg) {
     
     reg.on_construct<ChunkC>().connect<&Terrain::construction>(this);
-    reg.on_destroy<ChunkC>().connect<&Terrain::destruction>(this);
+    reg.on_destroy<Chunk>().connect<&Terrain::destruction>(this);
+    
+}
+
+void Terrain::init(entt::registry& reg) {
     
 }
 
 void Terrain::construction(entt::registry& reg, entt::entity entity, ChunkC& chunk) {
     
-    Chunk& chonk = reg.assign<Chunk>(entity);
+    reg.assign<Chunk>(entity);
+    reg.assign<entt::tag<"modified"_hs>>(entity);
+    
+}
+
+void Terrain::destruction(entt::registry& reg, entt::entity entity) {
+    
+    deallocate(reg.get<Chunk>(entity));
+    
+}
+
+void Terrain::allocate(Chunk& chonk) {
     
     if(!indirectSlots.empty()) {
         const auto& slot = indirectSlots.top();
@@ -56,6 +70,7 @@ void Terrain::construction(entt::registry& reg, entt::entity entity, ChunkC& chu
             chonk.indirect_offset = alloc.num;
             alloc.num++;
         } else {
+            std::cout << "indirect num" << indirects.size() << std::endl;
             indirects.push_back(IndirectAllocation(make_indirect(NUM_INDIRECT), NUM_INDIRECT));
             auto& new_alloc = indirects.back();
             chonk.indirect = new_alloc.buffer;
@@ -69,6 +84,7 @@ void Terrain::construction(entt::registry& reg, entt::entity entity, ChunkC& chu
         chonk.triangles = triangles[slot];
         triangleSlots.pop();
     } else {
+        std::cout << "triangles num" << triangles.size() << std::endl;
         triangles.push_back(make_triangles(NUM_TRIANGLES));
         chonk.triangles = triangles.back();
     }
@@ -84,21 +100,40 @@ void Terrain::construction(entt::registry& reg, entt::entity entity, ChunkC& chu
         vk::WriteDescriptorSet(chonk.set, 1, 0, 1, vk::DescriptorType::eStorageBuffer, nullptr, &indInfo, nullptr),
     }, {});
     
-    reg.assign<entt::tag<"modified"_hs>>(entity);
-    
 }
 
-void Terrain::destruction(entt::registry& reg, entt::entity entity) {
+void Terrain::deallocate(Chunk& chonk) {
     
-    auto& chonk = reg.get<Chunk>(entity);
     device->freeDescriptorSets(descPool, chonk.set);
     
-    reg.remove<Chunk>(entity);
+    for(uint32_t i = 0; i < indirects.size(); i++) {
+        if(chonk.indirect == indirects[i].buffer) {
+            indirectSlots.push(IndirectSlot{i, chonk.indirect_offset});
+            break;
+        }
+    }
+    
+    for(uint32_t i = 0; i < triangles.size(); i++) {
+        if(chonk.triangles == triangles[i].buffer) {
+            triangleSlots.push(i);
+            break;
+        }
+    }
     
 }
 
 
-void Terrain::update(entt::registry& reg) {
+void Terrain::tick(entt::registry& reg) {
+    
+    reg.view<ChunkC, Chunk, entt::tag<"modified"_hs>>().each([&](entt::entity entity, ChunkC& chunk, Chunk& chonk, auto) {
+        
+        if(chonk.set) {
+            deallocate(chonk);
+        }
+        
+        allocate(chonk);
+        
+    });
     
 }
 

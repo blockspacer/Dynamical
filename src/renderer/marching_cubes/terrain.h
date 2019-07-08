@@ -2,10 +2,13 @@
 #define TERRAIN_H
 
 #include "renderer/vmapp.h"
-
 #include "glm/glm.hpp"
-
 #include "entt/entt.hpp"
+
+#include "chunk.h"
+#include "logic/components/chunkc.h"
+
+#include "logic/systems/system.h"
 
 #include <stack>
 
@@ -14,17 +17,19 @@ struct Triangle {
 };
 
 class Device;
-class ChunkC;
 
-class Terrain {
+class Terrain : System {
 public:
     Terrain(Device& device);
+    void preinit(entt::registry& reg);
     void init(entt::registry& reg);
-    void update(entt::registry& reg);
+    void tick(entt::registry& reg);
     ~Terrain();
     
     void construction(entt::registry& reg, entt::entity entity, ChunkC& chunk);
     void destruction(entt::registry& reg, entt::entity entity);
+    void allocate(Chunk& chonk);
+    void deallocate(Chunk& chonk);
     
     vk::DescriptorSetLayout getDescLayout() {
         return descLayout;

@@ -75,7 +75,7 @@ float sq(float x) {
 const float k = 100.;
 
 float sdf1(vec3 p) {
-    return sq(18) - (sq(p.x-CHUNK_SIZES.x/2.)+sq(p.y-CHUNK_SIZES.y/2.)+sq(p.z-CHUNK_SIZES.z/2.)) - 30*sin(p.x+p.y+p.z+time/5.) - 20*cos(p.y+2*p.x-p.z+time/5.);
+    return sq(15) - (sq(p.x-CHUNK_SIZES.x/2.)+sq(p.y-CHUNK_SIZES.y/2.)+sq(p.z-CHUNK_SIZES.z/2.));// - 30*sin(p.x+p.y+p.z+time/5.) - 20*cos(p.y+2*p.x-p.z+time/5.);
 }
 
 float sdf2(vec3 p) {

@@ -5,9 +5,10 @@
 
 Systems::Systems() : systems() {
     
-    systems.reserve(3);
+    systems.reserve(4);
     systems.push_back(std::make_unique<InputSys>());
     systems.push_back(std::make_unique<CameraSys>());
+    systems.push_back(std::make_unique<ChunkSys>());
     systems.push_back(std::make_unique<Renderer>());
     
 }

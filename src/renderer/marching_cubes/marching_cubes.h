@@ -8,6 +8,8 @@
 
 #include "entt/entt.hpp"
 
+typedef uint32_t computing;
+
 class Device;
 class Terrain;
 

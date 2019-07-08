@@ -17,9 +17,10 @@
 class Renderer : public System {
 public:
     Renderer();
-    virtual void init(entt::registry& reg) override;
-    virtual void tick(entt::registry& reg) override;
-    virtual ~Renderer() override;
+    void preinit(entt::registry& reg) override;
+    void init(entt::registry& reg) override;
+    void tick(entt::registry& reg) override;
+    ~Renderer() override;
     
     void resize();
     

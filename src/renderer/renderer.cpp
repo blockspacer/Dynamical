@@ -16,6 +16,10 @@ waitsems(NUM_FRAMES), signalsems(NUM_FRAMES), computesems(NUM_FRAMES) {
     
 }
 
+void Renderer::preinit(entt::registry& reg) {
+    terrain.preinit(reg);
+}
+
 void Renderer::init(entt::registry& reg) {
     
     reg.set<SDL_Window*>(win);
@@ -26,7 +30,7 @@ void Renderer::init(entt::registry& reg) {
 
 void Renderer::tick(entt::registry& reg) {
     
-    terrain.update(reg);
+    terrain.tick(reg);
     
     InputC& input = reg.ctx<InputC>();
     if(input.on[Action::RESIZE]) {
@@ -36,13 +40,13 @@ void Renderer::tick(entt::registry& reg) {
     
     try {
         
-        marching_cubes.compute(reg, semindex, {}, {computesems[semindex]});
+        marching_cubes.compute(reg, semindex, {}, {});
         
         camera.update(reg);
         
         uint32_t index = swap.acquire(waitsems[semindex]);
         
-        main_render.render(reg, index, {waitsems[semindex], computesems[semindex]}, {signalsems[semindex]});
+        main_render.render(reg, index, {waitsems[semindex]}, {signalsems[semindex]});
         
         swap.present(signalsems[semindex]);
         

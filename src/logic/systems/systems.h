@@ -13,6 +13,14 @@ class Systems {
 public:
     Systems();
     
+    void preinit(entt::registry& reg) {
+        
+        for(std::unique_ptr<System>& sys : systems) {
+            sys->preinit(reg);
+        }
+        
+    }
+    
     void init(entt::registry& reg) {
         
         for(std::unique_ptr<System>& sys : systems) {

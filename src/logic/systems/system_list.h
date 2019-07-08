@@ -7,14 +7,20 @@
 
 class InputSys : public System {
 public:
-    virtual void init(entt::registry& reg) override;
-    virtual void tick(entt::registry& reg) override;
+    void init(entt::registry& reg) override;
+    void tick(entt::registry& reg) override;
 };
 
 class CameraSys : public System {
 public:
-    virtual void init(entt::registry& reg) override;
-    virtual void tick(entt::registry& reg) override;
+    void init(entt::registry& reg) override;
+    void tick(entt::registry& reg) override;
+};
+
+class ChunkSys : public System {
+public:
+    void init(entt::registry& reg) override;
+    void tick(entt::registry& reg) override;
 };
 
 #endif

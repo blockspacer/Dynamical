@@ -5,11 +5,11 @@
 
 class Chunk {
 public:
-    vk::Buffer triangles;
-    uint32_t triangles_offset; // in array index count
-    vk::Buffer indirect;
-    uint32_t indirect_offset; // in array index count
-    vk::DescriptorSet set;
+    vk::Buffer triangles = nullptr;
+    uint32_t triangles_offset = 0; // in array index count
+    vk::Buffer indirect = nullptr;
+    uint32_t indirect_offset = 0; // in array index count
+    vk::DescriptorSet set = nullptr;
 };
 
 #endif
