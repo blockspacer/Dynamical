@@ -70,7 +70,6 @@ void Terrain::allocate(Chunk& chonk) {
             chonk.indirect_offset = alloc.num;
             alloc.num++;
         } else {
-            std::cout << "indirect num" << indirects.size() << std::endl;
             indirects.push_back(IndirectAllocation(make_indirect(NUM_INDIRECT), NUM_INDIRECT));
             auto& new_alloc = indirects.back();
             chonk.indirect = new_alloc.buffer;
@@ -84,7 +83,6 @@ void Terrain::allocate(Chunk& chonk) {
         chonk.triangles = triangles[slot];
         triangleSlots.pop();
     } else {
-        std::cout << "triangles num" << triangles.size() << std::endl;
         triangles.push_back(make_triangles(NUM_TRIANGLES));
         chonk.triangles = triangles.back();
     }
