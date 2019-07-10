@@ -22,17 +22,17 @@ void CameraSys::tick(entt::registry& reg) {
     const float speed = 1.f;
     
     if(input.on[Action::FORWARD]) {
-        camera.pos.x += speed * std::sin(camera.yAxis);//*dt;
-        camera.pos.z += speed * std::cos(camera.yAxis);//*dt;
-    } if(input.on[Action::BACKWARD]) {
         camera.pos.x -= speed * std::sin(camera.yAxis);//*dt;
         camera.pos.z -= speed * std::cos(camera.yAxis);//*dt;
+    } if(input.on[Action::BACKWARD]) {
+        camera.pos.x += speed * std::sin(camera.yAxis);//*dt;
+        camera.pos.z += speed * std::cos(camera.yAxis);//*dt;
     } if(input.on[Action::LEFT]) {
-        camera.pos.x += speed * std::sin(M_PI/2.0f + camera.yAxis);//*dt;
-        camera.pos.z += speed * std::cos(M_PI/2.0 + camera.yAxis);//*dt;
-    } if(input.on[Action::RIGHT]) {
-        camera.pos.x -= speed * std::sin(M_PI/2.0 + camera.yAxis);//*dt;
+        camera.pos.x -= speed * std::sin(M_PI/2.0f + camera.yAxis);//*dt;
         camera.pos.z -= speed * std::cos(M_PI/2.0 + camera.yAxis);//*dt;
+    } if(input.on[Action::RIGHT]) {
+        camera.pos.x += speed * std::sin(M_PI/2.0 + camera.yAxis);//*dt;
+        camera.pos.z += speed * std::cos(M_PI/2.0 + camera.yAxis);//*dt;
     } if(input.on[Action::UP]) {
         camera.pos.y += speed;
     } if(input.on[Action::DOWN]) {
@@ -40,6 +40,6 @@ void CameraSys::tick(entt::registry& reg) {
     }
     
     camera.yAxis -= (input.mouseDiff.x) * (M_PI*0.1/180.);
-    camera.xAxis = std::max(std::min(camera.xAxis + (input.mouseDiff.y) * (M_PI*0.1/180.), M_PI/2.), -M_PI/2.);
+    camera.xAxis = std::max(std::min(camera.xAxis - (input.mouseDiff.y) * (M_PI*0.1/180.), M_PI/2.), -M_PI/2.);
     
 }

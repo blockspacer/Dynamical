@@ -17,12 +17,16 @@ waitsems(NUM_FRAMES), signalsems(NUM_FRAMES), computesems(NUM_FRAMES) {
 }
 
 void Renderer::preinit(entt::registry& reg) {
+    
+    reg.set<SDL_Window*>(win);
+    
     terrain.preinit(reg);
+    
 }
 
 void Renderer::init(entt::registry& reg) {
     
-    reg.set<SDL_Window*>(win);
+    
     
     terrain.init(reg);
     

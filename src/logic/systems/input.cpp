@@ -17,9 +17,19 @@ std::unordered_map<SDL_Scancode, Action> actionMap = {
     {SDL_SCANCODE_LSHIFT, Action::DOWN}
 };
 
-void InputSys::init(entt::registry& reg) {
+void InputSys::preinit(entt::registry& reg) {
     
     reg.set<InputC>();
+    
+}
+
+void InputSys::init(entt::registry& reg) {
+    
+    SDL_Window* win = reg.ctx<SDL_Window*>();
+    
+    int w, h;
+    SDL_GetWindowSize(win, &w, &h);
+    SDL_WarpMouseInWindow(win, w / 2, h / 2);
     
 }
 

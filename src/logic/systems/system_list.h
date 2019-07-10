@@ -7,6 +7,7 @@
 
 class InputSys : public System {
 public:
+    void preinit(entt::registry& reg) override;
     void init(entt::registry& reg) override;
     void tick(entt::registry& reg) override;
 };

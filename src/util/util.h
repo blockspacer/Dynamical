@@ -57,6 +57,17 @@ namespace Util {
         return index;
     }
     
+    template<typename T>
+    T sq(T v) {
+        return v*v;
+    }
+    
+    template<typename T>
+    constexpr T c_sq(T v) {
+        return v*v;
+    }
+    
+    
 };
 
 #endif

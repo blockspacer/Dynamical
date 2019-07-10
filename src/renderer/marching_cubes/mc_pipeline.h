@@ -10,7 +10,7 @@
 struct MCPushConstants {
     glm::vec3 pos;
     float time;
-    float size;
+    glm::vec4 sizes;
 };
 
 class Device;

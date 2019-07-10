@@ -23,6 +23,7 @@ private:
     vk::CommandPool commandPool;
     std::vector<vk::CommandBuffer> commandBuffers;
     std::vector<vk::Fence> fences;
+    std::vector<bool> fence_states;
     
     Device& device;
     Terrain& terrain;

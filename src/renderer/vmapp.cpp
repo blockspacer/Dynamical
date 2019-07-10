@@ -13,7 +13,13 @@ VmaBuffer::VmaBuffer(Device& device, VmaAllocationCreateInfo* allocInfo, const v
     VkResult result = vmaCreateBuffer(device, reinterpret_cast<const VkBufferCreateInfo*> (&bufferInfo), allocInfo, reinterpret_cast<VkBuffer*> (&buffer), &allocation, &info);
     
     if(result != VK_SUCCESS) {
-        std::cout << "Vma failed with result : " << result << std::endl;
+        if(result == VK_ERROR_OUT_OF_DEVICE_MEMORY) {
+            std::cout << "Allocation failed : Out of device memory" << std::endl;
+        } else if(result == VK_ERROR_OUT_OF_HOST_MEMORY) {
+            std::cout << "Allocation failed : Out of host memory" << std::endl;
+        } else {
+            std::cout << "Vma failed with result : " << result << std::endl;
+        }
     }
     
     size = info.size;
@@ -40,7 +46,13 @@ VmaImage::VmaImage(Device& device, VmaAllocationCreateInfo* allocInfo, const vk:
     VkResult result = vmaCreateImage(device, reinterpret_cast<const VkImageCreateInfo*> (&imageInfo), allocInfo, reinterpret_cast<VkImage*> (&image), &allocation, &info);
     
     if(result != VK_SUCCESS) {
-        std::cout << "Vma failed with result : " << result << std::endl;
+        if(result == VK_ERROR_OUT_OF_DEVICE_MEMORY) {
+            std::cout << "Allocation failed : Out of device memory" << std::endl;
+        } else if(result == VK_ERROR_OUT_OF_HOST_MEMORY) {
+            std::cout << "Allocation failed : Out of host memory" << std::endl;
+        } else {
+            std::cout << "Vma failed with result : " << result << std::endl;
+        }
     }
     
     size = info.size;

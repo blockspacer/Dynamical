@@ -8,9 +8,9 @@
 
 #include <iostream>
 
-constexpr uint32_t NUM_TRIANGLES = 80000;
+constexpr uint32_t NUM_TRIANGLES = 30000/3;
 constexpr uint32_t NUM_INDIRECT = 10;
-constexpr uint32_t MAX_CHUNKS = 100;
+constexpr uint32_t MAX_CHUNKS = 5000;
 
 Terrain::Terrain(Device& device) : device(device) {
     
@@ -83,6 +83,7 @@ void Terrain::allocate(Chunk& chonk) {
         chonk.triangles = triangles[slot];
         triangleSlots.pop();
     } else {
+        std::cout << (triangles.size() * NUM_TRIANGLES * sizeof(Triangle)) / 1000000. << std::endl;
         triangles.push_back(make_triangles(NUM_TRIANGLES));
         chonk.triangles = triangles.back();
     }

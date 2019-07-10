@@ -4,6 +4,10 @@
 #include "entt/entt.hpp"
 #include "glm/glm.hpp"
 
+constexpr float render_distance = 1500.f;
+constexpr float render_min = 0.1f;
+constexpr float render_fov = 70.f;
+
 class Camera {
 public:
     Camera(int width, int height);
