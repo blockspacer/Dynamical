@@ -3,8 +3,6 @@
 
 #include <functional>
 
-#include <bits/stdint-uintn.h>
-
 template <typename T, T nullv>
 class QuadTree {
     
