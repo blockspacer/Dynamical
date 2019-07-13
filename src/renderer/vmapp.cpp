@@ -28,10 +28,31 @@ VmaBuffer::VmaBuffer(Device& device, VmaAllocationCreateInfo* allocInfo, const v
     
 }
 
+VmaBuffer::VmaBuffer(Device& device, const vk::BufferCreateInfo& bufferInfo) {
+    
+    buffer = device->createBuffer(bufferInfo);
+    vk::MemoryRequirements memreq = device->getBufferMemoryRequirements(buffer);
+    memory = device->allocateMemory(vk::MemoryAllocateInfo(memreq.size, device.getMemoryType(memreq.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal)));
+    device->bindBufferMemory(buffer, memory, 0);
+    
+    size = bufferInfo.size;
+    offset = 0;
+    
+}
+
 VmaBuffer::~VmaBuffer() {
+    
     if(device != nullptr) {
-        vmaDestroyBuffer(*device, static_cast<VkBuffer>(buffer), allocation);
+        
+        if(allocation != nullptr) {
+            vmaDestroyBuffer(*device, static_cast<VkBuffer>(buffer), allocation);
+        } else {
+            (*device)->destroy(buffer);
+            (*device)->free(memory);
+        }
+        
     }
+    
 }
 
 
@@ -64,7 +85,9 @@ VmaImage::VmaImage(Device& device, VmaAllocationCreateInfo* allocInfo, const vk:
 VmaImage::~VmaImage() {
     
     if(device != nullptr) {
+        
         vmaDestroyImage(*device, static_cast<VkImage>(image), allocation);
+        
     }
     
 }

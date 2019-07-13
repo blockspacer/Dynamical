@@ -14,6 +14,7 @@ public:
     VmaBuffer();
     
     VmaBuffer(Device& device, VmaAllocationCreateInfo* allocInfo, const vk::BufferCreateInfo& bufferInfo);
+    VmaBuffer(Device& device, const vk::BufferCreateInfo& bufferInfo);
     VmaBuffer(VmaBuffer&& buffer) {
         this->device = buffer.device;
         this->allocation = buffer.allocation;
@@ -102,7 +103,11 @@ namespace dy {
     
     inline VmaImage make_image(Device& device, VmaAllocationCreateInfo* allocInfo, const vk::ImageCreateInfo& imageInfo) {
         return VmaImage(device, allocInfo, imageInfo);
-    };
+    }
+    
+    inline VmaBuffer make_buffer_not_vma(Device& device, VmaAllocationCreateInfo*, const vk::BufferCreateInfo& bufferInfo) {
+        return VmaBuffer(device, bufferInfo);
+    }
     
 };
 

@@ -134,7 +134,7 @@ uint32_t Swapchain::acquire(vk::Semaphore signal) {
 void Swapchain::present(vk::Semaphore wait) {
     
     // This will display the image
-    auto result = device.graphics.presentKHR(vk::PresentInfoKHR(1, &wait, 1, &swapchain, &current), *this);
+    auto result = device.graphics.presentKHR(vk::PresentInfoKHR((wait ? 1 : 0), &wait, 1, &swapchain, &current), *this);
     
     if(result == vk::Result::eSuboptimalKHR) {
         throw vk::OutOfDateKHRError("Suboptimal swapchain");

@@ -83,7 +83,7 @@ void Terrain::allocate(Chunk& chonk) {
         chonk.triangles = triangles[slot];
         triangleSlots.pop();
     } else {
-        std::cout << (triangles.size() * NUM_TRIANGLES * sizeof(Triangle)) / 1000000. << std::endl;
+        //std::cout << (triangles.size() * NUM_TRIANGLES * sizeof(Triangle)) / 1000000. << std::endl;
         triangles.push_back(make_triangles(NUM_TRIANGLES));
         chonk.triangles = triangles.back();
     }
@@ -92,7 +92,7 @@ void Terrain::allocate(Chunk& chonk) {
     chonk.set = device->allocateDescriptorSets(vk::DescriptorSetAllocateInfo(descPool, 1, &descLayout))[0];
     
     auto triInfo = vk::DescriptorBufferInfo(chonk.triangles, 0, NUM_TRIANGLES * sizeof(Triangle));
-    auto indInfo = vk::DescriptorBufferInfo(chonk.indirect, chonk.indirect_offset * sizeof(vk::DrawIndirectCommand), (NUM_INDIRECT - chonk.indirect_offset) * sizeof(vk::DrawIndirectCommand));
+    auto indInfo = vk::DescriptorBufferInfo(chonk.indirect, chonk.indirect_offset * sizeof(vk::DrawIndirectCommand), sizeof(vk::DrawIndirectCommand));
     
     device->updateDescriptorSets({
         vk::WriteDescriptorSet(chonk.set, 0, 0, 1, vk::DescriptorType::eStorageBuffer, nullptr, &triInfo, nullptr),
@@ -167,7 +167,7 @@ VmaBuffer Terrain::make_indirect(uint32_t numIndirect) {
     uint32_t qfs[2] = {device.g_i, device.c_i};
     
     return dy::make_buffer(device, &info, vk::BufferCreateInfo(
-        {}, numIndirect * sizeof(VkDrawIndirectCommand), 
+        {}, numIndirect * sizeof(vk::DrawIndirectCommand), 
         vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eIndirectBuffer,
         concurrent ? vk::SharingMode::eConcurrent : vk::SharingMode::eExclusive, concurrent ? 2 : 1, &qfs[0]));
     
