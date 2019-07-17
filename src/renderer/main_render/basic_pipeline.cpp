@@ -80,9 +80,9 @@ BasicPipeline::BasicPipeline(Device& device, Swapchain& swap, Renderpass& render
 
     VkViewport viewport = {};
     viewport.x = 0.0f;
-    viewport.y = 0.0f;
+    viewport.y = swap.extent.height;
     viewport.width = (float) swap.extent.width;
-    viewport.height = (float) swap.extent.height;
+    viewport.height = - ((float)swap.extent.height);
     viewport.minDepth = 0.0f;
     viewport.maxDepth = 1.0f;
 

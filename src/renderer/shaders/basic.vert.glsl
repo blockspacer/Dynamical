@@ -18,6 +18,5 @@ void main() {
 
     gl_Position = vp * vec4(a_pos);
     v_position = a_pos.xyz;
-    gl_Position.y = -gl_Position.y;
     
 }

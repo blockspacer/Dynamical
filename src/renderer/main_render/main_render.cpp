@@ -76,7 +76,7 @@ void MainRender::render(entt::registry& reg, uint32_t index, std::vector<vk::Sem
         vk::ClearValue(vk::ClearDepthStencilValue(1.0f, 0))};
     command.beginRenderPass(vk::RenderPassBeginInfo(renderpass, renderpass.framebuffers[index], vk::Rect2D({}, swap.extent), clearValues.size(), clearValues.data()), vk::SubpassContents::eInline);
     
-    command.setViewport(0, vk::Viewport(0, 0, swap.extent.width, swap.extent.height, 0, 1));
+    command.setViewport(0, vk::Viewport(0, (float) swap.extent.height, swap.extent.width, -((float) swap.extent.height), 0, 1));
     
     command.setScissor(0, vk::Rect2D(vk::Offset2D(), swap.extent));
     
