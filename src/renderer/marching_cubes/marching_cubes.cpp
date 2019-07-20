@@ -72,9 +72,10 @@ void MarchingCubes::compute(entt::registry& reg, uint32_t index, std::vector<vk:
         
         commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eCompute, pipeline, 0, {pipeline}, {});
         
-        int i = 0;
-        
-        reg.view<ChunkC, Chunk, entt::tag<"modified"_hs>>().each([&](entt::entity entity, ChunkC& chunk, Chunk& chonk, auto) {
+		auto view = reg.view<ChunkC, Chunk, entt::tag<"modified"_hs>>();
+		for(auto entity : view) {
+			auto& chunk = view.get<ChunkC>(entity);
+			auto& chonk = view.get<Chunk>(entity);
             
             commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eCompute, pipeline, 1, {chonk.set}, {});
             
@@ -88,8 +89,8 @@ void MarchingCubes::compute(entt::registry& reg, uint32_t index, std::vector<vk:
             
             reg.remove<entt::tag<"modified"_hs>>(entity);
             reg.assign<computing>(entity, index);
-            
-        });
+
+        }
         
         commandBuffer.end();
         

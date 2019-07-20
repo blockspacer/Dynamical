@@ -33,8 +33,8 @@ Swapchain::Swapchain(Windu& win, Instance& instance, Device &device) : win(win),
     format = surfaceformat.format;
     colorSpace = surfaceformat.colorSpace;
     
-    if(NUM_FRAMES < capabilities.minImageCount || NUM_FRAMES > capabilities.maxImageCount) {
-        std::cout << "number of frames incorrect" << std::endl;
+    if(NUM_FRAMES < capabilities.minImageCount || (capabilities.maxImageCount != 0 && NUM_FRAMES > capabilities.maxImageCount)) {
+        std::cout << "number of frames incorrect " << std::endl;
     }
     
     setup();
