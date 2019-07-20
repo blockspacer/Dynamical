@@ -3,6 +3,8 @@
 
 #include <vulkan/vulkan.hpp>
 
+#include "num_frames.h"
+
 class Windu;
 class Instance;
 class Device;
@@ -22,8 +24,8 @@ public :
     Device& device;
     
     vk::SwapchainKHR swapchain;
-    std::vector<vk::Image> images;
-    std::vector<vk::ImageView> imageViews;
+    std::array<vk::Image, NUM_FRAMES> images;
+    std::array<vk::ImageView, NUM_FRAMES> imageViews;
     vk::Format format;
     vk::Extent2D extent;
     vk::ColorSpaceKHR colorSpace;

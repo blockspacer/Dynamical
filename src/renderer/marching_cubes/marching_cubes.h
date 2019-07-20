@@ -4,6 +4,8 @@
 #include "vulkan/vulkan.hpp"
 #include "vma/vk_mem_alloc.h"
 
+#include "renderer/num_frames.h"
+
 #include "mc_pipeline.h"
 
 #include "entt/entt.hpp"
@@ -21,9 +23,17 @@ public:
     
 private:
     vk::CommandPool commandPool;
-    std::vector<vk::CommandBuffer> commandBuffers;
-    std::vector<vk::Fence> fences;
-    std::vector<bool> fence_states;
+    
+    vk::QueryPool queryPool;
+    
+    struct PerFrame {
+        vk::CommandBuffer commandBuffer;
+        vk::Fence fence;
+        bool fence_state;
+    };
+    
+    std::array<PerFrame, NUM_FRAMES> per_frame;
+    
     
     Device& device;
     Terrain& terrain;

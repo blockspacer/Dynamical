@@ -13,12 +13,12 @@ void GameLoop::run() {
     
     using clock = std::chrono::high_resolution_clock;
 
-	std::chrono::nanoseconds total_frame_time = timestep;
+    std::chrono::nanoseconds total_frame_time = timestep;
 
-	std::chrono::nanoseconds sleepy_time = timestep;
+    std::chrono::nanoseconds sleepy_time = timestep;
 
-	int num = 0;
-	std::chrono::nanoseconds sum = 0ns;
+    int num = 0;
+    std::chrono::nanoseconds sum = 0ns;
     
     while(running) {
         
@@ -28,18 +28,18 @@ void GameLoop::run() {
         
         auto update_duration = std::chrono::duration_cast<std::chrono::nanoseconds> (clock::now() - start);
 
-		sleepy_time = timestep - update_duration - (total_frame_time - sleepy_time - update_duration);
+        sleepy_time = timestep - update_duration - (total_frame_time - sleepy_time - update_duration);
         std::this_thread::sleep_for(sleepy_time);
 
-		total_frame_time = std::chrono::duration_cast<std::chrono::nanoseconds> (clock::now() - start);
+        total_frame_time = std::chrono::duration_cast<std::chrono::nanoseconds> (clock::now() - start);
 
-		num++;
-		sum += total_frame_time;
-		if (num >= 120) {
-			std::cout << 1000000000.f / (sum.count()/num) << std::endl;
-			num = 0;
-			sum = 0ns;
-		}
+        num++;
+        sum += total_frame_time;
+        if (num >= 120) {
+            std::cout << 1000000000.f / (sum.count()/num) << std::endl;
+            num = 0;
+            sum = 0ns;
+        }
 
     }
     

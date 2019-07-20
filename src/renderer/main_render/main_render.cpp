@@ -105,7 +105,7 @@ void MainRender::render(entt::registry& reg, uint32_t index, std::vector<vk::Sem
         Util::removeElement<vk::Semaphore>(signals, nullptr), signals.data()
     )}, fences[index]);
     
-    //device->waitForFences(fences[index], VK_TRUE, std::numeric_limits<uint64_t>::max());
+    device->waitForFences(fences[index], VK_TRUE, std::numeric_limits<uint64_t>::max());
     
 }
 

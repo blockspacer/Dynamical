@@ -4,6 +4,8 @@
 #include "util/util.h"
 #include "terrain.h"
 
+#include "glm/glm.hpp"
+
 #include <iostream>
 
 MCPipeline::MCPipeline(Device& device, Terrain& terrain) : device(device), terrain(terrain) {
@@ -34,11 +36,29 @@ MCPipeline::MCPipeline(Device& device, Terrain& terrain) : device(device), terra
     vk::ShaderModule computeShader = device->createShaderModule(
         vk::ShaderModuleCreateInfo({}, computeShaderCode.size() * sizeof(char), reinterpret_cast<const uint32_t*>(computeShaderCode.data())));
     
+    
+    auto mapEntries = std::vector {
+        vk::SpecializationMapEntry(0, 0 * sizeof(int), sizeof(int)),
+        vk::SpecializationMapEntry(1, 1 * sizeof(int), sizeof(int)),
+        vk::SpecializationMapEntry(2, 2 * sizeof(int), sizeof(int)),
+    };
+    
+    struct Constants {
+        int x;
+        int y;
+        int z;
+    } constants;
+    constants.x = local_size.x;
+    constants.y = local_size.y;
+    constants.z = local_size.z;
+    
+    auto specConstants = vk::SpecializationInfo(mapEntries.size(), mapEntries.data(), sizeof(Constants), &constants);
+    
     pipeline = device->createComputePipeline(
         nullptr,
         vk::ComputePipelineCreateInfo(
             {},
-            vk::PipelineShaderStageCreateInfo({}, vk::ShaderStageFlagBits::eCompute, computeShader, "main"),
+            vk::PipelineShaderStageCreateInfo({}, vk::ShaderStageFlagBits::eCompute, computeShader, "main", &specConstants),
             layout
         )
     );

@@ -3,7 +3,9 @@
 #extension GL_KHR_shader_subgroup_arithmetic: enable
 #extension GL_KHR_shader_subgroup_ballot: enable
 
-layout (local_size_x = 8, local_size_y = 4, local_size_z = 8) in;
+layout(local_size_x_id = 0) in;               
+layout(local_size_y_id = 1) in;
+layout(local_size_z_id = 2) in;
 
 const vec3 offsets[24] = {
     // 0
@@ -62,8 +64,8 @@ layout(std430, set=1, binding = 1) coherent buffer IndirectDraw {
 
 layout( push_constant ) uniform Args {
     vec3 pos;
+    float size;
     float time;
-    vec4 sizes;
 };
 
 float sq(float x) {
@@ -82,7 +84,7 @@ float sdf(vec3 p) {
 }
 
 float values(vec3 p) {
-    return sdf(p * sizes.w + pos);
+    return sdf(p * size + pos);
 }
 
 float values(float x, float y, float z) {
@@ -109,7 +111,7 @@ void main() {
                 | (values(gl_GlobalInvocationID.x  , gl_GlobalInvocationID.y+1, gl_GlobalInvocationID.z+1)>0 ? 128:0);
     
     uint num = trinum[val];
-    if(num > 0 && !(gl_GlobalInvocationID.x*sizes.w > sizes.x-1 || gl_GlobalInvocationID.y*sizes.w > sizes.y-1 || gl_GlobalInvocationID.z*sizes.w > sizes.z-1)) {
+    if(num > 0) {
     
         uint local_tri_index = subgroupExclusiveAdd(num*3);
         
@@ -132,7 +134,7 @@ void main() {
             //float density1 = values[int(a1.x * CHUNK_SIZE*CHUNK_SIZE + a1.y * CHUNK_SIZE + a1.z)];
             float density1 = values(a1);
             vec3 vertex = edge >= 0 ? mix(a1, a2, (-density1)/(values(a2) - density1)) : vec3(0);
-            tril[global_tri_index + local_tri_index+i] = vec4(vertex * sizes.w + pos, 1.0);
+            tril[global_tri_index + local_tri_index+i] = vec4(vertex * size + pos, 1.0);
         }
         
     }

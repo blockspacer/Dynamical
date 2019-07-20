@@ -7,10 +7,12 @@
 
 #include "glm/glm.hpp"
 
+constexpr glm::ivec3 local_size(8, 4, 8);
+
 struct MCPushConstants {
     glm::vec3 pos;
+    float size;
     float time;
-    glm::vec4 sizes;
 };
 
 class Device;
