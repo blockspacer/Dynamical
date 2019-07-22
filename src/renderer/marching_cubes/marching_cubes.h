@@ -12,6 +12,8 @@
 
 typedef uint32_t computing;
 
+constexpr int max_per_frame = 10;
+
 class Device;
 class Terrain;
 
@@ -29,7 +31,8 @@ private:
     struct PerFrame {
         vk::CommandBuffer commandBuffer;
         vk::Fence fence;
-        bool fence_state;
+        bool fence_state = false;
+        int chunk_count = 0;
     };
     
     std::array<PerFrame, NUM_FRAMES> per_frame;

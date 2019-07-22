@@ -16,7 +16,7 @@ public:
     int lod;
     
     glm::vec3 getPosition() {
-        return pos * getSize();
+        return pos * chunk_base_size;
     }
     
     glm::vec3 getSize() {
