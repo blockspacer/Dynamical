@@ -10,8 +10,8 @@
 constexpr glm::ivec3 local_size(8, 4, 8);
 
 struct MCPushConstants {
-    glm::vec3 pos;
-    float size;
+    glm::ivec3 pos;
+    int size;
     float time;
 };
 

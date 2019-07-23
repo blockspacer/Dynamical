@@ -5,8 +5,8 @@
 #include "util/util.h"
 #include "chunk.h"
 #include "logic/components/chunkc.h"
-
 #include "util/profile.h"
+#include "logic/components/chunkdatac.h"
 
 constexpr int timestamp_count = 2;
 constexpr int total_timestamp_count = timestamp_count*NUM_FRAMES;
@@ -43,6 +43,9 @@ void MarchingCubes::compute(entt::registry& reg, uint32_t index, std::vector<vk:
                 device->resetFences({per_frame[i].fence});
                 per_frame[i].fence_state = false;
                 
+                auto& cd = reg.ctx<ChunkDataC>();
+                cd.index = 0;
+                
                 if(profiling) {
                     if(per_frame[i].chunk_count > 0) {
                         std::array<uint64_t, timestamp_count> timestamps;
@@ -78,8 +81,8 @@ void MarchingCubes::compute(entt::registry& reg, uint32_t index, std::vector<vk:
     
     per_frame[index].chunk_count = 0;
     
-    if(reg.size<entt::tag<"modified"_hs>>() > 0) {
-    
+    if(reg.size<ChunkBuild>() > 0) {
+        
         vk::CommandBuffer commandBuffer = per_frame[index].commandBuffer;
         
         commandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
@@ -92,20 +95,20 @@ void MarchingCubes::compute(entt::registry& reg, uint32_t index, std::vector<vk:
         
         commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eCompute, pipeline, 0, {pipeline}, {});
         
-        auto view = reg.view<ChunkC, Chunk, entt::tag<"modified"_hs>>();
+        auto view = reg.view<ChunkC, ChunkBuild>();
         for(auto entity : view) {
             auto& chunk = view.get<ChunkC>(entity);
-            auto& chonk = view.get<Chunk>(entity);
+            auto& chonk = view.get<ChunkBuild>(entity);
             
-            commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eCompute, pipeline, 1, {chonk.set}, {});
+            commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eCompute, pipeline, 1, {chonk.set}, {static_cast<uint32_t>(sizeof(ChunkData)) * chonk.index});
             
             MCPushConstants pc {chunk.getPosition(), chunk.getCubeSize(), t};
             commandBuffer.pushConstants(pipeline, vk::ShaderStageFlagBits::eCompute, 0, sizeof(MCPushConstants), &pc);
             
-            constexpr glm::ivec3 dispatchSizes(glm::ivec3(chunk_base_size/chunk_base_cube_size)/local_size);
+            constexpr glm::ivec3 dispatchSizes(chunk::num_cubes/local_size);
             commandBuffer.dispatch(dispatchSizes.x, dispatchSizes.y, dispatchSizes.z);
             
-            reg.remove<entt::tag<"modified"_hs>>(entity);
+            reg.remove<ChunkBuild>(entity);
             reg.assign<computing>(entity, index);
             
             per_frame[index].chunk_count++;
@@ -118,7 +121,6 @@ void MarchingCubes::compute(entt::registry& reg, uint32_t index, std::vector<vk:
         if(profiling) commandBuffer.writeTimestamp(vk::PipelineStageFlagBits::eBottomOfPipe, queryPool, 1);
         
         commandBuffer.end();
-        
         
         
         auto stages = std::vector<vk::PipelineStageFlags> {vk::PipelineStageFlagBits::eTopOfPipe};

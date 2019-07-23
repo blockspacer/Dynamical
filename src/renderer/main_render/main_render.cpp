@@ -33,7 +33,6 @@ commandBuffers(NUM_FRAMES), fences(NUM_FRAMES), ubos(NUM_FRAMES), uboPointers(NU
         
         VmaAllocationInfo inf;
         vmaGetAllocationInfo(device, ubos[i].allocation, &inf);
-        void* r = inf.pMappedData;
         uboPointers[i] = static_cast<UBO*> (inf.pMappedData);
         
         auto bufInfo = vk::DescriptorBufferInfo(ubos[i], 0, ubos[i].size);

@@ -28,8 +28,8 @@ public:
     
     void construction(entt::registry& reg, entt::entity entity, ChunkC& chunk);
     void destruction(entt::registry& reg, entt::entity entity);
-    void allocate(Chunk& chonk);
-    void deallocate(Chunk& chonk);
+    void allocate(Chunk& chonk, ChunkBuild& build);
+    void deallocate(Chunk& chonk, ChunkBuild& build);
     
     vk::DescriptorSetLayout getDescLayout() {
         return descLayout;
@@ -40,6 +40,8 @@ private:
     
     VmaBuffer make_triangles(uint32_t numTriangles);
     VmaBuffer make_indirect(uint32_t numIndirect);
+    
+    VmaBuffer chunkData;
     
     std::vector<VmaBuffer> triangles;
     std::stack<uint32_t> triangleSlots;

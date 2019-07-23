@@ -3,28 +3,34 @@
 
 #include "glm/glm.hpp"
 
-constexpr float chunk_base_length = 160.f;
-constexpr float chunk_base_height = 40.f;
-constexpr glm::vec3 chunk_base_size(chunk_base_length, chunk_base_height, chunk_base_length);
-constexpr float chunk_base_cube_size = 4;
-constexpr float chunk_lod_multiplier = 2;
+namespace chunk {
+
+    constexpr int base_length = 160;
+    constexpr int base_height = 40;
+    constexpr glm::ivec3 base_size(base_length, base_height, base_length);
+    constexpr int base_cube_size = 4;
+    constexpr int lod_multiplier = 2;
+    constexpr glm::ivec3 num_cubes = base_size/base_cube_size;
+    constexpr glm::ivec3 num_values = num_cubes+1;
+    
+}
 
 class ChunkC {
 public:
     
-    glm::vec3 pos;
+    glm::ivec3 pos;
     int lod;
     
-    glm::vec3 getPosition() {
-        return pos * chunk_base_size;
+    glm::ivec3 getPosition() {
+        return pos * chunk::base_size;
     }
     
-    glm::vec3 getSize() {
-        return (float) std::pow(chunk_lod_multiplier, lod) * chunk_base_size;
+    glm::ivec3 getSize() {
+        return (int) std::pow(chunk::lod_multiplier, lod) * chunk::base_size;
     }
     
-    float getCubeSize() {
-        return std::pow(chunk_lod_multiplier, lod) * chunk_base_cube_size;
+    int getCubeSize() {
+        return std::pow(chunk::lod_multiplier, lod) * chunk::base_cube_size;
     }
     
 };

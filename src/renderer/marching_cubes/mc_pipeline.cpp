@@ -4,6 +4,8 @@
 #include "util/util.h"
 #include "terrain.h"
 
+#include "logic/components/chunkc.h"
+
 #include "glm/glm.hpp"
 
 #include <iostream>
@@ -36,21 +38,29 @@ MCPipeline::MCPipeline(Device& device, Terrain& terrain) : device(device), terra
     vk::ShaderModule computeShader = device->createShaderModule(
         vk::ShaderModuleCreateInfo({}, computeShaderCode.size() * sizeof(char), reinterpret_cast<const uint32_t*>(computeShaderCode.data())));
     
-    
-    auto mapEntries = std::vector {
-        vk::SpecializationMapEntry(0, 0 * sizeof(int), sizeof(int)),
-        vk::SpecializationMapEntry(1, 1 * sizeof(int), sizeof(int)),
-        vk::SpecializationMapEntry(2, 2 * sizeof(int), sizeof(int)),
-    };
-    
     struct Constants {
-        int x;
-        int y;
-        int z;
+        uint32_t x;
+        uint32_t y;
+        uint32_t z;
+        uint32_t s_x;
+        uint32_t s_y;
+        uint32_t s_z;
     } constants;
     constants.x = local_size.x;
     constants.y = local_size.y;
     constants.z = local_size.z;
+    constants.s_x = chunk::num_values.x;
+    constants.s_y = chunk::num_values.y;
+    constants.s_z = chunk::num_values.z;
+    
+    auto mapEntries = std::array {
+        vk::SpecializationMapEntry(0, offsetof(Constants, x), sizeof(uint32_t)),
+        vk::SpecializationMapEntry(1, offsetof(Constants, y), sizeof(uint32_t)),
+        vk::SpecializationMapEntry(2, offsetof(Constants, z), sizeof(uint32_t)),
+        vk::SpecializationMapEntry(3, offsetof(Constants, s_x), sizeof(uint32_t)),
+        vk::SpecializationMapEntry(4, offsetof(Constants, s_y), sizeof(uint32_t)),
+        vk::SpecializationMapEntry(5, offsetof(Constants, s_z), sizeof(uint32_t)),
+    };
     
     auto specConstants = vk::SpecializationInfo(mapEntries.size(), mapEntries.data(), sizeof(Constants), &constants);
     

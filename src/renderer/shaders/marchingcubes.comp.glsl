@@ -7,43 +7,43 @@ layout(local_size_x_id = 0) in;
 layout(local_size_y_id = 1) in;
 layout(local_size_z_id = 2) in;
 
-const vec3 offsets[24] = {
+const ivec3 offsets[24] = {
     // 0
-    vec3(0,0,0),
-    vec3(1,0,0),
+    ivec3(0,0,0),
+    ivec3(1,0,0),
     // 1
-    vec3(1,0,0),
-    vec3(1,0,1),
+    ivec3(1,0,0),
+    ivec3(1,0,1),
     // 2
-    vec3(1,0,1),
-    vec3(0,0,1),
+    ivec3(1,0,1),
+    ivec3(0,0,1),
     // 3
-    vec3(0,0,1),
-    vec3(0,0,0),
+    ivec3(0,0,1),
+    ivec3(0,0,0),
     // 4
-    vec3(0,1,0),
-    vec3(1,1,0),
+    ivec3(0,1,0),
+    ivec3(1,1,0),
     // 5
-    vec3(1,1,0),
-    vec3(1,1,1),
+    ivec3(1,1,0),
+    ivec3(1,1,1),
     // 6
-    vec3(1,1,1),
-    vec3(0,1,1),
+    ivec3(1,1,1),
+    ivec3(0,1,1),
     // 7
-    vec3(0,1,1),
-    vec3(0,1,0),
+    ivec3(0,1,1),
+    ivec3(0,1,0),
     // 8
-    vec3(0,0,0),
-    vec3(0,1,0),
+    ivec3(0,0,0),
+    ivec3(0,1,0),
     // 9
-    vec3(1,0,0),
-    vec3(1,1,0),
+    ivec3(1,0,0),
+    ivec3(1,1,0),
     // 10
-    vec3(1,0,1),
-    vec3(1,1,1),
+    ivec3(1,0,1),
+    ivec3(1,1,1),
     // 11
-    vec3(0,0,1),
-    vec3(0,1,1)
+    ivec3(0,0,1),
+    ivec3(0,1,1)
 };
 
 const uint trinum[256] = {0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 2, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 3, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 3, 2, 3, 3, 2, 3, 4, 4, 3, 3, 4, 4, 3, 4, 5, 5, 2, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 3, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 4, 2, 3, 3, 4, 3, 4, 2, 3, 3, 4, 4, 5, 4, 5, 3, 2, 3, 4, 4, 3, 4, 5, 3, 2, 4, 5, 5, 4, 5, 2, 4, 1, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 3, 2, 3, 3, 4, 3, 4, 4, 5, 3, 2, 4, 3, 4, 3, 5, 2, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 4, 3, 4, 4, 3, 4, 5, 5, 4, 4, 3, 5, 2, 5, 4, 2, 1, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 2, 3, 3, 2, 3, 4, 4, 5, 4, 5, 5, 2, 4, 3, 5, 4, 3, 2, 4, 1, 3, 4, 4, 5, 4, 5, 3, 4, 4, 5, 5, 2, 3, 4, 2, 1, 2, 3, 3, 2, 3, 4, 2, 1, 3, 2, 4, 1, 2, 1, 1, 0};
@@ -61,10 +61,17 @@ layout(std430, set=1, binding = 1) coherent buffer IndirectDraw {
     uint firstInstance;
 };
 
+layout (constant_id = 3) const uint chunk_size_x = 1;
+layout (constant_id = 4) const uint chunk_size_y = 1;
+layout (constant_id = 5) const uint chunk_size_z = 1;
+
+layout(std430, set=1, binding = 2) readonly buffer Values {
+    float val[chunk_size_x * chunk_size_y * chunk_size_z];
+};
 
 layout( push_constant ) uniform Args {
-    vec3 pos;
-    float size;
+    ivec3 pos;
+    int size;
     float time;
 };
 
@@ -83,12 +90,12 @@ float sdf(vec3 p) {
     return sdf2(p);
 }
 
-float values(vec3 p) {
-    return sdf(p * size + pos);
+float values(uint x, uint y, uint z) {
+    return val[x * chunk_size_y * chunk_size_z + z * chunk_size_y + y];
 }
 
-float values(float x, float y, float z) {
-    return values(vec3(x, y, z));
+float values(uvec3 p) {
+    return values(p.x, p.y, p.z);
 }
 
 void main() {
@@ -130,8 +137,7 @@ void main() {
         
         for(int i = 0; i<num*3; i++) {
             int edge = texelFetch(triTable, int(val) * 16 + i).r * 2;
-            vec3 a1 = gl_GlobalInvocationID.xyz + offsets[edge], a2 = gl_GlobalInvocationID.xyz + offsets[edge+1];
-            //float density1 = values[int(a1.x * CHUNK_SIZE*CHUNK_SIZE + a1.y * CHUNK_SIZE + a1.z)];
+            uvec3 a1 = gl_GlobalInvocationID.xyz + offsets[edge], a2 = gl_GlobalInvocationID.xyz + offsets[edge+1];
             float density1 = values(a1);
             vec3 vertex = edge >= 0 ? mix(a1, a2, (-density1)/(values(a2) - density1)) : vec3(0);
             tril[global_tri_index + local_tri_index+i] = vec4(vertex * size + pos, 1.0);

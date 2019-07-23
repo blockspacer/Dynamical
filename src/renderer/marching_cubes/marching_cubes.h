@@ -12,7 +12,7 @@
 
 typedef uint32_t computing;
 
-constexpr int max_per_frame = 10;
+constexpr int max_per_frame = 20;
 
 class Device;
 class Terrain;
