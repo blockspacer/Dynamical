@@ -39,7 +39,8 @@ Terrain::Terrain(Device& device) : device(device) {
 void Terrain::preinit(entt::registry& reg) {
     
     reg.on_construct<ChunkC>().connect<&Terrain::construction>(this);
-    reg.on_destroy<Chunk>().connect<&Terrain::destruction>(this);
+    reg.on_destroy<Chunk>().connect<&Terrain::destructionChunk>(this);
+    reg.on_destroy<ChunkBuild>().connect<&Terrain::destructionChunkBuild>(this);
     
 }
 
@@ -65,11 +66,18 @@ void Terrain::construction(entt::registry& reg, entt::entity entity, ChunkC& chu
     
 }
 
-void Terrain::destruction(entt::registry& reg, entt::entity entity) {
+void Terrain::destructionChunk(entt::registry& reg, entt::entity entity) {
     
-    deallocate(reg.get<Chunk>(entity), reg.get<ChunkBuild>(entity));
+    deallocate(reg.get<Chunk>(entity));
     
 }
+
+void Terrain::destructionChunkBuild(entt::registry& reg, entt::entity entity) {
+    
+    deallocate(reg.get<ChunkBuild>(entity));
+    
+}
+
 
 void Terrain::allocate(Chunk& chonk, ChunkBuild& build) {
     
@@ -118,9 +126,13 @@ void Terrain::allocate(Chunk& chonk, ChunkBuild& build) {
     
 }
 
-void Terrain::deallocate(Chunk& chonk, ChunkBuild& build) {
+void Terrain::deallocate(ChunkBuild& build) {
     
     device->freeDescriptorSets(descPool, build.set);
+    
+}
+
+void Terrain::deallocate(Chunk& chonk) {
     
     for(uint32_t i = 0; i < indirects.size(); i++) {
         if(chonk.indirect == indirects[i].buffer) {
@@ -139,12 +151,14 @@ void Terrain::deallocate(Chunk& chonk, ChunkBuild& build) {
 }
 
 
+
 void Terrain::tick(entt::registry& reg) {
     
-    reg.view<Chunk, ChunkBuild>().each([&](Chunk& chonk, ChunkBuild& build) {
+    reg.view<Chunk, ChunkBuild, entt::tag<"modified"_hs>>().each([&](Chunk& chonk, ChunkBuild& build, auto) {
         
         if(build.set) {
-            deallocate(chonk, build);
+            deallocate(chonk);
+            deallocate(build);
         }
         
         allocate(chonk, build);

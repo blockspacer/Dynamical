@@ -27,9 +27,11 @@ public:
     ~Terrain();
     
     void construction(entt::registry& reg, entt::entity entity, ChunkC& chunk);
-    void destruction(entt::registry& reg, entt::entity entity);
+    void destructionChunk(entt::registry& reg, entt::entity entity);
+    void destructionChunkBuild(entt::registry& reg, entt::entity entity);
     void allocate(Chunk& chonk, ChunkBuild& build);
-    void deallocate(Chunk& chonk, ChunkBuild& build);
+    void deallocate(Chunk& chonk);
+    void deallocate(ChunkBuild& build);
     
     vk::DescriptorSetLayout getDescLayout() {
         return descLayout;

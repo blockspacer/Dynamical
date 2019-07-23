@@ -25,6 +25,7 @@ entt::entity make_chunk(entt::registry& reg, int chunk_x, int chunk_z) {
     chunk.pos = glm::vec3(chunk_x, 0, chunk_z);
     chunk.lod = 0;
     
+    reg.assign<entt::tag<"modified"_hs>>(entity);
     ChunkBuild& cb = reg.assign<ChunkBuild>(entity);
     cb.index = cd.index;
     ChunkData& chunkData = *(cd.data + cd.index);
