@@ -7,6 +7,7 @@
 #include "chunk.h"
 #include "logic/components/chunkdatac.h"
 #include "marching_cubes.h"
+#include "logic/components/renderinfo.h"
 
 #include <iostream>
 
@@ -17,10 +18,10 @@ constexpr uint32_t MAX_CHUNKS = 5000;
 Terrain::Terrain(Device& device) : device(device) {
     
     auto poolSizes = std::vector {
-        vk::DescriptorPoolSize(vk::DescriptorType::eStorageBuffer, MAX_CHUNKS*2),
-        vk::DescriptorPoolSize(vk::DescriptorType::eStorageBufferDynamic, MAX_CHUNKS),
+        vk::DescriptorPoolSize(vk::DescriptorType::eStorageBuffer, max_per_frame*NUM_FRAMES*2),
+        vk::DescriptorPoolSize(vk::DescriptorType::eStorageBufferDynamic, max_per_frame*NUM_FRAMES),
     };
-    descPool = device->createDescriptorPool(vk::DescriptorPoolCreateInfo(vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet, MAX_CHUNKS, poolSizes.size(), poolSizes.data()));
+    descPool = device->createDescriptorPool(vk::DescriptorPoolCreateInfo(vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet, max_per_frame*NUM_FRAMES, poolSizes.size(), poolSizes.data()));
     
     auto bindings = std::vector {
         vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eCompute),
@@ -38,7 +39,9 @@ Terrain::Terrain(Device& device) : device(device) {
 
 void Terrain::preinit(entt::registry& reg) {
     
-    reg.on_construct<ChunkC>().connect<&Terrain::construction>(this);
+    ChunkDataC& cd = reg.set<ChunkDataC>();
+    
+    //reg.on_construct<ChunkC>().connect<&Terrain::construction>(this);
     reg.on_destroy<Chunk>().connect<&Terrain::destructionChunk>(this);
     reg.on_destroy<ChunkBuild>().connect<&Terrain::destructionChunkBuild>(this);
     
@@ -46,17 +49,19 @@ void Terrain::preinit(entt::registry& reg) {
 
 void Terrain::init(entt::registry& reg) {
     
-    VmaAllocationCreateInfo allocInfo = {};
-    allocInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
-    allocInfo.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
-    
-    chunkData = VmaBuffer(device, &allocInfo, vk::BufferCreateInfo({}, max_per_frame * sizeof(ChunkData), vk::BufferUsageFlagBits::eStorageBuffer, vk::SharingMode::eExclusive, 1, &device.c_i));
-    
-    ChunkDataC& cd = reg.set<ChunkDataC>();
-    
-    VmaAllocationInfo inf;
-    vmaGetAllocationInfo(device, chunkData.allocation, &inf);
-    cd.data = static_cast<ChunkData*> (inf.pMappedData);
+    for(int i = 0; i < chunkData.size(); i++) {
+        VmaAllocationCreateInfo allocInfo = {};
+        allocInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+        allocInfo.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
+        
+        chunkData[i] = VmaBuffer(device, &allocInfo, vk::BufferCreateInfo({}, max_per_frame * sizeof(ChunkData), vk::BufferUsageFlagBits::eStorageBuffer, vk::SharingMode::eExclusive, 1, &device.c_i));
+        
+        ChunkDataC& cd = reg.ctx<ChunkDataC>();
+        
+        VmaAllocationInfo inf;
+        vmaGetAllocationInfo(device, chunkData[i].allocation, &inf);
+        cd.data[i] = static_cast<ChunkData*> (inf.pMappedData);
+    }
     
 }
 
@@ -79,7 +84,7 @@ void Terrain::destructionChunkBuild(entt::registry& reg, entt::entity entity) {
 }
 
 
-void Terrain::allocate(Chunk& chonk, ChunkBuild& build) {
+void Terrain::allocate(entt::registry& reg, Chunk& chonk, ChunkBuild& build) {
     
     if(!indirectSlots.empty()) {
         const auto& slot = indirectSlots.top();
@@ -114,9 +119,10 @@ void Terrain::allocate(Chunk& chonk, ChunkBuild& build) {
     
     build.set = device->allocateDescriptorSets(vk::DescriptorSetAllocateInfo(descPool, 1, &descLayout))[0];
     
+    auto ri = reg.ctx<RenderInfo>();
     auto triInfo = vk::DescriptorBufferInfo(chonk.triangles, 0, NUM_TRIANGLES * sizeof(Triangle));
     auto indInfo = vk::DescriptorBufferInfo(chonk.indirect, chonk.indirect_offset * sizeof(vk::DrawIndirectCommand), sizeof(vk::DrawIndirectCommand));
-    auto uniformInfo = vk::DescriptorBufferInfo(chunkData, 0, sizeof(ChunkData));
+    auto uniformInfo = vk::DescriptorBufferInfo(chunkData[ri.frame_index], 0, sizeof(ChunkData));
     
     device->updateDescriptorSets({
         vk::WriteDescriptorSet(build.set, 0, 0, 1, vk::DescriptorType::eStorageBuffer, nullptr, &triInfo, nullptr),
@@ -154,16 +160,20 @@ void Terrain::deallocate(Chunk& chonk) {
 
 void Terrain::tick(entt::registry& reg) {
     
-    reg.view<Chunk, ChunkBuild, entt::tag<"modified"_hs>>().each([&](Chunk& chonk, ChunkBuild& build, auto) {
+    auto view = reg.view<ChunkBuild, entt::tag<"modified"_hs>>();
+    for(auto entity : view) {
+        auto& build = view.get<ChunkBuild>(entity);
         
-        if(build.set) {
+        if(reg.has<Chunk>(entity)) {
+            auto& chonk = reg.get<Chunk>(entity);
             deallocate(chonk);
             deallocate(build);
+            allocate(reg, chonk, build);
+        } else {
+            allocate(reg, reg.assign<Chunk>(entity), build);
         }
         
-        allocate(chonk, build);
-        
-    });
+    }
     
 }
 

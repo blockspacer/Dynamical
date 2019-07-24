@@ -7,6 +7,7 @@
 #include "logic/components/chunkc.h"
 #include "util/profile.h"
 #include "logic/components/chunkdatac.h"
+#include "logic/components/renderinfo.h"
 
 constexpr int timestamp_count = 2;
 constexpr int total_timestamp_count = timestamp_count*NUM_FRAMES;
@@ -43,8 +44,8 @@ void MarchingCubes::compute(entt::registry& reg, uint32_t index, std::vector<vk:
                 device->resetFences({per_frame[i].fence});
                 per_frame[i].fence_state = false;
                 
-                reg.view<computing>().each([&, i](entt::entity entity, uint32_t index) {
-                    if(index == i) {
+                reg.view<computing>().each([&, i](entt::entity entity, uint32_t ind) {
+                    if(ind == i) {
                         reg.remove<computing>(entity);
                         reg.remove<ChunkBuild>(entity);
                         reg.assign<entt::tag<"ready"_hs>>(entity);
@@ -52,7 +53,7 @@ void MarchingCubes::compute(entt::registry& reg, uint32_t index, std::vector<vk:
                 });
                 
                 auto& cd = reg.ctx<ChunkDataC>();
-                cd.index = 0;
+                cd.index[i] = 0;
                 
                 if(profiling) {
                     if(per_frame[i].chunk_count > 0) {
@@ -94,12 +95,11 @@ void MarchingCubes::compute(entt::registry& reg, uint32_t index, std::vector<vk:
         
         commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eCompute, pipeline, 0, {pipeline}, {});
         
-        auto view = reg.view<ChunkC, ChunkBuild>();
+        auto view = reg.view<ChunkC, ChunkBuild, entt::tag<"modified"_hs>>();
         for(auto entity : view) {
+            
             auto& chunk = view.get<ChunkC>(entity);
             auto& chonk = view.get<ChunkBuild>(entity);
-            
-            if(reg.has<computing>(entity)) break;
             
             commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eCompute, pipeline, 1, {chonk.set}, {static_cast<uint32_t>(sizeof(ChunkData)) * chonk.index});
             

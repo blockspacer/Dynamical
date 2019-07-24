@@ -10,6 +10,8 @@
 
 #include "logic/systems/system.h"
 
+#include "renderer/num_frames.h"
+
 #include <stack>
 
 struct Triangle {
@@ -29,7 +31,7 @@ public:
     void construction(entt::registry& reg, entt::entity entity, ChunkC& chunk);
     void destructionChunk(entt::registry& reg, entt::entity entity);
     void destructionChunkBuild(entt::registry& reg, entt::entity entity);
-    void allocate(Chunk& chonk, ChunkBuild& build);
+    void allocate(entt::registry& reg, Chunk& chonk, ChunkBuild& build);
     void deallocate(Chunk& chonk);
     void deallocate(ChunkBuild& build);
     
@@ -43,7 +45,7 @@ private:
     VmaBuffer make_triangles(uint32_t numTriangles);
     VmaBuffer make_indirect(uint32_t numIndirect);
     
-    VmaBuffer chunkData;
+    std::array<VmaBuffer, NUM_FRAMES> chunkData;
     
     std::vector<VmaBuffer> triangles;
     std::stack<uint32_t> triangleSlots;

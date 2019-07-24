@@ -36,7 +36,7 @@ void GameLoop::run() {
         num++;
         sum += total_frame_time;
         if (num >= 120) {
-            std::cout << 1000000000.f / (sum.count()/num) << std::endl;
+            std::cout << 1000000000.f / (sum.count()/num) << " fps" << std::endl;
             num = 0;
             sum = 0ns;
         }
