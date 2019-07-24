@@ -14,7 +14,14 @@
 #include "renderer/marching_cubes/marching_cubes.h"
 #include "logic/components/renderinfo.h"
 
+#include "perlin/PerlinNoise.hpp"
+
 constexpr float render_chunks = render_distance / chunk::base_length + 1;
+
+const static siv::PerlinNoise perlin;
+constexpr double frequency = 64.0;
+constexpr double amplitude = 20.;
+constexpr int octaves = 4;
 
 entt::entity make_chunk(entt::registry& reg, int chunk_x, int chunk_y, int chunk_z) {
     
@@ -40,7 +47,8 @@ entt::entity make_chunk(entt::registry& reg, int chunk_x, int chunk_y, int chunk
                 int rz = chunk::base_size.z * chunk_z + z * chunk::base_cube_size;
                 int ry = chunk::base_size.y * chunk_y + y * chunk::base_cube_size;
                 
-                float value = 70. - ry + 15.*std::sin((rx + rz) / 30.) + 20.*std::cos((rx - rz)/30.);
+                //float value = 70. - ry + 15.*std::sin((rx + rz) / 30.) + 20.*std::cos((rx - rz)/30.);
+                float value = 70. - ry + amplitude * perlin.octaveNoise(rx / frequency, ry / frequency, rz / frequency, octaves);
                 if(x == 0 && y == 0 && z == 0) {
                     sign = std::signbit(value);
                 } else if(sign != std::signbit(value)) {
