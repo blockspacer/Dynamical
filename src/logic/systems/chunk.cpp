@@ -19,8 +19,8 @@
 constexpr float render_chunks = render_distance / chunk::base_length + 1;
 
 const static std::unique_ptr<FastNoiseSIMD> myNoise = std::unique_ptr<FastNoiseSIMD>(FastNoiseSIMD::NewFastNoiseSIMD());
-constexpr double frequency = 0.03;
-constexpr double amplitude = 40.;
+constexpr double frequency = 0.01;
+constexpr double amplitude = 80.;
 constexpr int octaves = 3;
 
 entt::entity make_chunk(entt::registry& reg, int chunk_x, int chunk_y, int chunk_z) {
@@ -37,7 +37,7 @@ entt::entity make_chunk(entt::registry& reg, int chunk_x, int chunk_y, int chunk
     ChunkData& chunkData = *(cd.data[ri.frame_index] + cd.index[ri.frame_index]);
     
     float* noise = myNoise->GetSimplexFractalSet(
-        chunk::num_cubes.x * chunk_x, chunk::num_cubes.z * chunk_z, chunk::num_cubes.y * chunk_y,
+        chunk::num_cubes.x * chunk_x - chunk::border, chunk::num_cubes.z * chunk_z - chunk::border, chunk::num_cubes.y * chunk_y - chunk::border,
         chunk::num_values.x, chunk::num_values.z, chunk::num_values.y);
     
     

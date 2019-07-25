@@ -7,9 +7,7 @@
 #include "renderpass.h"
 #include "renderer/num_frames.h"
 
-struct Vertex {
-    float x,y,z,w;
-};
+#include "renderer/marching_cubes/terrain.h"
 
 BasicPipeline::BasicPipeline(Device& device, Swapchain& swap, Renderpass& renderpass) : device(device), swap(swap), renderpass(renderpass) {
     
@@ -60,12 +58,14 @@ BasicPipeline::BasicPipeline(Device& device, Swapchain& swap, Renderpass& render
     
     // VERTEX INPUT
     
-    auto vertexInputBindings = std::vector<vk::VertexInputBindingDescription> {
+    auto vertexInputBindings = std::vector {
         vk::VertexInputBindingDescription(0, sizeof(Vertex), vk::VertexInputRate::eVertex),
     };
     // Inpute attribute bindings describe shader attribute locations and memory layouts
-    auto vertexInputAttributs = std::vector<vk::VertexInputAttributeDescription> {
-        {0, 0, vk::Format::eR32G32B32A32Sfloat, 0}
+    auto vertexInputAttributs = std::vector {
+        vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, pos)),
+        vk::VertexInputAttributeDescription(1, 0, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, normal)),
+        vk::VertexInputAttributeDescription(2, 0, vk::Format::eR32G32Sfloat, offsetof(Vertex, uv)),
     };
     
     auto vertexInputState = vk::PipelineVertexInputStateCreateInfo({}, vertexInputBindings.size(), vertexInputBindings.data(), vertexInputAttributs.size(), vertexInputAttributs.data());

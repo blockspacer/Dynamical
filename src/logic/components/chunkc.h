@@ -11,7 +11,8 @@ namespace chunk {
     constexpr int base_cube_size = 4;
     constexpr int lod_multiplier = 2;
     constexpr glm::ivec3 num_cubes = base_size/base_cube_size;
-    constexpr glm::ivec3 num_values = num_cubes+1;
+    constexpr int border = 1;
+    constexpr glm::ivec3 num_values = num_cubes+1+2*border;
     
 }
 

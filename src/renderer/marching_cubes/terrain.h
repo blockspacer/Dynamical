@@ -14,8 +14,14 @@
 
 #include <stack>
 
+struct Vertex {
+    glm::vec3 pos;
+    glm::vec3 normal;
+    glm::vec2 uv;
+};
+
 struct Triangle {
-    glm::vec4 a,b,c;
+    Vertex a,b,c;
 };
 
 class Device;

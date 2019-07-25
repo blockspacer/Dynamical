@@ -90,12 +90,16 @@ float sdf(vec3 p) {
     return sdf2(p);
 }
 
-float values(uint x, uint y, uint z) {
-    return val[x * chunk_size_y * chunk_size_z + z * chunk_size_y + y];
+float values(int x, int y, int z) {
+    return val[(x+1) * chunk_size_y * chunk_size_z + (z+1) * chunk_size_y + y+1];
 }
 
-float values(uvec3 p) {
+float values(ivec3 p) {
     return values(p.x, p.y, p.z);
+}
+
+float values(uint x, uint y, uint z) {
+    return values(int(x), int(y), int(z));
 }
 
 void main() {
@@ -137,10 +141,29 @@ void main() {
         
         for(int i = 0; i<num*3; i++) {
             int edge = texelFetch(triTable, int(val) * 16 + i).r * 2;
-            uvec3 a1 = gl_GlobalInvocationID.xyz + offsets[edge], a2 = gl_GlobalInvocationID.xyz + offsets[edge+1];
+            ivec3 a1 = ivec3(gl_GlobalInvocationID.xyz) + offsets[edge], a2 = ivec3(gl_GlobalInvocationID.xyz) + offsets[edge+1];
             float density1 = values(a1);
-            vec3 vertex = edge >= 0 ? mix(a1, a2, (-density1)/(values(a2) - density1)) : vec3(0);
-            tril[global_tri_index + local_tri_index+i] = vec4(vertex * size + pos, 1.0);
+            float density2 = values(a2);
+            vec3 vertex = mix(a1, a2, (-density1)/(density2 - density1));
+            
+            vec3 norm1 = vec3(
+            values(a1.x-1, a1.y, a1.z) - values(a1.x+1, a1.y, a1.z),
+            values(a1.x, a1.y-1, a1.z) - values(a1.x, a1.y+1, a1.z),
+            values(a1.x, a1.y, a1.z-1) - values(a1.x, a1.y, a1.z+1)
+            );
+            
+            vec3 norm2 = vec3(
+            values(a2.x-1, a2.y, a2.z) - values(a2.x+1, a2.y, a2.z),
+            values(a2.x, a2.y-1, a2.z) - values(a2.x, a2.y+1, a2.z),
+            values(a2.x, a2.y, a2.z-1) - values(a2.x, a2.y, a2.z+1)
+            );
+            
+            vec3 normal = normalize(-mix(norm1, norm2, (-density1)/(density2 - density1)));
+            
+            vec2 uv = vec2(0, 0);
+            
+            tril[(global_tri_index + local_tri_index+i)*2] = vec4(vertex * size + pos, normal.x);
+            tril[(global_tri_index + local_tri_index+i)*2 + 1] = vec4(normal.yz, uv);
         }
         
     }
