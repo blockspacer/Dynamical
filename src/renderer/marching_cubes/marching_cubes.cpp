@@ -18,7 +18,7 @@ MarchingCubes::MarchingCubes(Device& device, Terrain& terrain) : device(device),
     
     std::vector<vk::CommandBuffer> commandBuffers = device->allocateCommandBuffers(vk::CommandBufferAllocateInfo(commandPool, vk::CommandBufferLevel::ePrimary, NUM_FRAMES));
     
-    if(profiling) queryPool = device->createQueryPool(vk::QueryPoolCreateInfo({}, vk::QueryType::eTimestamp, total_timestamp_count));
+    if(marchingcubesprofiling) queryPool = device->createQueryPool(vk::QueryPoolCreateInfo({}, vk::QueryType::eTimestamp, total_timestamp_count));
     
     for(int i = 0; i<NUM_FRAMES; i++) {
         per_frame[i].commandBuffer = commandBuffers[i];
@@ -55,13 +55,12 @@ void MarchingCubes::compute(entt::registry& reg, uint32_t index, std::vector<vk:
                 auto& cd = reg.ctx<ChunkDataC>();
                 cd.index[i] = 0;
                 
-                if(profiling) {
+                if(marchingcubesprofiling) {
                     if(per_frame[i].chunk_count > 0) {
                         std::array<uint64_t, timestamp_count> timestamps;
                         device->getQueryPoolResults(queryPool, 0, timestamp_count, timestamps.size() * sizeof(uint64_t), timestamps.data(), sizeof(uint64_t), vk::QueryResultFlagBits::e64 | vk::QueryResultFlagBits::eWait);
                         
-                        std::cout << (timestamps[timestamps.size()-1] - timestamps[0])*device.properties.limits.timestampPeriod/1000000./per_frame[i].chunk_count << std::endl;
-                        std::cout << "total time " << (timestamps[timestamps.size()-1] - timestamps[0])*device.properties.limits.timestampPeriod/1000000. << std::endl;
+                        std::cout << "Chunk rendering took " << (timestamps[timestamps.size()-1] - timestamps[0])*device.properties.limits.timestampPeriod/1000000./per_frame[i].chunk_count << " per chunk for " << per_frame[i].chunk_count << " chunks" << std::endl;
                     }
                 }
                 
@@ -87,9 +86,9 @@ void MarchingCubes::compute(entt::registry& reg, uint32_t index, std::vector<vk:
         
         commandBuffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
         
-        if(profiling) commandBuffer.resetQueryPool(queryPool, 0, timestamp_count);
+        if(marchingcubesprofiling) commandBuffer.resetQueryPool(queryPool, 0, timestamp_count);
         
-        if(profiling) commandBuffer.writeTimestamp(vk::PipelineStageFlagBits::eTopOfPipe, queryPool, 0);
+        if(marchingcubesprofiling) commandBuffer.writeTimestamp(vk::PipelineStageFlagBits::eTopOfPipe, queryPool, 0);
         
         commandBuffer.bindPipeline(vk::PipelineBindPoint::eCompute, pipeline);
         
@@ -119,7 +118,7 @@ void MarchingCubes::compute(entt::registry& reg, uint32_t index, std::vector<vk:
 
         }
         
-        if(profiling) commandBuffer.writeTimestamp(vk::PipelineStageFlagBits::eBottomOfPipe, queryPool, 1);
+        if(marchingcubesprofiling) commandBuffer.writeTimestamp(vk::PipelineStageFlagBits::eBottomOfPipe, queryPool, 1);
         
         commandBuffer.end();
         

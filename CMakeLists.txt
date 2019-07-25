@@ -4,6 +4,8 @@ set(CMAKE_CXX_STANDARD 17)
 
 project(dynamical)
 
+add_subdirectory(3rdparty/FastNoiseSIMD)
+
 include_directories("./src")
 include_directories("./3rdparty")
 file(GLOB_RECURSE sources main.cpp src/*.cpp src/*.h)
@@ -18,7 +20,7 @@ target_link_libraries(dynamical PRIVATE SDL2::SDL2 SDL2::SDL2main)
 include_directories(${SDL2_INCLUDE_DIRS})
 
 
-
+target_link_libraries(dynamical PRIVATE FastNoiseSIMD)
 
 
 

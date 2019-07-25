@@ -3,11 +3,14 @@
 
 #include "system.h"
 
+#include "util/profile.h"
+
 #include <vector>
 #include <functional>
 #include "entt/entt.hpp"
 
 #include <iostream>
+#include <chrono>
 
 class Systems {
 public:
@@ -32,7 +35,15 @@ public:
     void tick(entt::registry& reg) {
         
         for(std::unique_ptr<System>& sys : systems) {
-            sys->tick(reg);
+            if(systemprofiling) {
+                auto before = std::chrono::high_resolution_clock::now();
+                sys->tick(reg);
+                auto after = std::chrono::high_resolution_clock::now();
+                auto milliseconds = std::chrono::duration_cast<std::chrono::nanoseconds> (after - before).count()/1000000.;
+                if(milliseconds > 20.) std::cout << sys->name() << " system took " << milliseconds << " milliseconds" << std::endl;
+            } else {
+                sys->tick(reg);
+            }
         }
         
     }

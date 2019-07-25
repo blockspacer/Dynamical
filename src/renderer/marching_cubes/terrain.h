@@ -23,9 +23,10 @@ class Device;
 class Terrain : System {
 public:
     Terrain(Device& device);
-    void preinit(entt::registry& reg);
-    void init(entt::registry& reg);
-    void tick(entt::registry& reg);
+    void preinit(entt::registry& reg) override;
+    void init(entt::registry& reg) override;
+    void tick(entt::registry& reg) override;
+    const char* name() override {return "Terrain";};
     ~Terrain();
     
     void construction(entt::registry& reg, entt::entity entity, ChunkC& chunk);

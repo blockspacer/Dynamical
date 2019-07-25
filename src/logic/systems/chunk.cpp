@@ -14,14 +14,14 @@
 #include "renderer/marching_cubes/marching_cubes.h"
 #include "logic/components/renderinfo.h"
 
-#include "perlin/PerlinNoise.hpp"
+#include "FastNoiseSIMD/FastNoiseSIMD/FastNoiseSIMD.h"
 
 constexpr float render_chunks = render_distance / chunk::base_length + 1;
 
-const static siv::PerlinNoise perlin;
-constexpr double frequency = 64.0;
-constexpr double amplitude = 20.;
-constexpr int octaves = 4;
+const static std::unique_ptr<FastNoiseSIMD> myNoise = std::unique_ptr<FastNoiseSIMD>(FastNoiseSIMD::NewFastNoiseSIMD());
+constexpr double frequency = 0.03;
+constexpr double amplitude = 40.;
+constexpr int octaves = 3;
 
 entt::entity make_chunk(entt::registry& reg, int chunk_x, int chunk_y, int chunk_z) {
     
@@ -29,13 +29,19 @@ entt::entity make_chunk(entt::registry& reg, int chunk_x, int chunk_y, int chunk
     auto ri = reg.ctx<RenderInfo>();
     if(cd.index[ri.frame_index] >= max_per_frame) return entt::null;
     
-    
     auto entity = reg.create();
     ChunkC& chunk = reg.assign<ChunkC>(entity);
     chunk.pos = glm::vec3(chunk_x, chunk_y, chunk_z);
     chunk.lod = 0;
     
     ChunkData& chunkData = *(cd.data[ri.frame_index] + cd.index[ri.frame_index]);
+    
+    float* noise = myNoise->GetSimplexFractalSet(
+        chunk::num_cubes.x * chunk_x, chunk::num_cubes.z * chunk_z, chunk::num_cubes.y * chunk_y,
+        chunk::num_values.x, chunk::num_values.z, chunk::num_values.y);
+    
+    
+    int index = 0;
     
     bool sign;
     bool empty = true;
@@ -47,8 +53,8 @@ entt::entity make_chunk(entt::registry& reg, int chunk_x, int chunk_y, int chunk
                 int rz = chunk::base_size.z * chunk_z + z * chunk::base_cube_size;
                 int ry = chunk::base_size.y * chunk_y + y * chunk::base_cube_size;
                 
-                //float value = 70. - ry + 15.*std::sin((rx + rz) / 30.) + 20.*std::cos((rx - rz)/30.);
-                float value = 70. - ry + amplitude * perlin.octaveNoise(rx / frequency, ry / frequency, rz / frequency, octaves);
+                float value = 70. - ry + amplitude * noise[index++];
+                
                 if(x == 0 && y == 0 && z == 0) {
                     sign = std::signbit(value);
                 } else if(sign != std::signbit(value)) {
@@ -59,6 +65,8 @@ entt::entity make_chunk(entt::registry& reg, int chunk_x, int chunk_y, int chunk
             }
         }
     }
+    
+    FastNoiseSIMD::FreeNoiseSet(noise);
     
     if(empty == true) {
         return entity;
@@ -76,6 +84,9 @@ entt::entity make_chunk(entt::registry& reg, int chunk_x, int chunk_y, int chunk
 void ChunkSys::init(entt::registry& reg) {
     
     ChunkMap& map = reg.set<ChunkMap>();
+    
+    myNoise->SetFractalOctaves(octaves);
+    myNoise->SetFrequency(frequency);
     
 }
 
