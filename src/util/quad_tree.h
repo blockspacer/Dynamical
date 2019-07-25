@@ -3,7 +3,7 @@
 
 #include <functional>
 
-template <typename T>
+template <typename T, T nullv>
 class QuadTree {
     
     class Node {
@@ -12,36 +12,56 @@ class QuadTree {
         Node() : hsize(0) {}
         
         Node(int size) : hsize(size) {
-            for(int i = 0; i<4; i++) {
+            for(int i = 0; i<8; i++) {
                 ptrs[i] = nullptr;
             }
         }
         
         Node(T value) : hsize(0), value(value) {}
         
-        T* get(int x, int y) {
+        T get(int x, int y, int z) {
             if(hsize > 0) {
-                int index = (x>=hsize?1:0) + (y>=hsize?2:0);
+                int index = (x>=hsize?1:0) + (y>=hsize?2:0) + (z>=hsize?4:0);
                 if(ptrs[index] == nullptr) {
-                    return nullptr;
+                    return nullv;
                 }
-                return ptrs[(x>=hsize?1:0) + (y>=hsize?2:0)]->get(x-(x>=hsize?hsize:0), y-(y>=hsize?hsize:0));
+                return ptrs[index]->get(x-(x>=hsize?hsize:0), y-(y>=hsize?hsize:0), z-(z>=hsize?hsize:0));
             } else {
-                return &value;
+                return value;
             }
         }
     
-        T* set(int x, int y, T val) {
+        void set(int x, int y, int z, T val) {
             if(hsize > 0) {
-                int index = (x>=hsize?1:0) + (y>=hsize?2:0);
+                int index = (x>=hsize?1:0) + (y>=hsize?2:0) + (z>=hsize?4:0);
                 if(ptrs[index] == nullptr) {
                     ptrs[index] = std::make_unique<Node>(hsize/2);
                 }
-                return ptrs[index]->set(x-(x>=hsize?hsize:0), y-(y>=hsize?hsize:0), val);
+                ptrs[index]->set(x-(x>=hsize?hsize:0), y-(y>=hsize?hsize:0), z-(z>=hsize?hsize:0), val);
             } else {
                 value = val;
-                return &value;
             }
+        }
+        
+        bool remove(int x, int y, int z) {
+            if(hsize>0) {
+                int index = (x>=hsize?1:0) + (y>=hsize?2:0) + (z>=hsize?4:0);
+                if(ptrs[index] == nullptr || !ptrs[index]->remove(x-(x>=hsize?hsize:0), y-(y>=hsize?hsize:0), z-(z>=hsize?hsize:0))) {
+                    ptrs[index] = nullptr;
+                    int c = 0;
+                    for(int i = 0; i<8; i++) {
+                        if(ptrs[index] != nullptr) {
+                            c++;
+                        }
+                    }
+                    if(c == 0) {
+                        return false;
+                    }
+                    return true;
+                }
+                
+            }
+            return false;
         }
         
         void set(int index, std::unique_ptr<Node>& val) {
@@ -53,33 +73,43 @@ class QuadTree {
     private:
         
         T value;
-        std::unique_ptr<Node> ptrs[4];
+        std::unique_ptr<Node> ptrs[8];
     };
     
 public:
     QuadTree() {
-        root = std::make_unique<Node>();
+        root = std::make_unique<Node>(nullv);
     }
     
-    T* get(int x, int y) {
-        if(std::max(x+x0, y+y0) >= root->hsize*2 || std::min(x+x0, y+y0) < 0) return nullptr;
-        return root->get(x+x0, y+y0);
+    T get(int x, int y, int z) {
+        if(std::max(std::max(x+x0, y+y0), z+z0) >= root->hsize*2 || std::min(std::min(x+x0, y+y0), z+z0) < 0) return nullv;
+        return root->get(x+x0, y+y0, z+z0);
     }
     
-    T* set(int x, int y, T val) {
+    void set(int x, int y, int z, T val) {
         
-        if(std::max(x+x0, y+y0) >= root->hsize*2 || std::min(x+x0, y+y0) < 0) { // Vérifier que l'arbre est assez grand.
+        if(std::max(std::max(x+x0, y+y0), z+z0) >= root->hsize*2 || std::min(std::min(x+x0, y+y0), z+z0) < 0) { // Vérifier que l'arbre est assez grand.
             
             std::unique_ptr<Node> node = std::make_unique<Node>((int) std::max(root->hsize*2, 1));
             
-            node->set(((x+x0)<0?1:0) + ((y+y0)<0?2:0), root); 
+            node->set(((x+x0)<0?1:0) + ((y+y0)<0?2:0) + ((z+z0)<0?4:0), root);
             root = std::move(node); // Remplacer root par un Node plus grand.
             
             x0 += (x+x0<0?root->hsize:0);
             y0 += (y+y0<0?root->hsize:0);
+            z0 += (z+z0<0?root->hsize:0);
             
-            return set(x, y, val); // Recommencer tant que l'arbre n'est pas assez grand.
-        } else return root->set(x+x0, y+y0, val);
+            return set(x, y, z, val); // Recommencer tant que l'arbre n'est pas assez grand.
+        } else return root->set(x+x0, y+y0, z+z0, val);
+        
+    }
+    
+    void remove(int x, int y, int z) {
+        if(std::max(std::max(x+x0, y+y0), z+z0) >= root->hsize*2 || std::min(std::min(x+x0, y+y0), z+z0) < 0) { // Vérifier que l'arbre est assez grand.
+            
+            root->remove(x, y, z);
+            
+        }
         
     }
     
@@ -101,9 +131,9 @@ public:
     
 private:
     std::unique_ptr<Node> root;
-    int x0;
-    int y0;
-        
+    int x0 = 0;
+    int y0 = 0;
+    int z0 = 0;
 
 };
 
