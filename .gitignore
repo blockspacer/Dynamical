@@ -3,3 +3,5 @@ build/
 *.kdev4
 .vs/
 CMakeSettings.json
+*~
+CMakeLists.txt.user
