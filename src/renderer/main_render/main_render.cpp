@@ -10,14 +10,17 @@
 #include "renderer/marching_cubes/chunk.h"
 #include "logic/components/chunkc.h"
 
-MainRender::MainRender(Instance& instance, Device& device, Swapchain& swap, Camera& camera, Terrain& terrain) : renderpass(device, swap), pipeline(device, swap, renderpass), instance(instance), device(device), swap(swap), camera(camera), terrain(terrain),
-commandBuffers(NUM_FRAMES), fences(NUM_FRAMES), ubos(NUM_FRAMES), uboPointers(NUM_FRAMES) {
+std::mutex Chunk::mutex;
+
+MainRender::MainRender(Instance& instance, Device& device, Swapchain& swap, Camera& camera) : renderpass(device, swap), pipeline(device, swap, renderpass), instance(instance), device(device), swap(swap), camera(camera) {
     
     commandPool = device->createCommandPool(vk::CommandPoolCreateInfo(vk::CommandPoolCreateFlagBits::eResetCommandBuffer, device.g_i));
     
-    commandBuffers = device->allocateCommandBuffers(vk::CommandBufferAllocateInfo(commandPool, vk::CommandBufferLevel::ePrimary, NUM_FRAMES));
+    auto temp = device->allocateCommandBuffers(vk::CommandBufferAllocateInfo(commandPool, vk::CommandBufferLevel::ePrimary, NUM_FRAMES));
     
-    for(int i = 0; i < fences.size(); i++) {
+    for(int i = 0; i < NUM_FRAMES; i++) {
+        
+        commandBuffers[i] = temp[i];
         
         fences[i] = device->createFence(vk::FenceCreateInfo(vk::FenceCreateFlagBits::eSignaled));
         
@@ -83,6 +86,7 @@ void MainRender::render(entt::registry& reg, uint32_t index, std::vector<vk::Sem
     
     command.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline, 0, {pipeline.descSets[index]}, {});
     
+    Chunk::mutex.lock();
     reg.view<Chunk, entt::tag<"ready"_hs>>().each([&](Chunk& chonk, auto) {
         
         command.bindVertexBuffers(0, {chonk.triangles}, {chonk.triangles_offset * sizeof(Triangle)});
@@ -90,6 +94,7 @@ void MainRender::render(entt::registry& reg, uint32_t index, std::vector<vk::Sem
         command.drawIndirect(chonk.indirect, chonk.indirect_offset * sizeof(vk::DrawIndirectCommand), 1, 0);
         
     });
+    Chunk::mutex.unlock();
     
     command.endRenderPass();
     

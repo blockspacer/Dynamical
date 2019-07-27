@@ -15,7 +15,25 @@ constexpr uint32_t NUM_TRIANGLES = 50000/3;
 constexpr uint32_t NUM_INDIRECT = 10;
 constexpr uint32_t MAX_CHUNKS = 5000;
 
-Terrain::Terrain(Device& device) : device(device) {
+Terrain::Terrain() {
+    
+    
+    
+}
+
+void Terrain::preinit(entt::registry& reg) {
+    
+    ChunkDataC& cd = reg.set<ChunkDataC>();
+    
+    //reg.on_construct<ChunkC>().connect<&Terrain::construction>(this);
+    reg.on_destroy<Chunk>().connect<&Terrain::destructionChunk>(this);
+    reg.on_destroy<ChunkBuild>().connect<&Terrain::destructionChunkBuild>(this);
+    
+}
+
+void Terrain::init(entt::registry& reg) {
+    
+    Device& device = *reg.ctx<Device*>();
     
     auto poolSizes = std::vector {
         vk::DescriptorPoolSize(vk::DescriptorType::eStorageBuffer, max_per_frame*NUM_FRAMES*2),
@@ -33,21 +51,8 @@ Terrain::Terrain(Device& device) : device(device) {
     triangles.reserve(MAX_CHUNKS);
     indirects.reserve(NUM_INDIRECT);
     
-    indirects.push_back(IndirectAllocation(make_indirect(NUM_INDIRECT), NUM_INDIRECT));
+    indirects.push_back(IndirectAllocation(make_indirect(device, NUM_INDIRECT), NUM_INDIRECT));
     
-}
-
-void Terrain::preinit(entt::registry& reg) {
-    
-    ChunkDataC& cd = reg.set<ChunkDataC>();
-    
-    //reg.on_construct<ChunkC>().connect<&Terrain::construction>(this);
-    reg.on_destroy<Chunk>().connect<&Terrain::destructionChunk>(this);
-    reg.on_destroy<ChunkBuild>().connect<&Terrain::destructionChunkBuild>(this);
-    
-}
-
-void Terrain::init(entt::registry& reg) {
     
     for(int i = 0; i < chunkData.size(); i++) {
         VmaAllocationCreateInfo allocInfo = {};
@@ -62,6 +67,8 @@ void Terrain::init(entt::registry& reg) {
         vmaGetAllocationInfo(device, chunkData[i].allocation, &inf);
         cd.data[i] = static_cast<ChunkData*> (inf.pMappedData);
     }
+    
+    reg.set<TerrainDescriptorLayout>(descLayout);
     
 }
 
@@ -79,12 +86,14 @@ void Terrain::destructionChunk(entt::registry& reg, entt::entity entity) {
 
 void Terrain::destructionChunkBuild(entt::registry& reg, entt::entity entity) {
     
-    deallocate(reg.get<ChunkBuild>(entity));
+    deallocate(*reg.ctx<Device*>(), reg.get<ChunkBuild>(entity));
     
 }
 
 
 void Terrain::allocate(entt::registry& reg, Chunk& chonk, ChunkBuild& build) {
+    
+    Device& device = *reg.ctx<Device*>();
     
     if(!indirectSlots.empty()) {
         const auto& slot = indirectSlots.top();
@@ -98,7 +107,7 @@ void Terrain::allocate(entt::registry& reg, Chunk& chonk, ChunkBuild& build) {
             chonk.indirect_offset = alloc.num;
             alloc.num++;
         } else {
-            indirects.push_back(IndirectAllocation(make_indirect(NUM_INDIRECT), NUM_INDIRECT));
+            indirects.push_back(IndirectAllocation(make_indirect(device, NUM_INDIRECT), NUM_INDIRECT));
             auto& new_alloc = indirects.back();
             chonk.indirect = new_alloc.buffer;
             chonk.indirect_offset = new_alloc.num;
@@ -112,7 +121,7 @@ void Terrain::allocate(entt::registry& reg, Chunk& chonk, ChunkBuild& build) {
         triangleSlots.pop();
     } else {
         //std::cout << (triangles.size() * NUM_TRIANGLES * sizeof(Triangle)) / 1000000. << std::endl;
-        triangles.push_back(make_triangles(NUM_TRIANGLES));
+        triangles.push_back(make_triangles(device, NUM_TRIANGLES));
         chonk.triangles = triangles.back();
     }
     chonk.triangles_offset = 0;
@@ -132,7 +141,7 @@ void Terrain::allocate(entt::registry& reg, Chunk& chonk, ChunkBuild& build) {
     
 }
 
-void Terrain::deallocate(ChunkBuild& build) {
+void Terrain::deallocate(Device& device, ChunkBuild& build) {
     
     device->freeDescriptorSets(descPool, build.set);
     
@@ -160,24 +169,31 @@ void Terrain::deallocate(Chunk& chonk) {
 
 void Terrain::tick(entt::registry& reg) {
     
+    Device& device = *reg.ctx<Device*>();
+    
     auto view = reg.view<ChunkBuild, entt::tag<"modified"_hs>>();
     for(auto entity : view) {
         auto& build = view.get<ChunkBuild>(entity);
         
+        Chunk::mutex.lock();
         if(reg.has<Chunk>(entity)) {
             auto& chonk = reg.get<Chunk>(entity);
             deallocate(chonk);
-            deallocate(build);
+            deallocate(device, build);
             allocate(reg, chonk, build);
         } else {
-            allocate(reg, reg.assign<Chunk>(entity), build);
+            auto& chonk = reg.assign<Chunk>(entity);
+            allocate(reg, chonk, build);
         }
+        Chunk::mutex.unlock();
         
     }
     
 }
 
-Terrain::~Terrain() {
+void Terrain::finish(entt::registry& reg) {
+    
+    Device& device = *reg.ctx<Device*>();
     
     device->destroy(descLayout);
     
@@ -185,7 +201,12 @@ Terrain::~Terrain() {
     
 }
 
-VmaBuffer Terrain::make_triangles(uint32_t numTriangles) {
+
+Terrain::~Terrain() {
+    
+}
+
+VmaBuffer Terrain::make_triangles(Device& device, uint32_t numTriangles) {
     
     VmaAllocationCreateInfo info = {};
     info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
@@ -199,7 +220,7 @@ VmaBuffer Terrain::make_triangles(uint32_t numTriangles) {
         concurrent ? vk::SharingMode::eConcurrent : vk::SharingMode::eExclusive, concurrent ? 2 : 1, &qfs[0]));
 }
 
-VmaBuffer Terrain::make_indirect(uint32_t numIndirect) {
+VmaBuffer Terrain::make_indirect(Device& device, uint32_t numIndirect) {
     
     VmaAllocationCreateInfo info = {};
     info.usage = VMA_MEMORY_USAGE_GPU_ONLY;

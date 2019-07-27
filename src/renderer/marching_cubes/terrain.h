@@ -26,12 +26,15 @@ struct Triangle {
 
 class Device;
 
-class Terrain : System {
+typedef vk::DescriptorSetLayout TerrainDescriptorLayout;
+
+class Terrain : public System {
 public:
-    Terrain(Device& device);
+    Terrain();
     void preinit(entt::registry& reg) override;
     void init(entt::registry& reg) override;
     void tick(entt::registry& reg) override;
+    void finish(entt::registry& reg) override;
     const char* name() override {return "Terrain";};
     ~Terrain();
     
@@ -40,17 +43,16 @@ public:
     void destructionChunkBuild(entt::registry& reg, entt::entity entity);
     void allocate(entt::registry& reg, Chunk& chonk, ChunkBuild& build);
     void deallocate(Chunk& chonk);
-    void deallocate(ChunkBuild& build);
+    void deallocate(Device& device, ChunkBuild& build);
     
     vk::DescriptorSetLayout getDescLayout() {
         return descLayout;
     }
     
 private:
-    Device& device;
     
-    VmaBuffer make_triangles(uint32_t numTriangles);
-    VmaBuffer make_indirect(uint32_t numIndirect);
+    VmaBuffer make_triangles(Device& device, uint32_t numTriangles);
+    VmaBuffer make_indirect(Device& device, uint32_t numIndirect);
     
     std::array<VmaBuffer, NUM_FRAMES> chunkData;
     

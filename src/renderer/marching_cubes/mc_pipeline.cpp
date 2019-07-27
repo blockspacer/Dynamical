@@ -10,7 +10,7 @@
 
 #include <iostream>
 
-MCPipeline::MCPipeline(Device& device, Terrain& terrain) : device(device), terrain(terrain) {
+MCPipeline::MCPipeline(Device& device, vk::DescriptorSetLayout setlayout) : device(device) {
     
     auto poolSizes = std::vector {
         vk::DescriptorPoolSize(vk::DescriptorType::eUniformTexelBuffer, 1),
@@ -29,7 +29,7 @@ MCPipeline::MCPipeline(Device& device, Terrain& terrain) : device(device), terra
     
     auto pcrange = vk::PushConstantRange(vk::ShaderStageFlagBits::eCompute, 0, sizeof(MCPushConstants));
     
-    auto layouts = std::vector {descLayout, terrain.getDescLayout()};
+    auto layouts = std::vector {descLayout, setlayout};
     layout = device->createPipelineLayout(vk::PipelineLayoutCreateInfo({}, layouts.size(), layouts.data(), 1, &pcrange));
     
     
@@ -79,14 +79,16 @@ MCPipeline::MCPipeline(Device& device, Terrain& terrain) : device(device), terra
     
     VmaAllocationCreateInfo allocInfo = {};
     allocInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+    allocInfo.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
     lookupBuffer = VmaBuffer(device, &allocInfo, vk::BufferCreateInfo(
         {}, lookupData.size() * sizeof(char), vk::BufferUsageFlagBits::eUniformTexelBuffer,
         vk::SharingMode::eExclusive, 1, &device.c_i
     ));
     
-    void* ptr = device->mapMemory(lookupBuffer.memory, lookupBuffer.offset, lookupBuffer.size);
-    memcpy(ptr, lookupData.data(), lookupBuffer.size);
-    device->unmapMemory(lookupBuffer.memory);
+    VmaAllocationInfo vai;
+    vmaGetAllocationInfo(device, lookupBuffer, &vai);
+    
+    memcpy(vai.pMappedData, lookupData.data(), lookupBuffer.size);
     
     lookupView = device->createBufferView(vk::BufferViewCreateInfo({}, lookupBuffer, vk::Format::eR8Sint, 0, lookupBuffer.size));
     

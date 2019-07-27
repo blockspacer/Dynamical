@@ -20,7 +20,7 @@ class Terrain;
 
 class MCPipeline {
 public:
-    MCPipeline(Device& device, Terrain& terrain);
+    MCPipeline(Device& device, vk::DescriptorSetLayout setlayout);
     ~MCPipeline();
     
     operator vk::Pipeline() { return pipeline; }
@@ -31,8 +31,8 @@ public:
     operator VkDescriptorSet() { return static_cast<VkDescriptorSet>(descSet); }
     
 private:
+    
     Device& device;
-    Terrain& terrain;
     
     vk::Pipeline pipeline;
     vk::PipelineLayout layout;

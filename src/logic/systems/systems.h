@@ -12,9 +12,11 @@
 #include <iostream>
 #include <chrono>
 
+#include "taskflow/taskflow.hpp"
+
 class Systems {
 public:
-    Systems();
+    Systems(entt::registry& reg);
     
     void preinit(entt::registry& reg) {
         
@@ -32,24 +34,22 @@ public:
         
     }
     
-    void tick(entt::registry& reg) {
+    void tick(entt::registry&);
+    
+    void finish(entt::registry& reg) {
         
         for(std::unique_ptr<System>& sys : systems) {
-            if(systemprofiling) {
-                auto before = std::chrono::high_resolution_clock::now();
-                sys->tick(reg);
-                auto after = std::chrono::high_resolution_clock::now();
-                auto milliseconds = std::chrono::duration_cast<std::chrono::nanoseconds> (after - before).count()/1000000.;
-                if(milliseconds > 20.) std::cout << sys->name() << " system took " << milliseconds << " milliseconds" << std::endl;
-            } else {
-                sys->tick(reg);
-            }
+            sys->finish(reg);
         }
         
     }
 
 private:
     std::vector<std::unique_ptr<System>> systems;
+    
+    tf::Executor executor;
+    tf::Taskflow taskflow;
+    
 };
 
 #endif

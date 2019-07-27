@@ -10,6 +10,8 @@
 
 #include "entt/entt.hpp"
 
+#include "renderer/num_frames.h"
+
 class Instance;
 class Device;
 class Swapchain;
@@ -26,7 +28,7 @@ struct UBO {
 
 class MainRender {
 public:
-    MainRender(Instance& instance, Device& device, Swapchain& swap, Camera& camera, Terrain& terrain);
+    MainRender(Instance& instance, Device& device, Swapchain& swap, Camera& camera);
     void setup();
     void rsetup();
     void render(entt::registry& reg, uint32_t index, std::vector<vk::Semaphore> waits, std::vector<vk::Semaphore> signals);
@@ -42,14 +44,13 @@ private:
     Device& device;
     Swapchain& swap;
     Camera& camera;
-    Terrain& terrain;
     
     vk::CommandPool commandPool;
-    std::vector<vk::CommandBuffer> commandBuffers;
-    std::vector<vk::Fence> fences;
+    std::array<vk::CommandBuffer, NUM_FRAMES> commandBuffers;
+    std::array<vk::Fence, NUM_FRAMES> fences;
     
-    std::vector<VmaBuffer> ubos;
-    std::vector<UBO*> uboPointers;
+    std::array<VmaBuffer, NUM_FRAMES> ubos;
+    std::array<UBO*, NUM_FRAMES> uboPointers;
     
 };
 

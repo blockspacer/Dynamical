@@ -10,18 +10,19 @@
 
 #include "entt/entt.hpp"
 
+#include "logic/systems/system.h"
+
 typedef uint32_t computing;
 
 constexpr int max_per_frame = 20;
 
-class Device;
-class Terrain;
-
-class MarchingCubes {
+class MarchingCubes : public System {
 public:
-    MarchingCubes(Device& device, Terrain& terrain);
-    void compute(entt::registry& reg, uint32_t index, std::vector<vk::Semaphore> waits, std::vector<vk::Semaphore> signals);
-    ~MarchingCubes();
+    MarchingCubes();
+    void init(entt::registry& reg) override;
+    void tick(entt::registry& reg) override;
+    void finish(entt::registry& reg) override;
+    const char* name() override {return "Marching Cubes";};
     
 private:
     vk::CommandPool commandPool;
@@ -37,11 +38,7 @@ private:
     
     std::array<PerFrame, NUM_FRAMES> per_frame;
     
-    
-    Device& device;
-    Terrain& terrain;
-    
-    MCPipeline pipeline;
+    std::unique_ptr<MCPipeline> pipeline;
     
 };
 

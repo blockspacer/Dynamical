@@ -9,7 +9,7 @@
 #include "components/chunkc.h"
 #include "components/positionc.h"
 
-Game::Game() {
+Game::Game() : systems(reg) {
     
 }
 
@@ -40,6 +40,8 @@ void Game::update(float dt) {
 }
 
 void Game::quit() {
+    
+    systems.finish(reg);
     
 }
 

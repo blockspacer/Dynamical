@@ -12,7 +12,15 @@
 constexpr int timestamp_count = 2;
 constexpr int total_timestamp_count = timestamp_count*NUM_FRAMES;
 
-MarchingCubes::MarchingCubes(Device& device, Terrain& terrain) : device(device), terrain(terrain), pipeline(device, terrain) {
+MarchingCubes::MarchingCubes() : pipeline(nullptr) {
+    
+}
+
+void MarchingCubes::init(entt::registry& reg) {
+    
+    Device& device = *reg.ctx<Device*>();
+    
+    pipeline = std::make_unique<MCPipeline>(device, reg.ctx<TerrainDescriptorLayout>());
     
     commandPool = device->createCommandPool(vk::CommandPoolCreateInfo(vk::CommandPoolCreateFlagBits::eResetCommandBuffer, device.c_i));
     
@@ -27,7 +35,10 @@ MarchingCubes::MarchingCubes(Device& device, Terrain& terrain) : device(device),
     
 }
 
-void MarchingCubes::compute(entt::registry& reg, uint32_t index, std::vector<vk::Semaphore> waits, std::vector<vk::Semaphore> signals) {
+void MarchingCubes::tick(entt::registry& reg) {
+    
+    Device& device = *reg.ctx<Device*>();
+    uint32_t index = reg.ctx<RenderInfo>().frame_index;
     
     static float t = 0;
     
@@ -48,7 +59,9 @@ void MarchingCubes::compute(entt::registry& reg, uint32_t index, std::vector<vk:
                     if(ind == i) {
                         reg.remove<computing>(entity);
                         reg.remove<ChunkBuild>(entity);
+                        Chunk::mutex.lock();
                         reg.assign<entt::tag<"ready"_hs>>(entity);
+                        Chunk::mutex.unlock();
                     }
                 });
                 
@@ -69,13 +82,16 @@ void MarchingCubes::compute(entt::registry& reg, uint32_t index, std::vector<vk:
         
     }
     
-    reg.view<entt::tag<"destroying"_hs>>().each([&](entt::entity entity, auto) {
-        
-        if(!reg.has<computing>(entity)) {
-            reg.destroy(entity);
-        }
-        
-    });
+    if(Chunk::mutex.try_lock()) {
+        reg.view<entt::tag<"destroying"_hs>>().each([&](entt::entity entity, auto) {
+            
+            if(!reg.has<computing>(entity)) {
+                reg.destroy(entity);
+            }
+            
+        });
+        Chunk::mutex.unlock();
+    }
     
     
     per_frame[index].chunk_count = 0;
@@ -90,9 +106,9 @@ void MarchingCubes::compute(entt::registry& reg, uint32_t index, std::vector<vk:
         
         if(marchingcubesprofiling) commandBuffer.writeTimestamp(vk::PipelineStageFlagBits::eTopOfPipe, queryPool, 0);
         
-        commandBuffer.bindPipeline(vk::PipelineBindPoint::eCompute, pipeline);
+        commandBuffer.bindPipeline(vk::PipelineBindPoint::eCompute, *pipeline);
         
-        commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eCompute, pipeline, 0, {pipeline}, {});
+        commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eCompute, *pipeline, 0, {*pipeline}, {});
         
         auto view = reg.view<ChunkC, ChunkBuild, entt::tag<"modified"_hs>>();
         for(auto entity : view) {
@@ -100,10 +116,10 @@ void MarchingCubes::compute(entt::registry& reg, uint32_t index, std::vector<vk:
             auto& chunk = view.get<ChunkC>(entity);
             auto& chonk = view.get<ChunkBuild>(entity);
             
-            commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eCompute, pipeline, 1, {chonk.set}, {static_cast<uint32_t>(sizeof(ChunkData)) * chonk.index});
+            commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eCompute, *pipeline, 1, {chonk.set}, {static_cast<uint32_t>(sizeof(ChunkData)) * chonk.index});
             
             MCPushConstants pc {chunk.getPosition(), chunk.getCubeSize(), t};
-            commandBuffer.pushConstants(pipeline, vk::ShaderStageFlagBits::eCompute, 0, sizeof(MCPushConstants), &pc);
+            commandBuffer.pushConstants(*pipeline, vk::ShaderStageFlagBits::eCompute, 0, sizeof(MCPushConstants), &pc);
             
             constexpr glm::ivec3 dispatchSizes(chunk::num_cubes/local_size);
             commandBuffer.dispatch(dispatchSizes.x, dispatchSizes.y, dispatchSizes.z);
@@ -127,9 +143,9 @@ void MarchingCubes::compute(entt::registry& reg, uint32_t index, std::vector<vk:
             auto stages = std::vector<vk::PipelineStageFlags> {vk::PipelineStageFlagBits::eTopOfPipe};
             
             device.compute.submit({vk::SubmitInfo(
-                Util::removeElement<vk::Semaphore>(waits, nullptr), waits.data(), stages.data(),
+                0, nullptr, nullptr,
                 1, &commandBuffer,
-                Util::removeElement<vk::Semaphore>(signals, nullptr), signals.data()
+                0, nullptr
             )}, per_frame[index].fence);
             
             per_frame[index].fence_state = true;
@@ -139,7 +155,9 @@ void MarchingCubes::compute(entt::registry& reg, uint32_t index, std::vector<vk:
     
 }
 
-MarchingCubes::~MarchingCubes() {
+void MarchingCubes::finish(entt::registry& reg) {
+    
+    Device& device = *reg.ctx<Device*>();
     
     for(int i = 0; i<NUM_FRAMES; i++) {
         device->destroy(per_frame[i].fence);

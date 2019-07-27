@@ -6,7 +6,7 @@
 #include "num_frames.h"
 #include "logic/components/renderinfo.h"
 
-Renderer::Renderer() : win(), instance(win), device(instance), swap(win, instance, device), camera(swap.extent.width, swap.extent.height), terrain(device), marching_cubes(device, terrain), main_render(instance, device, swap, camera, terrain),
+Renderer::Renderer() : win(), instance(win), device(instance), swap(win, instance, device), camera(swap.extent.width, swap.extent.height), main_render(instance, device, swap, camera),
 waitsems(NUM_FRAMES), signalsems(NUM_FRAMES), computesems(NUM_FRAMES) {
     
     for(int i = 0; i < waitsems.size(); i++) {
@@ -21,25 +21,21 @@ void Renderer::preinit(entt::registry& reg) {
     
     reg.set<SDL_Window*>(win);
     
+    reg.set<Device*>(&device);
+    
     auto& ri = reg.set<RenderInfo>();
     ri.frame_index = 0;
     ri.frame_num = 0;
     
-    terrain.preinit(reg);
-    
 }
 
 void Renderer::init(entt::registry& reg) {
-    
-    terrain.init(reg);
     
 }
 
 void Renderer::tick(entt::registry& reg) {
     
     auto& ri = reg.ctx<RenderInfo>();
-    
-    terrain.tick(reg);
     
     InputC& input = reg.ctx<InputC>();
     if(input.on[Action::RESIZE]) {
@@ -48,8 +44,6 @@ void Renderer::tick(entt::registry& reg) {
     }
     
     try {
-        
-        marching_cubes.compute(reg, ri.frame_index, {}, {});
         
         camera.update(reg);
         
