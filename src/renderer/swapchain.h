@@ -24,8 +24,8 @@ public :
     Device& device;
     
     vk::SwapchainKHR swapchain;
-    std::array<vk::Image, NUM_FRAMES> images;
-    std::array<vk::ImageView, NUM_FRAMES> imageViews;
+    std::vector<vk::Image> images;
+    std::vector<vk::ImageView> imageViews;
     vk::Format format;
     vk::Extent2D extent;
     vk::ColorSpaceKHR colorSpace;
@@ -34,6 +34,8 @@ public :
     vk::SurfaceCapabilitiesKHR capabilities;
     std::vector<vk::SurfaceFormatKHR> formats;
     std::vector<vk::PresentModeKHR> presentModes;
+    
+    uint32_t num_frames = NUM_FRAMES;
     
     vk::Format findSupportedFormat(const std::vector<vk::Format>& candidates, vk::ImageTiling tiling, vk::FormatFeatureFlags features);
 

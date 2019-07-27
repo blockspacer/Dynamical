@@ -33,8 +33,8 @@ Swapchain::Swapchain(Windu& win, Instance& instance, Device &device) : win(win),
     format = surfaceformat.format;
     colorSpace = surfaceformat.colorSpace;
     
-    if(NUM_FRAMES < capabilities.minImageCount || (capabilities.maxImageCount != 0 && NUM_FRAMES > capabilities.maxImageCount)) {
-        std::cout << "number of frames incorrect " << std::endl;
+    if(num_frames < capabilities.minImageCount || (capabilities.maxImageCount != 0 && num_frames > capabilities.maxImageCount)) {
+        num_frames = std::max(capabilities.minImageCount, std::min(num_frames, capabilities.maxImageCount == 0 ? 10 : capabilities.maxImageCount));
     }
     
     setup();
@@ -71,11 +71,12 @@ void Swapchain::setup() {
     uint32_t num;
     vkGetSwapchainImagesKHR(device, static_cast<VkSwapchainKHR> (swapchain), &num, nullptr);
     
-    if(NUM_FRAMES != num) std::cout << "number of frames changed to : " << num << std::endl;
+    if(num_frames != num) std::cout << "number of frames changed to : " << num << std::endl;
     
+    images.resize(num_frames);
     vkGetSwapchainImagesKHR(device, static_cast<VkSwapchainKHR> (swapchain), &num, reinterpret_cast<VkImage*> (images.data()));
     
-    
+    imageViews.resize(num_frames);
     for(uint32_t i = 0; i < imageViews.size(); i++) {
         
         imageViews[i] = device->createImageView(vk::ImageViewCreateInfo({}, images[i], vk::ImageViewType::e2D, format,

@@ -5,7 +5,7 @@
 #include "renderer/num_frames.h"
 
 Renderpass::Renderpass(Device& device, Swapchain& swap) :
-depthImages(NUM_FRAMES), depthViews(NUM_FRAMES), framebuffers(NUM_FRAMES),
+depthImages(swap.num_frames), depthViews(swap.num_frames), framebuffers(swap.num_frames),
 device(device), swap(swap) {
     
     depthFormat = swap.findSupportedFormat(

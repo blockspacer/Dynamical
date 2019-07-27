@@ -9,6 +9,7 @@
 #include "renderer/num_frames.h"
 #include "renderer/marching_cubes/chunk.h"
 #include "logic/components/chunkc.h"
+#include "logic/components/renderinfo.h"
 
 std::mutex Chunk::mutex;
 
@@ -63,13 +64,15 @@ void MainRender::rsetup() {
 
 void MainRender::render(entt::registry& reg, uint32_t index, std::vector<vk::Semaphore> waits, std::vector<vk::Semaphore> signals) {
     
-    device->waitForFences(fences[index], VK_TRUE, std::numeric_limits<uint64_t>::max());
+    const auto& ri = reg.ctx<RenderInfo>();
     
-    device->resetFences(fences[index]);
+    device->waitForFences(fences[ri.frame_index], VK_TRUE, std::numeric_limits<uint64_t>::max());
     
-    uboPointers[index]->viewproj = camera.getViewProjection();
+    device->resetFences(fences[ri.frame_index]);
     
-    vk::CommandBuffer command = commandBuffers[index];
+    uboPointers[ri.frame_index]->viewproj = camera.getViewProjection();
+    
+    vk::CommandBuffer command = commandBuffers[ri.frame_index];
         
     command.begin(vk::CommandBufferBeginInfo({}, nullptr));
     
@@ -84,7 +87,7 @@ void MainRender::render(entt::registry& reg, uint32_t index, std::vector<vk::Sem
     
     command.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
     
-    command.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline, 0, {pipeline.descSets[index]}, {});
+    command.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline, 0, {pipeline.descSets[ri.frame_index]}, {});
     
     Chunk::mutex.lock();
     reg.view<Chunk, entt::tag<"ready"_hs>>().each([&](Chunk& chonk, auto) {
@@ -105,11 +108,11 @@ void MainRender::render(entt::registry& reg, uint32_t index, std::vector<vk::Sem
     
     device.graphics.submit({vk::SubmitInfo(
         Util::removeElement<vk::Semaphore>(waits, nullptr), waits.data(), stages.data(),
-        1, &commandBuffers[index],
+        1, &commandBuffers[ri.frame_index],
         Util::removeElement<vk::Semaphore>(signals, nullptr), signals.data()
-    )}, fences[index]);
+    )}, fences[ri.frame_index]);
     
-    device->waitForFences(fences[index], VK_TRUE, std::numeric_limits<uint64_t>::max());
+    device->waitForFences(fences[ri.frame_index], VK_TRUE, std::numeric_limits<uint64_t>::max());
     
 }
 

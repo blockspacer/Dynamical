@@ -19,9 +19,7 @@ find_package(SDL2 CONFIG REQUIRED)
 target_link_libraries(dynamical PRIVATE SDL2::SDL2 SDL2::SDL2main)
 include_directories(${SDL2_INCLUDE_DIRS})
 
-
 target_link_libraries(dynamical PRIVATE FastNoiseSIMD)
-
 
 
 set(GLSL_VALIDATOR "glslangValidator")

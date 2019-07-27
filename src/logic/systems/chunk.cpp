@@ -23,17 +23,7 @@ constexpr double frequency = 0.01;
 constexpr double amplitude = 80.;
 constexpr int octaves = 3;
 
-entt::entity make_chunk(entt::registry& reg, int chunk_x, int chunk_y, int chunk_z) {
-    
-    auto& cd = reg.ctx<ChunkDataC>();
-    auto ri = reg.ctx<RenderInfo>();
-    
-    auto entity = reg.create();
-    ChunkC& chunk = reg.assign<ChunkC>(entity);
-    chunk.pos = glm::vec3(chunk_x, chunk_y, chunk_z);
-    chunk.lod = 0;
-    
-    ChunkData& chunkData = *(cd.data[ri.frame_index] + cd.index[ri.frame_index]);
+bool make_chunk(ChunkData& chunkData, int chunk_x, int chunk_y, int chunk_z) {
     
     float* noise = myNoise->GetSimplexFractalSet(
         chunk::num_cubes.x * chunk_x - chunk::border, chunk::num_cubes.z * chunk_z - chunk::border, chunk::num_cubes.y * chunk_y - chunk::border,
@@ -68,15 +58,12 @@ entt::entity make_chunk(entt::registry& reg, int chunk_x, int chunk_y, int chunk
     FastNoiseSIMD::FreeNoiseSet(noise);
     
     if(empty == true) {
-        return entity;
+        return false;
     }
     
-    reg.assign<entt::tag<"modified"_hs>>(entity);
-    ChunkBuild& cb = reg.assign<ChunkBuild>(entity);
-    cb.index = cd.index[ri.frame_index];
-    cd.index[ri.frame_index]++;
     
-    return entity;
+    
+    return true;
     
 }
 
@@ -112,17 +99,43 @@ void ChunkSys::tick(entt::registry& reg) {
                 chunk.lod = 0;
                 chunk.pos = glm::vec3(x + std::round(cam.pos.x/chunk::base_length), y, z + std::round(cam.pos.z/chunk::base_length));
                 
-                if(glm::distance2(glm::vec3(chunk.getPosition()), cam.pos) < Util::c_sq(render_distance + chunk::base_length) && 
-                    map.get(chunk.pos.x, chunk.pos.y, chunk.pos.z) == entt::null) {
-                    
-                    if(cd.index[ri.frame_index] >= max_per_frame) return;
+                if(map.get(chunk.pos.x, chunk.pos.y, chunk.pos.z) == entt::null && glm::distance2(glm::vec3(chunk.getPosition()), cam.pos) < Util::c_sq(render_distance + chunk::base_length)) {
                     auto entity = reg.create();
-                    
-                    
+                    ChunkC& cc = reg.assign<ChunkC>(entity);
+                    cc.pos = chunk.pos;
+                    cc.lod = chunk.lod;
+                    reg.assign<entt::tag<"prepare"_hs>>(entity);
                     map.set(chunk.pos.x, chunk.pos.y, chunk.pos.z, entity);
+                    
                 }
             }
         }
     }
+    
+    //static std::mutex mutex;
+    
+    int i = cd.index[ri.frame_index];
+    auto view = reg.view<ChunkC, entt::tag<"prepare"_hs>>();
+    for(auto entity : view) {
+        
+        //mutex.lock();
+        if(i >= max_per_frame) return;
+        //mutex.unlock();
+        
+        auto& chunk = view.get<ChunkC>(entity);
+        if(make_chunk(*(cd.data[ri.frame_index] + i), chunk.pos.x, chunk.pos.y, chunk.pos.z)) {
+            reg.assign<entt::tag<"modified"_hs>>(entity);
+            ChunkBuild& cb = reg.assign<ChunkBuild>(entity);
+            //mutex.lock();
+            cb.index = i;
+            i++;
+            //mutex.unlock();
+            
+        }
+        
+        reg.remove<entt::tag<"prepare"_hs>>(entity);
+    }
+    
+    cd.index[ri.frame_index] = i;
     
 }
