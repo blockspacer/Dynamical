@@ -38,6 +38,8 @@ public:
     
     void finish(entt::registry& reg) {
         
+        executor.wait_for_all();
+        
         for(std::unique_ptr<System>& sys : systems) {
             sys->finish(reg);
         }

@@ -25,15 +25,16 @@ Systems::Systems(entt::registry& reg) : systems() {
     MAKE_SYSTEM(Terrain, terrain)
     MAKE_SYSTEM(MarchingCubes, marching_cubes)
     MAKE_SYSTEM(Renderer, renderer)
+    Renderer* rend = static_cast<Renderer*> (systems[i-1].operator->());
+    tf::Task renderer_prep = taskflow.emplace([=]() {rend->prepare(*preg);});
     
     input.precede(camera);
-    camera.precede(chunk, renderer);
+    camera.precede(renderer_prep);
+    renderer_prep.precede(chunk, renderer);
     
-    {
-        chunk.precede(terrain);
-        terrain.precede(marching_cubes);
-    }
-    
+    chunk.precede(terrain);
+    terrain.precede(marching_cubes);
+
 }
 
 

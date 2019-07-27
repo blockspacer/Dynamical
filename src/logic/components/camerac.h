@@ -3,6 +3,8 @@
 
 #include "glm/glm.hpp"
 
+#include <mutex>
+
 class CameraC {
 public:
     glm::vec3 pos;

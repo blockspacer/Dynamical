@@ -27,7 +27,6 @@ entt::entity make_chunk(entt::registry& reg, int chunk_x, int chunk_y, int chunk
     
     auto& cd = reg.ctx<ChunkDataC>();
     auto ri = reg.ctx<RenderInfo>();
-    if(cd.index[ri.frame_index] >= max_per_frame) return entt::null;
     
     auto entity = reg.create();
     ChunkC& chunk = reg.assign<ChunkC>(entity);
@@ -94,7 +93,7 @@ void ChunkSys::init(entt::registry& reg) {
 void ChunkSys::tick(entt::registry& reg) {
     
     ChunkMap& map = reg.ctx<ChunkMap>();
-    CameraC& cam = reg.ctx<CameraC>();
+    CameraC cam = reg.ctx<CameraC>();
     
     reg.view<ChunkC>().each([&](entt::entity entity, ChunkC& chunk) {
         if(glm::distance2(glm::vec3(chunk.getPosition()), cam.pos) > Util::c_sq(render_distance + chunk::base_length*2)) {
@@ -103,6 +102,8 @@ void ChunkSys::tick(entt::registry& reg) {
         }
     });
     
+    auto& cd = reg.ctx<ChunkDataC>();
+    auto ri = reg.ctx<RenderInfo>();
     
     for(int x = -render_chunks; x<=render_chunks; x++) {
         for(int z = -render_chunks; z<=render_chunks; z++) {
@@ -114,8 +115,10 @@ void ChunkSys::tick(entt::registry& reg) {
                 if(glm::distance2(glm::vec3(chunk.getPosition()), cam.pos) < Util::c_sq(render_distance + chunk::base_length) && 
                     map.get(chunk.pos.x, chunk.pos.y, chunk.pos.z) == entt::null) {
                     
-                    auto entity = make_chunk(reg, chunk.pos.x, chunk.pos.y, chunk.pos.z);
-                    if(entity == entt::null) return;
+                    if(cd.index[ri.frame_index] >= max_per_frame) return;
+                    auto entity = reg.create();
+                    
+                    
                     map.set(chunk.pos.x, chunk.pos.y, chunk.pos.z, entity);
                 }
             }

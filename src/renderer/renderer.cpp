@@ -33,15 +33,24 @@ void Renderer::init(entt::registry& reg) {
     
 }
 
-void Renderer::tick(entt::registry& reg) {
+void Renderer::prepare(entt::registry& reg) {
     
     auto& ri = reg.ctx<RenderInfo>();
+    
+    ri.frame_index = (ri.frame_index+1)%NUM_FRAMES;
+    ri.frame_num++;
     
     InputC& input = reg.ctx<InputC>();
     if(input.on[Action::RESIZE]) {
         resize();
         input.on.set(Action::RESIZE, false);
     }
+    
+}
+
+void Renderer::tick(entt::registry& reg) {
+    
+    auto ri = reg.ctx<RenderInfo>();
     
     try {
         
@@ -52,9 +61,6 @@ void Renderer::tick(entt::registry& reg) {
         main_render.render(reg, index, {waitsems[ri.frame_index]}, {signalsems[ri.frame_index]});
         
         swap.present(signalsems[ri.frame_index]);
-        
-        ri.frame_index = (ri.frame_index+1)%NUM_FRAMES;
-        ri.frame_num++;
         
     } catch(vk::OutOfDateKHRError) {
         
