@@ -6,17 +6,18 @@
 #include "renderer/marching_cubes/marching_cubes.h"
 
 #define MAKE_SYSTEM(TYPE, NAME) \
-systems.push_back(std::make_unique<TYPE>()); \
-tf::Task NAME = taskflow.emplace([=]() {systems[i]->tick(*preg);}); \
+systems.push_back(std::make_unique<TYPE>(reg)); \
+tf::Task NAME = taskflow.emplace([=]() {systems[i]->tick();}); \
 i++;
 
 
 constexpr size_t system_count = 6;
 
-Systems::Systems(entt::registry& reg) : systems() {
+Systems::Systems(entt::registry& reg) : reg(reg) {
+    
+    static_assert(std::is_invocable_v<System>);
     
     systems.reserve(system_count);
-    entt::registry* preg = &reg;
     int i = 0;
     
     MAKE_SYSTEM(InputSys, input)
@@ -26,7 +27,7 @@ Systems::Systems(entt::registry& reg) : systems() {
     MAKE_SYSTEM(MarchingCubes, marching_cubes)
     MAKE_SYSTEM(Renderer, renderer)
     Renderer* rend = static_cast<Renderer*> (systems[i-1].operator->());
-    tf::Task renderer_prep = taskflow.emplace([=]() {rend->prepare(*preg);});
+    tf::Task renderer_prep = taskflow.emplace([=]() {rend->prepare();});
     
     input.precede(camera);
     camera.precede(renderer_prep);
@@ -38,7 +39,7 @@ Systems::Systems(entt::registry& reg) : systems() {
 }
 
 
-void Systems::tick(entt::registry&) {
+void Systems::tick() {
     
     /*
     for(std::unique_ptr<System>& sys : systems) {

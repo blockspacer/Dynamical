@@ -15,9 +15,9 @@ Game::Game() : systems(reg) {
 
 void Game::init() {
     
-    systems.preinit(reg);
+    systems.preinit();
     
-    systems.init(reg);
+    systems.init();
     
 }
 
@@ -29,7 +29,7 @@ void Game::start() {
 
 void Game::update(float dt) {
     
-    systems.tick(reg);
+    systems.tick();
     
     InputC& input = reg.ctx<InputC>();
     if(input.on[Action::EXIT]) {
@@ -41,7 +41,7 @@ void Game::update(float dt) {
 
 void Game::quit() {
     
-    systems.finish(reg);
+    systems.finish();
     
 }
 

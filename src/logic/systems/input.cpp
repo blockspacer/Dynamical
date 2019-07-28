@@ -17,13 +17,13 @@ std::unordered_map<SDL_Scancode, Action> actionMap = {
     {SDL_SCANCODE_LSHIFT, Action::DOWN}
 };
 
-void InputSys::preinit(entt::registry& reg) {
+void InputSys::preinit() {
     
     reg.set<InputC>();
     
 }
 
-void InputSys::init(entt::registry& reg) {
+void InputSys::init() {
     
     SDL_Window* win = reg.ctx<SDL_Window*>();
     
@@ -33,7 +33,7 @@ void InputSys::init(entt::registry& reg) {
     
 }
 
-void InputSys::tick(entt::registry& reg) {
+void InputSys::tick() {
     
     InputC& input = reg.ctx<InputC>();
     

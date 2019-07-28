@@ -6,7 +6,7 @@
 #include "num_frames.h"
 #include "logic/components/renderinfo.h"
 
-Renderer::Renderer() : win(), instance(win), device(instance), swap(win, instance, device), camera(swap.extent.width, swap.extent.height), main_render(instance, device, swap, camera),
+Renderer::Renderer(entt::registry& reg) : System(reg), win(), instance(win), device(instance), swap(win, instance, device), camera(swap.extent.width, swap.extent.height), main_render(instance, device, swap, camera),
 waitsems(NUM_FRAMES), signalsems(NUM_FRAMES), computesems(NUM_FRAMES) {
     
     for(int i = 0; i < waitsems.size(); i++) {
@@ -17,7 +17,7 @@ waitsems(NUM_FRAMES), signalsems(NUM_FRAMES), computesems(NUM_FRAMES) {
     
 }
 
-void Renderer::preinit(entt::registry& reg) {
+void Renderer::preinit() {
     
     reg.set<SDL_Window*>(win);
     
@@ -29,11 +29,11 @@ void Renderer::preinit(entt::registry& reg) {
     
 }
 
-void Renderer::init(entt::registry& reg) {
+void Renderer::init() {
     
 }
 
-void Renderer::prepare(entt::registry& reg) {
+void Renderer::prepare() {
     
     auto& ri = reg.ctx<RenderInfo>();
     
@@ -48,7 +48,7 @@ void Renderer::prepare(entt::registry& reg) {
     
 }
 
-void Renderer::tick(entt::registry& reg) {
+void Renderer::tick() {
     
     auto ri = reg.ctx<RenderInfo>();
     

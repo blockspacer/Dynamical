@@ -15,13 +15,13 @@ constexpr uint32_t NUM_TRIANGLES = 50000/3;
 constexpr uint32_t NUM_INDIRECT = 10;
 constexpr uint32_t MAX_CHUNKS = 5000;
 
-Terrain::Terrain() {
+Terrain::Terrain(entt::registry& reg) : System(reg) {
     
     
     
 }
 
-void Terrain::preinit(entt::registry& reg) {
+void Terrain::preinit() {
     
     ChunkDataC& cd = reg.set<ChunkDataC>();
     
@@ -31,7 +31,7 @@ void Terrain::preinit(entt::registry& reg) {
     
 }
 
-void Terrain::init(entt::registry& reg) {
+void Terrain::init() {
     
     Device& device = *reg.ctx<Device*>();
     
@@ -91,7 +91,7 @@ void Terrain::destructionChunkBuild(entt::registry& reg, entt::entity entity) {
 }
 
 
-void Terrain::allocate(entt::registry& reg, Chunk& chonk, ChunkBuild& build) {
+void Terrain::allocate(Chunk& chonk, ChunkBuild& build) {
     
     Device& device = *reg.ctx<Device*>();
     
@@ -167,7 +167,7 @@ void Terrain::deallocate(Chunk& chonk) {
 
 
 
-void Terrain::tick(entt::registry& reg) {
+void Terrain::tick() {
     
     Device& device = *reg.ctx<Device*>();
     
@@ -180,10 +180,10 @@ void Terrain::tick(entt::registry& reg) {
             auto& chonk = reg.get<Chunk>(entity);
             deallocate(chonk);
             deallocate(device, build);
-            allocate(reg, chonk, build);
+            allocate(chonk, build);
         } else {
             auto& chonk = reg.assign<Chunk>(entity);
-            allocate(reg, chonk, build);
+            allocate(chonk, build);
         }
         Chunk::mutex.unlock();
         
@@ -191,7 +191,7 @@ void Terrain::tick(entt::registry& reg) {
     
 }
 
-void Terrain::finish(entt::registry& reg) {
+void Terrain::finish() {
     
     Device& device = *reg.ctx<Device*>();
     

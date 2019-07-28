@@ -12,11 +12,11 @@
 constexpr int timestamp_count = 2;
 constexpr int total_timestamp_count = timestamp_count*NUM_FRAMES;
 
-MarchingCubes::MarchingCubes() : pipeline(nullptr) {
+MarchingCubes::MarchingCubes(entt::registry& reg) : System(reg), pipeline(nullptr) {
     
 }
 
-void MarchingCubes::init(entt::registry& reg) {
+void MarchingCubes::init() {
     
     Device& device = *reg.ctx<Device*>();
     
@@ -35,7 +35,7 @@ void MarchingCubes::init(entt::registry& reg) {
     
 }
 
-void MarchingCubes::tick(entt::registry& reg) {
+void MarchingCubes::tick() {
     
     Device& device = *reg.ctx<Device*>();
     uint32_t index = reg.ctx<RenderInfo>().frame_index;
@@ -155,7 +155,7 @@ void MarchingCubes::tick(entt::registry& reg) {
     
 }
 
-void MarchingCubes::finish(entt::registry& reg) {
+void MarchingCubes::finish() {
     
     Device& device = *reg.ctx<Device*>();
     

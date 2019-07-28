@@ -18,10 +18,10 @@ constexpr int max_per_frame = 20;
 
 class MarchingCubes : public System {
 public:
-    MarchingCubes();
-    void init(entt::registry& reg) override;
-    void tick(entt::registry& reg) override;
-    void finish(entt::registry& reg) override;
+    MarchingCubes(entt::registry& reg);
+    void init() override;
+    void tick() override;
+    void finish() override;
     const char* name() override {return "Marching Cubes";};
     
 private:

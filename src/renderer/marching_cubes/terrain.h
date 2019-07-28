@@ -30,18 +30,18 @@ typedef vk::DescriptorSetLayout TerrainDescriptorLayout;
 
 class Terrain : public System {
 public:
-    Terrain();
-    void preinit(entt::registry& reg) override;
-    void init(entt::registry& reg) override;
-    void tick(entt::registry& reg) override;
-    void finish(entt::registry& reg) override;
+    Terrain(entt::registry& reg);
+    void preinit() override;
+    void init() override;
+    void tick() override;
+    void finish() override;
     const char* name() override {return "Terrain";};
     ~Terrain();
     
     void construction(entt::registry& reg, entt::entity entity, ChunkC& chunk);
     void destructionChunk(entt::registry& reg, entt::entity entity);
     void destructionChunkBuild(entt::registry& reg, entt::entity entity);
-    void allocate(entt::registry& reg, Chunk& chonk, ChunkBuild& build);
+    void allocate(Chunk& chonk, ChunkBuild& build);
     void deallocate(Chunk& chonk);
     void deallocate(Device& device, ChunkBuild& build);
     

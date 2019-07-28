@@ -24,7 +24,7 @@ constexpr double frequency = 0.01;
 constexpr double amplitude = 200.;
 constexpr int octaves = 4;
 
-void ChunkSys::init(entt::registry& reg) {
+void ChunkSys::init() {
     
     ChunkMap& map = reg.set<ChunkMap>();
     
@@ -34,7 +34,7 @@ void ChunkSys::init(entt::registry& reg) {
 }
 
 
-void ChunkSys::tick(entt::registry& reg) {
+void ChunkSys::tick() {
     
     ChunkMap& map = reg.ctx<ChunkMap>();
     CameraC cam = reg.ctx<CameraC>();

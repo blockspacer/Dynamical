@@ -14,11 +14,11 @@
 
 class Renderer : public System {
 public:
-    Renderer();
-    void preinit(entt::registry& reg) override;
-    void init(entt::registry& reg) override;
-    void prepare(entt::registry& reg);
-    void tick(entt::registry& reg) override;
+    Renderer(entt::registry& reg);
+    void preinit() override;
+    void init() override;
+    void prepare();
+    void tick() override;
     const char* name() override {return "Renderer";};
     ~Renderer() override;
     

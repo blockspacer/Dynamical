@@ -7,13 +7,13 @@
 
 #include "logic/components/camerac.h"
 
-void CameraSys::init(entt::registry& reg) {
+void CameraSys::init() {
     
     reg.set<CameraC>();
     
 }
 
-void CameraSys::tick(entt::registry& reg) {
+void CameraSys::tick() {
     
     CameraC& camera = reg.ctx<CameraC>();
     

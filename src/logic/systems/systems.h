@@ -18,30 +18,30 @@ class Systems {
 public:
     Systems(entt::registry& reg);
     
-    void preinit(entt::registry& reg) {
+    void preinit() {
         
         for(std::unique_ptr<System>& sys : systems) {
-            sys->preinit(reg);
+            sys->preinit();
         }
         
     }
     
-    void init(entt::registry& reg) {
+    void init() {
         
         for(std::unique_ptr<System>& sys : systems) {
-            sys->init(reg);
+            sys->init();
         }
         
     }
     
-    void tick(entt::registry&);
+    void tick();
     
-    void finish(entt::registry& reg) {
+    void finish() {
         
         executor.wait_for_all();
         
         for(std::unique_ptr<System>& sys : systems) {
-            sys->finish(reg);
+            sys->finish();
         }
         
     }
@@ -51,6 +51,8 @@ private:
     
     tf::Executor executor;
     tf::Taskflow taskflow;
+    
+    entt::registry& reg;
     
 };
 
