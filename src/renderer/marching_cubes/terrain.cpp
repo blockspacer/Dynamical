@@ -195,6 +195,8 @@ void Terrain::finish() {
     
     Device& device = *reg.ctx<Device*>();
     
+    device->waitIdle();
+    
     device->destroy(descLayout);
     
     device->destroy(descPool);

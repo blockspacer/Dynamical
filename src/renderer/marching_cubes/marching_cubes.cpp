@@ -159,6 +159,8 @@ void MarchingCubes::finish() {
     
     Device& device = *reg.ctx<Device*>();
     
+    device->waitIdle();
+    
     for(int i = 0; i<NUM_FRAMES; i++) {
         if(per_frame[i].fence_state) device->waitForFences(per_frame[i].fence, VK_TRUE, std::numeric_limits<uint64_t>::max());
         device->destroy(per_frame[i].fence);

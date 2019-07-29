@@ -17,11 +17,11 @@
 #include "FastNoiseSIMD/FastNoiseSIMD/FastNoiseSIMD.h"
 #include "taskflow/taskflow.hpp"
 
-constexpr float render_chunks = render_distance / chunk::base_length + 1;
+//constexpr float render_chunks = render_distance / chunk::base_length + 1;
 
 const static std::unique_ptr<FastNoiseSIMD> myNoise = std::unique_ptr<FastNoiseSIMD>(FastNoiseSIMD::NewFastNoiseSIMD());
-constexpr double frequency = 0.01;
-constexpr double amplitude = 200.;
+constexpr double frequency = 0.001;
+constexpr double amplitude = 3000.;
 constexpr int octaves = 4;
 
 void ChunkSys::init() {
@@ -29,6 +29,7 @@ void ChunkSys::init() {
     ChunkMap& map = reg.set<ChunkMap>();
     
     myNoise->SetFractalOctaves(octaves);
+    myNoise->SetFrequency(frequency);
     
 }
 
@@ -39,7 +40,7 @@ void ChunkSys::tick() {
     CameraC cam = reg.ctx<CameraC>();
     
     reg.view<ChunkC>().each([&](entt::entity entity, ChunkC& chunk) {
-        if(glm::distance2(glm::vec3(chunk.getPosition()), cam.pos) > Util::c_sq(render_distance + chunk::base_length*2)) {
+        if(glm::distance2(glm::vec3(chunk.getPosition()), cam.pos) > Util::sq(render_distance + chunk.getSize().x*2)) {
             map.remove(chunk.pos.x, chunk.pos.y, chunk.pos.z);
             if(!reg.has<entt::tag<"destroying"_hs>>(entity)) reg.assign<entt::tag<"destroying"_hs>>(entity);
         }
@@ -50,15 +51,16 @@ void ChunkSys::tick() {
     
     typedef int prepare;
     
+    ChunkC chunk;
+    chunk.lod = 2;
+    const auto mul = chunk.getLOD();
+    const int render_chunks = render_distance / (chunk.getSize().x);
     for(int x = -render_chunks; x<=render_chunks; x++) {
         for(int z = -render_chunks; z<=render_chunks; z++) {
             for(int y = -render_chunks; y<=render_chunks; y++) {
-                ChunkC chunk;
-                chunk.lod = 0;
-                const auto mul = chunk.getLOD();
-                chunk.pos = glm::vec3(x*mul + (int) std::round(cam.pos.x/chunk::base_length)%mul, y*mul + (int) std::round(cam.pos.y/chunk::base_height)%mul, z*mul + (int) std::round(cam.pos.z/chunk::base_length)%mul);
+                chunk.pos = glm::vec3(x*mul + std::round(cam.pos.x/chunk::base_length), y*mul + std::round(cam.pos.y/chunk::base_height), z*mul + std::round(cam.pos.z/chunk::base_length));
                 
-                if(map.get(chunk.pos.x, chunk.pos.y, chunk.pos.z, chunk.lod) == entt::null && glm::distance2(glm::vec3(chunk.getPosition()), cam.pos) < Util::c_sq(render_distance + chunk::base_length)) {
+                if(map.get(chunk.pos.x, chunk.pos.y, chunk.pos.z, chunk.lod) == entt::null && glm::distance2(glm::vec3(chunk.getPosition()), cam.pos) < Util::sq(render_distance + chunk.getSize().x)) {
                     auto entity = reg.create();
                     ChunkC& cc = reg.assign<ChunkC>(entity);
                     cc.pos = chunk.pos;
@@ -88,11 +90,11 @@ void ChunkSys::tick() {
         
         auto& chunk = view.get<ChunkC>(entity);
         
+        const int mul = chunk.getLOD();
         const auto cubeSize = chunk.getCubeSize();
-        myNoise->SetFrequency(frequency/chunk.getLOD());
         float* noise = myNoise->GetSimplexFractalSet(
-            chunk::num_cubes.x * chunk.pos.x - chunk::border, chunk::num_cubes.z * chunk.pos.z - chunk::border, chunk::num_cubes.y * chunk.pos.y - chunk::border,
-            chunk::num_values.x, chunk::num_values.z, chunk::num_values.y);
+            chunk::num_cubes.x * chunk.pos.x/mul - chunk::border, chunk::num_cubes.z * chunk.pos.z/mul - chunk::border, chunk::num_cubes.y * chunk.pos.y/mul - chunk::border,
+            chunk::num_values.x, chunk::num_values.z, chunk::num_values.y, mul);
     
         int index = 0;
         

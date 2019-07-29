@@ -9,9 +9,9 @@ class QuadTree {
     class Node {
     public:
         
-        Node() : hsize(0) {}
+        Node() : hsize(0), value(nullv) {}
         
-        Node(int size) : hsize(size) {
+        Node(int size) : hsize(size), value(nullv) {
             for(int i = 0; i<8; i++) {
                 ptrs[i] = nullptr;
             }
@@ -20,7 +20,7 @@ class QuadTree {
         Node(T value) : hsize(0), value(value) {}
         
         T get(int x, int y, int z, int mhsize) {
-            if(hsize > mhsize) {
+            if(hsize > mhsize && value == nullv) {
                 int index = (x>=hsize?1:0) + (y>=hsize?2:0) + (z>=hsize?4:0);
                 if(ptrs[index] == nullptr) {
                     return nullv;
@@ -32,7 +32,7 @@ class QuadTree {
         }
     
         void set(int x, int y, int z, int mhsize, T val) {
-            if(hsize > 0) {
+            if(hsize > mhsize) {
                 int index = (x>=hsize?1:0) + (y>=hsize?2:0) + (z>=hsize?4:0);
                 if(ptrs[index] == nullptr) {
                     ptrs[index] = std::make_unique<Node>(hsize/2);
