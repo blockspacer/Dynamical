@@ -43,7 +43,7 @@ Swapchain::Swapchain(Windu& win, Instance& instance, Device &device) : win(win),
 
 void Swapchain::setup() {
     
-    vk::SwapchainCreateInfoKHR createInfo({}, win.surface, NUM_FRAMES, format, colorSpace, extent, 1, vk::ImageUsageFlagBits::eColorAttachment, vk::SharingMode::eExclusive,
+    vk::SwapchainCreateInfoKHR createInfo({}, win.surface, num_frames, format, colorSpace, extent, 1, vk::ImageUsageFlagBits::eColorAttachment, vk::SharingMode::eExclusive,
         1, &device.g_i, capabilities.currentTransform, vk::CompositeAlphaFlagBitsKHR::eOpaque, presentMode, VK_TRUE, swapchain
     );
     
