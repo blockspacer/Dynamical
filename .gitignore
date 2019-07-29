@@ -1,3 +1,4 @@
+cmake-build-debug/
 build/
 .kdev4/
 *.kdev4
@@ -5,3 +6,5 @@ build/
 CMakeSettings.json
 *~
 CMakeLists.txt.user
+*.autosave
+.idea/*
