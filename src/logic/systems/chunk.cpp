@@ -29,7 +29,6 @@ void ChunkSys::init() {
     ChunkMap& map = reg.set<ChunkMap>();
     
     myNoise->SetFractalOctaves(octaves);
-    myNoise->SetFrequency(frequency);
     
 }
 
@@ -56,15 +55,16 @@ void ChunkSys::tick() {
             for(int y = -render_chunks; y<=render_chunks; y++) {
                 ChunkC chunk;
                 chunk.lod = 0;
-                chunk.pos = glm::vec3(x + std::round(cam.pos.x/chunk::base_length), y + std::round(cam.pos.y/chunk::base_height), z + std::round(cam.pos.z/chunk::base_length));
+                const auto mul = chunk.getLOD();
+                chunk.pos = glm::vec3(x*mul + (int) std::round(cam.pos.x/chunk::base_length)%mul, y*mul + (int) std::round(cam.pos.y/chunk::base_height)%mul, z*mul + (int) std::round(cam.pos.z/chunk::base_length)%mul);
                 
-                if(map.get(chunk.pos.x, chunk.pos.y, chunk.pos.z) == entt::null && glm::distance2(glm::vec3(chunk.getPosition()), cam.pos) < Util::c_sq(render_distance + chunk::base_length)) {
+                if(map.get(chunk.pos.x, chunk.pos.y, chunk.pos.z, chunk.lod) == entt::null && glm::distance2(glm::vec3(chunk.getPosition()), cam.pos) < Util::c_sq(render_distance + chunk::base_length)) {
                     auto entity = reg.create();
                     ChunkC& cc = reg.assign<ChunkC>(entity);
                     cc.pos = chunk.pos;
                     cc.lod = chunk.lod;
                     reg.assign<prepare>(entity, -1);
-                    map.set(chunk.pos.x, chunk.pos.y, chunk.pos.z, entity);
+                    map.set(entity, chunk.pos.x, chunk.pos.y, chunk.pos.z, chunk.lod);
                     
                 }
             }
@@ -88,10 +88,11 @@ void ChunkSys::tick() {
         
         auto& chunk = view.get<ChunkC>(entity);
         
+        const auto cubeSize = chunk.getCubeSize();
+        myNoise->SetFrequency(frequency/chunk.getLOD());
         float* noise = myNoise->GetSimplexFractalSet(
             chunk::num_cubes.x * chunk.pos.x - chunk::border, chunk::num_cubes.z * chunk.pos.z - chunk::border, chunk::num_cubes.y * chunk.pos.y - chunk::border,
             chunk::num_values.x, chunk::num_values.z, chunk::num_values.y);
-    
     
         int index = 0;
         
@@ -102,9 +103,9 @@ void ChunkSys::tick() {
             for(int z = 0; z < chunk::num_values.z; z++) {
                 for(int y = 0; y < chunk::num_values.y; y++) {
                     
-                    int rx = chunk::base_size.x * chunk.pos.x + x * chunk::base_cube_size;
-                    int rz = chunk::base_size.z * chunk.pos.z + z * chunk::base_cube_size;
-                    int ry = chunk::base_size.y * chunk.pos.y + y * chunk::base_cube_size;
+                    int rx = chunk::base_size.x * chunk.pos.x + x * cubeSize;
+                    int rz = chunk::base_size.z * chunk.pos.z + z * cubeSize;
+                    int ry = chunk::base_size.y * chunk.pos.y + y * cubeSize;
                     
                     float value = 70 - ry + amplitude * noise[index];
                     

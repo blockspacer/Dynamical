@@ -19,25 +19,25 @@ class QuadTree {
         
         Node(T value) : hsize(0), value(value) {}
         
-        T get(int x, int y, int z) {
-            if(hsize > 0) {
+        T get(int x, int y, int z, int mhsize) {
+            if(hsize > mhsize) {
                 int index = (x>=hsize?1:0) + (y>=hsize?2:0) + (z>=hsize?4:0);
                 if(ptrs[index] == nullptr) {
                     return nullv;
                 }
-                return ptrs[index]->get(x-(x>=hsize?hsize:0), y-(y>=hsize?hsize:0), z-(z>=hsize?hsize:0));
+                return ptrs[index]->get(x-(x>=hsize?hsize:0), y-(y>=hsize?hsize:0), z-(z>=hsize?hsize:0), mhsize);
             } else {
                 return value;
             }
         }
     
-        void set(int x, int y, int z, T val) {
+        void set(int x, int y, int z, int mhsize, T val) {
             if(hsize > 0) {
                 int index = (x>=hsize?1:0) + (y>=hsize?2:0) + (z>=hsize?4:0);
                 if(ptrs[index] == nullptr) {
                     ptrs[index] = std::make_unique<Node>(hsize/2);
                 }
-                ptrs[index]->set(x-(x>=hsize?hsize:0), y-(y>=hsize?hsize:0), z-(z>=hsize?hsize:0), val);
+                ptrs[index]->set(x-(x>=hsize?hsize:0), y-(y>=hsize?hsize:0), z-(z>=hsize?hsize:0), mhsize, val);
             } else {
                 value = val;
             }
@@ -81,14 +81,14 @@ public:
         root = std::make_unique<Node>(nullv);
     }
     
-    T get(int x, int y, int z) {
+    T get(int x, int y, int z, int mhsize = 0) {
         if(std::max(std::max(x+x0, y+y0), z+z0) >= root->hsize*2 || std::min(std::min(x+x0, y+y0), z+z0) < 0) return nullv;
-        return root->get(x+x0, y+y0, z+z0);
+        return root->get(x+x0, y+y0, z+z0, mhsize);
     }
     
-    void set(int x, int y, int z, T val) {
+    void set(int x, int y, int z, int mhsize, T val) {
         
-        if(std::max(std::max(x+x0, y+y0), z+z0) >= root->hsize*2 || std::min(std::min(x+x0, y+y0), z+z0) < 0) { // Vérifier que l'arbre est assez grand.
+        if(root->hsize < mhsize || std::max(std::max(x+x0, y+y0), z+z0) >= root->hsize*2 || std::min(std::min(x+x0, y+y0), z+z0) < 0) { // Vérifier que l'arbre est assez grand.
             
             std::unique_ptr<Node> node = std::make_unique<Node>((int) std::max(root->hsize*2, 1));
             
@@ -99,8 +99,8 @@ public:
             y0 += (y+y0<0?root->hsize:0);
             z0 += (z+z0<0?root->hsize:0);
             
-            return set(x, y, z, val); // Recommencer tant que l'arbre n'est pas assez grand.
-        } else return root->set(x+x0, y+y0, z+z0, val);
+            return set(x, y, z, mhsize, val); // Recommencer tant que l'arbre n'est pas assez grand.
+        } else return root->set(x+x0, y+y0, z+z0, mhsize, val);
         
     }
     

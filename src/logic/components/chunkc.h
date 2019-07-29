@@ -34,6 +34,10 @@ public:
         return std::pow(chunk::lod_multiplier, lod) * chunk::base_cube_size;
     }
     
+    int getLOD() {
+        return std::pow(chunk::lod_multiplier, lod);
+    }
+    
 };
 
 #endif

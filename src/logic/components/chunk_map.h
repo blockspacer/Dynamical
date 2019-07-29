@@ -10,15 +10,15 @@ constexpr int map_chunk_height = 5;
 class ChunkMap {
 public:
     
-    entt::entity get(int x, int y, int z) {
-        return tree.get(x, y, z);
+    entt::entity get(int x, int y, int z, int lod = 0) {
+        return tree.get(x, y, z, lod);
     }
     
-    void set(int x, int y, int z, entt::entity entity) {
-        tree.set(x, y, z, entity);
+    void set(entt::entity entity, int x, int y, int z, int lod = 0) {
+        tree.set(x, y, z, lod, entity);
     }
     void remove(int x, int y, int z) {
-        set(x, y, z, entt::null);
+        set(entt::null, x, y, z, 0);
     }
     void print() {
         tree.print();
