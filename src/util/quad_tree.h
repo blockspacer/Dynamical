@@ -78,11 +78,11 @@ class QuadTree {
     
 public:
     QuadTree() {
-        root = std::make_unique<Node>(nullv);
+        root = std::make_unique<Node>((int) std::pow(2, 0));
     }
     
     T get(int x, int y, int z, int mhsize = 0) {
-        if(std::max(std::max(x+x0, y+y0), z+z0) >= root->hsize*2 || std::min(std::min(x+x0, y+y0), z+z0) < 0) return nullv;
+        if(root->hsize < mhsize || std::max(std::max(x+x0, y+y0), z+z0) >= root->hsize*2 || std::min(std::min(x+x0, y+y0), z+z0) < 0) return nullv;
         return root->get(x+x0, y+y0, z+z0, mhsize);
     }
     

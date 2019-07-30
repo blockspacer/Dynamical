@@ -18,7 +18,7 @@ public:
         tree.set(x, y, z, lod, entity);
     }
     void remove(int x, int y, int z) {
-        set(entt::null, x, y, z, 0);
+        tree.remove(x, y, z);
     }
     void print() {
         tree.print();
