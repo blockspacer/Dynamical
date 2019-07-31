@@ -20,8 +20,8 @@
 //constexpr float render_chunks = render_distance / chunk::base_length + 1;
 
 const static std::unique_ptr<FastNoiseSIMD> myNoise = std::unique_ptr<FastNoiseSIMD>(FastNoiseSIMD::NewFastNoiseSIMD());
-constexpr double frequency = 0.0005;
-constexpr double amplitude = 500.;
+constexpr double frequency = 0.0001;
+constexpr double amplitude = 4000.;
 constexpr int octaves = 6;
 
 void ChunkSys::init() {

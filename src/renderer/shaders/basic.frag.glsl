@@ -6,11 +6,11 @@ layout(location = 2) in vec2 v_uv;
 
 layout(location = 0) out vec4 outColor;
 
-const int chunk_size = 1*8*8 * 2*2*2*2*2;
+const int chunk_size = 1*8*5 * 2*2*2*2*2;
 
 void main() {
     
-    float separator = min(length(1.0 - min(abs((ivec3(v_position.xyz-1.0)%chunk_size)/10.), 1.0)) * 1000., 1.0);
+    float separator = min(length(1.0 - min(abs((ivec3(v_position.xyz)%chunk_size)/2.), 1.0)) * 1000., 1.0);
     vec3 spos = v_position/length(v_position);
     outColor = vec4(abs(spos.x), separator, abs(spos.z), 1);
     
