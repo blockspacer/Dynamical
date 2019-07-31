@@ -3,6 +3,7 @@
 
 #include <vulkan/vulkan.hpp>
 #include "vma/vk_mem_alloc.h"
+#include <mutex>
 
 class Instance;
 
@@ -23,6 +24,8 @@ public :
     
     vk::Queue graphics, compute, transfer;
     uint32_t g_i = 0, c_i = 0, t_i = 0;
+    std::mutex *g_mutex, *c_mutex, *t_mutex;
+    std::unique_ptr<std::mutex> g_mutex_, c_mutex_, t_mutex_;
     
     vk::PhysicalDeviceFeatures requiredFeatures;
     std::vector<const char*> requiredExtensions;

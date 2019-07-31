@@ -33,7 +33,7 @@ void Renderer::init() {
     
 }
 
-void Renderer::prepare() {
+void Renderer::tick() {
     
     auto& ri = reg.ctx<RenderInfo>();
     
@@ -45,12 +45,6 @@ void Renderer::prepare() {
         resize();
         input.on.set(Action::RESIZE, false);
     }
-    
-}
-
-void Renderer::tick() {
-    
-    auto ri = reg.ctx<RenderInfo>();
     
     try {
         

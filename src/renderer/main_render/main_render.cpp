@@ -64,7 +64,7 @@ void MainRender::rsetup() {
 
 void MainRender::render(entt::registry& reg, uint32_t index, std::vector<vk::Semaphore> waits, std::vector<vk::Semaphore> signals) {
     
-    const auto& ri = reg.ctx<RenderInfo>();
+    RenderInfo ri = reg.ctx<RenderInfo>();
     
     device->waitForFences(fences[ri.frame_index], VK_TRUE, std::numeric_limits<uint64_t>::max());
     
@@ -106,11 +106,13 @@ void MainRender::render(entt::registry& reg, uint32_t index, std::vector<vk::Sem
 
     auto stages = std::vector<vk::PipelineStageFlags> {vk::PipelineStageFlagBits::eTopOfPipe, vk::PipelineStageFlagBits::eTopOfPipe};
     
+    device.g_mutex->lock();
     device.graphics.submit({vk::SubmitInfo(
         Util::removeElement<vk::Semaphore>(waits, nullptr), waits.data(), stages.data(),
         1, &commandBuffers[ri.frame_index],
         Util::removeElement<vk::Semaphore>(signals, nullptr), signals.data()
     )}, fences[ri.frame_index]);
+    device.g_mutex->unlock();
     
     device->waitForFences(fences[ri.frame_index], VK_TRUE, std::numeric_limits<uint64_t>::max());
     

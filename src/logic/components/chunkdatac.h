@@ -4,6 +4,8 @@
 #include "chunkc.h"
 #include "renderer/num_frames.h"
 
+typedef int ChunkSyncIndex;
+
 struct ChunkData {
     float values[chunk::num_values.x * chunk::num_values.y * chunk::num_values.z];
 };

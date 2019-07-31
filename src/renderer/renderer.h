@@ -17,7 +17,6 @@ public:
     Renderer(entt::registry& reg);
     void preinit() override;
     void init() override;
-    void prepare();
     void tick() override;
     const char* name() override {return "Renderer";};
     ~Renderer() override;

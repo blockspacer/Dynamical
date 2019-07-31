@@ -7,54 +7,70 @@
 
 #define MAKE_SYSTEM(TYPE, NAME) \
 systems.push_back(std::make_unique<TYPE>(reg)); \
-tf::Task NAME = taskflow.emplace([=]() {systems[i]->tick();}); \
+auto NAME = systems[i].get(); \
 i++;
 
-
-constexpr size_t system_count = 6;
-
 Systems::Systems(entt::registry& reg) : reg(reg) {
+
+    tf::Executor& executor = reg.set<tf::Executor>();
     
-    static_assert(std::is_invocable_v<System>);
-    
-    systems.reserve(system_count);
     int i = 0;
-    
     MAKE_SYSTEM(InputSys, input)
     MAKE_SYSTEM(CameraSys, camera)
     MAKE_SYSTEM(ChunkSys, chunk)
     MAKE_SYSTEM(Terrain, terrain)
     MAKE_SYSTEM(MarchingCubes, marching_cubes)
     MAKE_SYSTEM(Renderer, renderer)
-    Renderer* rend = static_cast<Renderer*> (systems[i-1].operator->());
-    tf::Task renderer_prep = taskflow.emplace([=]() {rend->prepare();});
     
-    input.precede(camera);
-    camera.precede(renderer_prep);
-    renderer_prep.precede(chunk, renderer);
+    tf::Task input_t = taskflow.emplace([=]() {input->tick();});
+    tf::Task camera_t = taskflow.emplace([=]() {camera->tick();});
+    tf::Task renderer_t = taskflow.emplace([=]() {renderer->tick();});
     
-    chunk.precede(terrain);
-    terrain.precede(marching_cubes);
-
+    {
+        tf::Task chunk_t = chunk_taskflow.emplace([=]() {chunk->tick();});
+        tf::Task terrain_t = chunk_taskflow.emplace([=]() {terrain->tick();});
+        tf::Task marching_cubes_t = chunk_taskflow.emplace([=]() {marching_cubes->tick();});
+        chunk_t.precede(terrain_t);
+        terrain_t.precede(marching_cubes_t);
+    }
+    
+    input_t.precede(camera_t);
+    camera_t.precede(renderer_t);
+    
 }
 
+void Systems::preinit() {
+    
+    for(std::unique_ptr<System>& sys : systems) {
+        sys->preinit();
+    }
+    
+}
+
+void Systems::init() {
+    
+    for(std::unique_ptr<System>& sys : systems) {
+        sys->init();
+    }
+    
+    reg.ctx<tf::Executor>().run_until(chunk_taskflow, [this]() {return !running;});
+    
+}
 
 void Systems::tick() {
     
-    /*
-    for(std::unique_ptr<System>& sys : systems) {
-        if(systemprofiling) {
-            auto before = std::chrono::high_resolution_clock::now();
-            sys->tick(reg);
-            auto after = std::chrono::high_resolution_clock::now();
-            auto milliseconds = std::chrono::duration_cast<std::chrono::nanoseconds> (after - before).count()/1000000.;
-            if(milliseconds > 20.) std::cout << sys->name() << " system took " << milliseconds << " milliseconds" << std::endl;
-        } else {
-            sys->tick(reg);
-        }
-    }
-    */
-    
+    tf::Executor& executor = reg.ctx<tf::Executor>();
     executor.run(taskflow).wait();
+}
+
+void Systems::finish() {
+        
+    tf::Executor& executor = reg.ctx<tf::Executor>();
+    running = false;
+    executor.wait_for_all();
+    
+    for(std::unique_ptr<System>& sys : systems) {
+        sys->finish();
+    }
     
 }

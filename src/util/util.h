@@ -2,6 +2,8 @@
 #define UTIL_H
 
 #include <vector>
+#include <mutex>
+#include <iostream>
 
 namespace Util {
     
@@ -66,6 +68,37 @@ namespace Util {
     constexpr T c_sq(T v) {
         return v*v;
     }
+    
+    template<typename T>
+    class ThreadSafe {
+    public:
+        class Locker {
+        public:
+            Locker(T* value, std::mutex& mutex) : value(value), mutex(mutex) {
+                mutex.lock();
+            }
+            T* operator-> () {
+                return value;
+            }
+            operator T&() {
+                return *value;
+            }
+            ~Locker() {
+                mutex.unlock();
+            }
+        private:
+            T* value;
+            std::mutex& mutex;
+        };
+        template<typename... Args>
+        ThreadSafe(Args&&... args) : value(std::forward<Args>(args)...) {}
+        Locker operator *() {
+            return Locker(&value, mutex);
+        }
+    private:
+        T value;
+        std::mutex mutex;
+    };
     
     
 };

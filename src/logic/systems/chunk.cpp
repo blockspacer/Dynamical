@@ -31,13 +31,16 @@ void ChunkSys::init() {
     myNoise->SetFractalOctaves(octaves);
     myNoise->SetFrequency(frequency);
     
+    ChunkSyncIndex& ri = reg.set<ChunkSyncIndex>();
+    ri = 0;
+    
 }
 
 
 void ChunkSys::tick() {
     
     ChunkMap& map = reg.ctx<ChunkMap>();
-    CameraC cam = reg.ctx<CameraC>();
+    CameraC cam = *reg.ctx<Util::ThreadSafe<CameraC>>();
     
     ChunkC chunk;
     const int lod = 5;
@@ -52,9 +55,9 @@ void ChunkSys::tick() {
     });
     
     
-    
     auto& cd = reg.ctx<ChunkDataC>();
-    auto ri = reg.ctx<RenderInfo>();
+    ChunkSyncIndex& ri = reg.ctx<ChunkSyncIndex>();
+    ri = (ri+1)%NUM_FRAMES;
     
     typedef int prepare;
     
@@ -76,9 +79,9 @@ void ChunkSys::tick() {
     }
     
     static std::mutex mutex;
-    int i = cd.index[ri.frame_index];
+    int i = cd.index[ri];
     
-    tf::Executor executor;
+    tf::Executor& executor = reg.ctx<tf::Executor>();
     tf::Taskflow taskflow;
     
     auto view = reg.view<ChunkC, prepare>();
@@ -139,7 +142,7 @@ void ChunkSys::tick() {
         full = si;
         if(si >= max_per_frame) return;
         
-        ChunkData* chunkData = cd.data[ri.frame_index] + si;
+        ChunkData* chunkData = cd.data[ri] + si;
         
         memcpy(chunkData, noise, sizeof(ChunkData));
         FastNoiseSIMD::FreeNoiseSet(noise);
@@ -148,7 +151,7 @@ void ChunkSys::tick() {
     
     executor.run(taskflow).wait();
     
-    cd.index[ri.frame_index] = std::min(i, max_per_frame);
+    cd.index[ri] = std::min(i, max_per_frame);
     
     auto endView = reg.view<prepare>();
     endView.each([&](entt::entity entity, int& si) {

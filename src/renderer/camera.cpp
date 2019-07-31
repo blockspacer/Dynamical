@@ -6,6 +6,7 @@
 #include "logic/components/camerac.h"
 
 #include "glm/gtc/matrix_transform.hpp"
+#include "util/util.h"
 
 Camera::Camera(int width, int height) {
     setup(width, height);
@@ -19,7 +20,7 @@ void Camera::setup(int width, int height) {
 
 void Camera::update(entt::registry& reg) {
     
-    CameraC& cam = reg.ctx<CameraC>();
+    CameraC cam = *reg.ctx<Util::ThreadSafe<CameraC>>();
     
     view = glm::mat4(1.0);
     view = glm::translate(view, cam.pos);

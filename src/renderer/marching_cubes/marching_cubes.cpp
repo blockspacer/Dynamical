@@ -38,7 +38,7 @@ void MarchingCubes::init() {
 void MarchingCubes::tick() {
     
     Device& device = *reg.ctx<Device*>();
-    uint32_t index = reg.ctx<RenderInfo>().frame_index;
+    ChunkSyncIndex index = reg.ctx<ChunkSyncIndex>();
     
     static float t = 0;
     
@@ -142,11 +142,13 @@ void MarchingCubes::tick() {
         
             auto stages = std::vector<vk::PipelineStageFlags> {vk::PipelineStageFlagBits::eTopOfPipe};
             
+            device.c_mutex->lock();
             device.compute.submit({vk::SubmitInfo(
                 0, nullptr, nullptr,
                 1, &commandBuffer,
                 0, nullptr
             )}, per_frame[index].fence);
+            device.c_mutex->unlock();
             
             per_frame[index].fence_state = true;
             

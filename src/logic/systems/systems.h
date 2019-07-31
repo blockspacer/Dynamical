@@ -11,6 +11,7 @@
 
 #include <iostream>
 #include <chrono>
+#include <mutex>
 
 #include "taskflow/taskflow.hpp"
 
@@ -18,39 +19,21 @@ class Systems {
 public:
     Systems(entt::registry& reg);
     
-    void preinit() {
-        
-        for(std::unique_ptr<System>& sys : systems) {
-            sys->preinit();
-        }
-        
-    }
+    void preinit();
     
-    void init() {
-        
-        for(std::unique_ptr<System>& sys : systems) {
-            sys->init();
-        }
-        
-    }
+    void init();
     
     void tick();
     
-    void finish() {
-        
-        executor.wait_for_all();
-        
-        for(std::unique_ptr<System>& sys : systems) {
-            sys->finish();
-        }
-        
-    }
+    void finish();
+    
+    bool running = true;
 
 private:
     std::vector<std::unique_ptr<System>> systems;
     
-    tf::Executor executor;
     tf::Taskflow taskflow;
+    tf::Taskflow chunk_taskflow;
     
     entt::registry& reg;
     

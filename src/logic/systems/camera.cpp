@@ -6,16 +6,18 @@
 #include "logic/components/inputc.h"
 
 #include "logic/components/camerac.h"
+#include "util/util.h"
 
 void CameraSys::init() {
     
-    reg.set<CameraC>();
+    reg.set<Util::ThreadSafe<CameraC>>();
     
 }
 
 void CameraSys::tick() {
     
-    CameraC& camera = reg.ctx<CameraC>();
+    auto cam = *reg.ctx<Util::ThreadSafe<CameraC>>();
+    CameraC& camera = cam;
     
     const InputC& input = reg.ctx<InputC>();
     
