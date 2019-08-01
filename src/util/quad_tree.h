@@ -2,6 +2,8 @@
 #define QUAD_TREE_H
 
 #include <functional>
+#include <cereal/types/memory.hpp>
+#include <cereal/types/array.hpp>
 
 template <typename T, T nullv>
 class QuadTree {
@@ -70,13 +72,19 @@ class QuadTree {
 
         int hsize;
         
+        template <class Archive>
+        void serialize( Archive & ar ) {
+            ar(value, ptrs);
+        }
+        
     private:
         
         T value;
-        std::unique_ptr<Node> ptrs[8];
+        std::array<std::unique_ptr<Node>, 8> ptrs;
     };
     
 public:
+    
     QuadTree() {
         root = std::make_unique<Node>((int) std::pow(2, 0));
     }
@@ -127,6 +135,11 @@ public:
             std::cout << std::endl;
         }
         
+    }
+    
+    template <class Archive>
+    void serialize( Archive & ar ) {
+        ar(x0, y0, z0, root);
     }
     
 private:

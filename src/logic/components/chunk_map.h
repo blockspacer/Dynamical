@@ -5,8 +5,6 @@
 
 #include "entt/entt.hpp"
 
-constexpr int map_chunk_height = 5;
-
 class ChunkMap {
 public:
     
@@ -22,6 +20,11 @@ public:
     }
     void print() {
         tree.print();
+    }
+    
+    template <class Archive>
+    void serialize( Archive & ar ) {
+        ar(tree);
     }
     
 private:
