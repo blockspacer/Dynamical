@@ -21,6 +21,8 @@ include_directories(${SDL2_INCLUDE_DIRS})
 
 target_link_libraries(dynamical PRIVATE FastNoiseSIMD)
 
+#target_compile_definitions(dynamical PRIVATE SERVER_SIDE)
+
 
 set(GLSL_VALIDATOR "glslangValidator")
 

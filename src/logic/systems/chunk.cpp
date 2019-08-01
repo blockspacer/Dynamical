@@ -39,6 +39,10 @@ void ChunkSys::init() {
 
 void ChunkSys::tick() {
     
+#ifdef SERVER_SIDE
+    std::cout << "server side" << std::endl;
+#endif
+
     ChunkMap& map = reg.ctx<ChunkMap>();
     CameraC cam = *reg.ctx<Util::ThreadSafe<CameraC>>();
     
