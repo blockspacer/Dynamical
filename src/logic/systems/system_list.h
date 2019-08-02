@@ -30,4 +30,13 @@ public:
     const char* name() override {return "Chunk";};
 };
 
+class SettingSys : public System {
+public:
+    SettingSys(entt::registry& reg) : System(reg) {};
+    void preinit() override;
+    void init() {};
+    void tick() {};
+    const char* name() override {return "Setting";};
+};
+
 #endif
