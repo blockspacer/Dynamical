@@ -15,6 +15,7 @@ Systems::Systems(entt::registry& reg) : reg(reg) {
     tf::Executor& executor = reg.set<tf::Executor>();
     
     int i = 0;
+    MAKE_SYSTEM(SettingSys, settings)
     MAKE_SYSTEM(InputSys, input)
     MAKE_SYSTEM(CameraSys, camera)
     MAKE_SYSTEM(ChunkSys, chunk)
