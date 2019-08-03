@@ -9,12 +9,13 @@
 #include "components/chunkc.h"
 #include "components/positionc.h"
 
-Game::Game() : systems(reg) {
-    
+Game::Game(int argc, char** argv) : systems(reg) {
+    auto& args = reg.set<Arguments>();
+    args.argc = argc;
+    args.argv = argv;
 }
 
 void Game::init() {
-    
     systems.preinit();
     
     systems.init();
@@ -30,7 +31,6 @@ void Game::start() {
 void Game::update(float dt) {
     
     systems.tick();
-    
     InputC& input = reg.ctx<InputC>();
     if(input.on[Action::EXIT]) {
         setQuitting();

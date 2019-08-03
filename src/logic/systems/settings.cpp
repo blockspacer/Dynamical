@@ -10,9 +10,8 @@
 #define DYNAMICAL_CONFIG_FILE "./config.json"
 #endif
 
-void SettingSys::preinit() {
-    auto& settings = reg.set<Settings>();
-    
+
+void loadSettings(entt::registry& reg, Settings& settings) {
     if(std::filesystem::exists(DYNAMICAL_CONFIG_FILE)) {
         std::ifstream is(DYNAMICAL_CONFIG_FILE);
         int i = is.get();
@@ -22,11 +21,15 @@ void SettingSys::preinit() {
             return;
         }
     }
-    
+
     std::ofstream os(DYNAMICAL_CONFIG_FILE);
     os.put(Settings::magic_number);
     cereal::JSONOutputArchive out(os);
     settings.serialize(out);
-    
 }
 
+
+void SettingSys::preinit() {
+    auto& settings = reg.set<Settings>();
+    loadSettings(reg, settings);
+}

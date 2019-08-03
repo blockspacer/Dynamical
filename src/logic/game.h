@@ -7,10 +7,11 @@
 #include "entt/entt.hpp"
 
 #include "systems/systems.h"
+#include "components/arguments.h"
 
 class Game : GameLoop {
 public:
-    Game();
+    Game(int argc, char** argv);
     void init();
     void start();
     virtual void update(float dt) override;
@@ -19,7 +20,6 @@ public:
     
 private:
     entt::registry reg;
-    
     Systems systems;
     
 };
