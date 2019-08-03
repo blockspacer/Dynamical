@@ -2,6 +2,7 @@
 #define CHUNKC_H
 
 #include "glm/glm.hpp"
+#include "util/util.h"
 
 namespace chunk {
 
@@ -13,12 +14,15 @@ namespace chunk {
     constexpr glm::ivec3 num_cubes = base_size/base_cube_size;
     constexpr int border = 1;
     constexpr glm::ivec3 num_values = num_cubes+1+2*border;
+    constexpr int max_lod = 5;
+    constexpr int max_mul = Util::c_pow(lod_multiplier, max_lod);
     
 }
 
 class ChunkC {
 public:
-    
+    ChunkC() {}
+    ChunkC(glm::ivec3 pos, int lod) : pos(pos), lod(lod) {}
     glm::ivec3 pos;
     int lod;
     
@@ -38,6 +42,17 @@ public:
         return std::pow(chunk::lod_multiplier, lod);
     }
     
+};
+
+class GlobalChunkC : public ChunkC {
+public:
+    GlobalChunkC() {}
+    GlobalChunkC(glm::ivec3 pos, int lod) : ChunkC(pos, lod) {}
+};
+class OuterGlobalChunk {
+public:
+    OuterGlobalChunk(entt::entity entity) : entity(entity) {}
+    entt::entity entity;
 };
 
 #endif

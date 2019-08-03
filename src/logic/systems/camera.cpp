@@ -10,18 +10,17 @@
 
 void CameraSys::init() {
     
-    reg.set<Util::ThreadSafe<CameraC>>();
+    reg.set<CameraC>();
     
 }
 
 void CameraSys::tick() {
     
-    auto cam = *reg.ctx<Util::ThreadSafe<CameraC>>();
-    CameraC& camera = cam;
+    CameraC& camera = reg.ctx<CameraC>();
     
     const InputC& input = reg.ctx<InputC>();
     
-    constexpr float speed = 2.f;
+    constexpr float speed = 4.5f;
     
     if(input.on[Action::FORWARD]) {
         camera.pos.x -= speed * std::sin(camera.yAxis);//*dt;

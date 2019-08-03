@@ -32,4 +32,8 @@ private:
     
 };
 
+class GlobalChunkMap : public ChunkMap {
+    
+};
+
 #endif

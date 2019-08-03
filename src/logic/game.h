@@ -7,7 +7,7 @@
 #include "entt/entt.hpp"
 
 #include "systems/systems.h"
-#include "components/arguments.h"
+#include "systems/argument_parser.h"
 
 class Game : GameLoop {
 public:
@@ -20,6 +20,7 @@ public:
     
 private:
     entt::registry reg;
+    ArgumentParser argument_parser;
     Systems systems;
     
 };

@@ -69,6 +69,14 @@ namespace Util {
         return v*v;
     }
     
+    constexpr int c_pow(int down, int up) {
+        int mul = 1;
+        for(int i = 0; i < up; i++) {
+            mul *= down;
+        }
+        return mul;
+    }
+    
     template<typename T>
     class ThreadSafe {
     public:
@@ -95,6 +103,13 @@ namespace Util {
         Locker operator *() {
             return Locker(&value, mutex);
         }
+        operator Locker() {
+            return Locker(&value, mutex);
+        }
+        operator T() {
+            return Locker(&value, mutex);
+        }
+        
     private:
         T value;
         std::mutex mutex;

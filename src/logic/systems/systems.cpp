@@ -12,31 +12,46 @@ i++;
 
 Systems::Systems(entt::registry& reg) : reg(reg) {
 
-    tf::Executor& executor = reg.set<tf::Executor>();
+    reg.set<tf::Executor>();
     
     int i = 0;
     MAKE_SYSTEM(SettingSys, settings)
     MAKE_SYSTEM(InputSys, input)
     MAKE_SYSTEM(CameraSys, camera)
+    MAKE_SYSTEM(ChunkManagerSys, chunk_manager)
+    MAKE_SYSTEM(ChunkLoaderSys, chunk_loader)
+    MAKE_SYSTEM(ChunkGeneratorSys, chunk_generator)
     MAKE_SYSTEM(ChunkSys, chunk)
     MAKE_SYSTEM(Terrain, terrain)
     MAKE_SYSTEM(MarchingCubes, marching_cubes)
     MAKE_SYSTEM(Renderer, renderer)
     
-    tf::Task input_t = taskflow.emplace([=]() {input->tick();});
-    tf::Task camera_t = taskflow.emplace([=]() {camera->tick();});
-    tf::Task renderer_t = taskflow.emplace([=]() {renderer->tick();});
-    
-    {
-        tf::Task chunk_t = chunk_taskflow.emplace([=]() {chunk->tick();});
-        tf::Task terrain_t = chunk_taskflow.emplace([=]() {terrain->tick();});
-        tf::Task marching_cubes_t = chunk_taskflow.emplace([=]() {marching_cubes->tick();});
+    { // Main taskflow
+        tf::Task input_t = taskflow.emplace([=]() {input->tick();});
+        tf::Task camera_t = taskflow.emplace([=]() {camera->tick();});
+        
+        auto [chunk_manager_t, chunk_loader_t, chunk_generator_t, chunk_t, terrain_t, marching_cubes_t] = taskflow.emplace(
+            [=]() {chunk_manager->tick();},
+            [=]() {chunk_loader->tick();},
+            [=]() {chunk_generator->tick();},
+            [=]() {chunk->tick();},
+            [=]() {terrain->tick();},
+            [=]() {marching_cubes->tick();}
+        );
+        
+        tf::Task renderer_t = taskflow.emplace([=]() {renderer->tick();});
+        
+        input_t.precede(camera_t);
+        
+        renderer_t.gather(camera_t);
+        
+        chunk_manager_t.gather(camera_t);
+        chunk_manager_t.precede(chunk_loader_t);
+        chunk_loader_t.precede(chunk_generator_t);
+        chunk_generator_t.precede(chunk_t);
         chunk_t.precede(terrain_t);
         terrain_t.precede(marching_cubes_t);
     }
-    
-    input_t.precede(camera_t);
-    camera_t.precede(renderer_t);
     
 }
 
@@ -54,7 +69,7 @@ void Systems::init() {
         sys->init();
     }
     
-    reg.ctx<tf::Executor>().run_until(chunk_taskflow, [this]() {return !running;});
+    //reg.ctx<tf::Executor>().run_until(chunk_taskflow, [this]() {return !running;});
     
 }
 

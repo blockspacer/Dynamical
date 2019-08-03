@@ -38,7 +38,7 @@ void MarchingCubes::init() {
 void MarchingCubes::tick() {
     
     Device& device = *reg.ctx<Device*>();
-    ChunkSyncIndex index = reg.ctx<ChunkSyncIndex>();
+    int index = reg.ctx<ChunkSync>().index;
     
     static float t = 0;
     
@@ -55,7 +55,8 @@ void MarchingCubes::tick() {
                 device->resetFences({per_frame[i].fence});
                 per_frame[i].fence_state = false;
                 
-                reg.view<computing>().each([&, i](entt::entity entity, uint32_t ind) {
+                reg.view<computing>().each([&, i](entt::entity entity, computing comp) {
+                    uint32_t ind = comp.index;
                     if(ind == i) {
                         reg.remove<computing>(entity);
                         reg.remove<ChunkBuild>(entity);

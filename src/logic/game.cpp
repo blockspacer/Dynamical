@@ -9,13 +9,12 @@
 #include "components/chunkc.h"
 #include "components/positionc.h"
 
-Game::Game(int argc, char** argv) : systems(reg) {
-    auto& args = reg.set<Arguments>();
-    args.argc = argc;
-    args.argv = argv;
+Game::Game(int argc, char** argv) : reg(), argument_parser(reg, argc, argv), systems(reg) {
+    
 }
 
 void Game::init() {
+    
     systems.preinit();
     
     systems.init();

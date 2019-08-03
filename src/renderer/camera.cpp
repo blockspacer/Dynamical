@@ -20,7 +20,7 @@ void Camera::setup(int width, int height) {
 
 void Camera::update(entt::registry& reg) {
     
-    CameraC cam = *reg.ctx<Util::ThreadSafe<CameraC>>();
+    CameraC cam = reg.ctx<CameraC>();
     
     view = glm::mat4(1.0);
     view = glm::translate(view, cam.pos);

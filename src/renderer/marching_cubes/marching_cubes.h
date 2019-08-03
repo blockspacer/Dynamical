@@ -12,7 +12,11 @@
 
 #include "logic/systems/system.h"
 
-typedef uint32_t computing;
+class computing {
+public:
+    computing(uint32_t index) : index(index) {}
+    uint32_t index;
+};
 
 constexpr int max_per_frame = 20;
 

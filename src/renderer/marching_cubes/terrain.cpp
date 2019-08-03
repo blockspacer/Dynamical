@@ -17,8 +17,6 @@ constexpr uint32_t MAX_CHUNKS = 5000;
 
 Terrain::Terrain(entt::registry& reg) : System(reg) {
     
-    
-    
 }
 
 void Terrain::preinit() {
@@ -128,7 +126,7 @@ void Terrain::allocate(Chunk& chonk, ChunkBuild& build) {
     
     build.set = device->allocateDescriptorSets(vk::DescriptorSetAllocateInfo(descPool, 1, &descLayout))[0];
     
-    ChunkSyncIndex ri = reg.ctx<ChunkSyncIndex>();
+    int ri = reg.ctx<ChunkSync>().index;
     auto triInfo = vk::DescriptorBufferInfo(chonk.triangles, 0, NUM_TRIANGLES * sizeof(Triangle));
     auto indInfo = vk::DescriptorBufferInfo(chonk.indirect, chonk.indirect_offset * sizeof(vk::DrawIndirectCommand), sizeof(vk::DrawIndirectCommand));
     auto uniformInfo = vk::DescriptorBufferInfo(chunkData[ri], 0, sizeof(ChunkData));

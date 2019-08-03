@@ -10,8 +10,7 @@
 #define DYNAMICAL_CONFIG_FILE "./config.json"
 #endif
 
-
-void loadSettings(entt::registry& reg, Settings& settings) {
+void synchronize(entt::registry& reg, Settings& settings) {
     if(std::filesystem::exists(DYNAMICAL_CONFIG_FILE)) {
         std::ifstream is(DYNAMICAL_CONFIG_FILE);
         int i = is.get();
@@ -28,8 +27,7 @@ void loadSettings(entt::registry& reg, Settings& settings) {
     settings.serialize(out);
 }
 
-
-void SettingSys::preinit() {
+SettingSys::SettingSys(entt::registry& reg) : System(reg) {
     auto& settings = reg.set<Settings>();
-    loadSettings(reg, settings);
+    synchronize(reg, settings);
 }

@@ -5,6 +5,8 @@
 #include <cereal/types/memory.hpp>
 #include <cereal/types/array.hpp>
 
+#include <cmath>
+
 template <typename T, T nullv>
 class QuadTree {
     

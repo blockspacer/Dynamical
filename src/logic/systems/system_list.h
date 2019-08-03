@@ -22,6 +22,30 @@ public:
     const char* name() override {return "Camera";};
 };
 
+class ChunkManagerSys : public System {
+public:
+    ChunkManagerSys(entt::registry& reg) : System(reg) {};
+    void init() override;
+    void tick() override;
+    const char* name() override {return "ChunkManager";};
+};
+
+class ChunkLoaderSys : public System {
+public:
+    ChunkLoaderSys(entt::registry& reg) : System(reg) {};
+    void init() override;
+    void tick() override;
+    const char* name() override {return "ChunkLoader";};
+};
+
+class ChunkGeneratorSys : public System {
+public:
+    ChunkGeneratorSys(entt::registry& reg) : System(reg) {};
+    void init() override;
+    void tick() override;
+    const char* name() override {return "ChunkGenerator";};
+};
+
 class ChunkSys : public System {
 public:
     ChunkSys(entt::registry& reg) : System(reg) {};
@@ -32,10 +56,10 @@ public:
 
 class SettingSys : public System {
 public:
-    SettingSys(entt::registry& reg) : System(reg) {};
-    void preinit() override;
-    void init() {};
-    void tick() {};
+    SettingSys(entt::registry& reg);
+    void preinit() override {};
+    void init() override {};
+    void tick() override {};
     const char* name() override {return "Setting";};
 };
 
