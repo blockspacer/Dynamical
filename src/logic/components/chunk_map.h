@@ -5,15 +5,34 @@
 
 #include "entt/entt.hpp"
 
+
+class Entity {
+public:
+    Entity() : value(entt::null) {}
+    Entity(entt::entity entity) : value(entity) {}
+    Entity& operator=(entt::entity entity) {
+        value = entity;
+        return *this;
+    }
+    entt::entity& get() {
+        return value;
+    }
+    operator bool () {
+        return value != entt::null;
+    }
+private:
+    entt::entity value;
+};
+
 class ChunkMap {
 public:
     
     entt::entity get(int x, int y, int z, int lod = 0) {
-        return tree.get(x, y, z, lod);
+        return tree.get(x, y, z, lod).get();
     }
     
     void set(entt::entity entity, int x, int y, int z, int lod = 0) {
-        tree.set(x, y, z, lod, entity);
+        tree.set(x, y, z, lod, Entity(entity));
     }
     void remove(int x, int y, int z) {
         tree.remove(x, y, z);
@@ -28,12 +47,10 @@ public:
     }
     
 private:
-    QuadTree<entt::entity, entt::null> tree;
+    QuadTree<Entity> tree;
     
 };
 
-class GlobalChunkMap : public ChunkMap {
-    
-};
+class GlobalChunkMap : public ChunkMap {};
 
 #endif

@@ -7,15 +7,15 @@
 
 #include <cmath>
 
-template <typename T, T nullv>
+template <typename T>
 class QuadTree {
     
     class Node {
     public:
         
-        Node() : hsize(0), value(nullv) {}
+        Node() : hsize(0), value() {}
         
-        Node(int size) : hsize(size), value(nullv) {
+        Node(int size) : hsize(size), value() {
             for(int i = 0; i<8; i++) {
                 ptrs[i] = nullptr;
             }
@@ -24,10 +24,10 @@ class QuadTree {
         Node(T value) : hsize(0), value(value) {}
         
         T get(int x, int y, int z, int mhsize) {
-            if(hsize > mhsize && value == nullv) {
+            if(hsize > mhsize && !value) {
                 int index = (x>=hsize?1:0) + (y>=hsize?2:0) + (z>=hsize?4:0);
                 if(ptrs[index] == nullptr) {
-                    return nullv;
+                    return T();
                 }
                 return ptrs[index]->get(x-(x>=hsize?hsize:0), y-(y>=hsize?hsize:0), z-(z>=hsize?hsize:0), mhsize);
             } else {
@@ -92,7 +92,7 @@ public:
     }
     
     T get(int x, int y, int z, int mhsize = 0) {
-        if(root->hsize < mhsize || std::max(std::max(x+x0, y+y0), z+z0) >= root->hsize*2 || std::min(std::min(x+x0, y+y0), z+z0) < 0) return nullv;
+        if(root->hsize < mhsize || std::max(std::max(x+x0, y+y0), z+z0) >= root->hsize*2 || std::min(std::min(x+x0, y+y0), z+z0) < 0) return T();
         return root->get(x+x0, y+y0, z+z0, mhsize);
     }
     
