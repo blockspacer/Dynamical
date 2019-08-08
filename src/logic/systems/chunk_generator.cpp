@@ -26,17 +26,18 @@ void ChunkGeneratorSys::tick() {
     tf::Taskflow taskflow;
     
     reg.view<entt::tag<"loading"_hs>>().each([this](const entt::entity entity, auto) {
-        reg.assign<GlobalChunkData>(entity);
+        reg.assign<SparseChunk>(entity);
         reg.assign<GlobalChunkEmpty>(entity, 0.f);
     });
     
-    auto view = reg.view<GlobalChunkC, GlobalChunkData, GlobalChunkEmpty, entt::tag<"loading"_hs>>();
-    taskflow.parallel_for(view.begin(), view.end(), [view](const entt::entity entity) { 
+    auto view = reg.view<GlobalChunkC, SparseChunk, GlobalChunkEmpty, entt::tag<"loading"_hs>>();
+    taskflow.parallel_for(view.begin(), view.end(), [&view] (const entt::entity entity) { 
         
         auto& chunk = view.get<GlobalChunkC>(entity);
-        auto& chunk_data = view.get<GlobalChunkData>(entity);
         auto& chunk_mean = view.get<GlobalChunkEmpty>(entity).mean;
         chunk_mean = 0;
+        
+        GlobalChunkData chunk_data;
         
         const int mul = chunk.getLOD();
         const auto cubeSize = chunk.getCubeSize();
@@ -77,34 +78,18 @@ void ChunkGeneratorSys::tick() {
         if(empty) {
             chunk_mean = sum/index;
         } else {
-            
-            
-            SparseChunk* sc = new SparseChunk();
-            sc->set(chunk_data);
-            
-            int index = 0;
-            for(int x = 0; x < chunk::max_num_values.x; x++) {
-                for(int z = 0; z < chunk::max_num_values.z; z++) {
-                    for(int y = 0; y < chunk::max_num_values.y; y++) {
-                        chunk_data.data[index++] = 5-y+3*std::sin(x/10.);
-                    }
-                }
-            }
-            
-            sc->get(chunk_data);
-            delete sc;
-            
+            auto& sparse_chunk = view.get<SparseChunk>(entity);
+            sparse_chunk.set(chunk_data);
         }
         
     });
     
     executor.run(taskflow).wait();
-    taskflow.clear();
     
     auto endView = reg.view<GlobalChunkEmpty, entt::tag<"loading"_hs>>();
     for(auto entity : endView) {
         if(endView.get<GlobalChunkEmpty>(entity).mean != 0) {
-            reg.remove<GlobalChunkData>(entity);
+            reg.remove<SparseChunk>(entity);
         } else {
             reg.remove<GlobalChunkEmpty>(entity);
         }

@@ -25,7 +25,7 @@ class SparseChunk {
                     cd.data[x * chunk::max_num_values.y * chunk::max_num_values.z + z * chunk::max_num_values.y + y] = value;
                 }
                 
-            } else if(ptrs[0] == 0) {
+            } else if(ptrs.get<int>(0) == 0) {
                 
                 for(int zi = 0; zi<hsize*2; zi++) {
                     for(int yi = 0; yi<hsize*2; yi++) {
@@ -43,7 +43,7 @@ class SparseChunk {
                 for(int zi = 0; zi<2; zi++) {
                     for(int yi = 0; yi<2; yi++) {
                         for(int xi = 0; xi<2; xi++) {
-                            tree->nodes[ptrs[index]].get(tree, cd, x + xi*hsize, y + yi*hsize, z + zi*hsize);
+                            tree->nodes[ptrs.get<int>(index)].get(tree, cd, x + xi*hsize, y + yi*hsize, z + zi*hsize);
                             index++;
                         }
                     }
@@ -58,7 +58,7 @@ class SparseChunk {
         }
         
         float value;
-        std::array<int, 8> ptrs;
+        Util::DiTypedArray<int, float, 8> ptrs;
         int hsize;
         
     };
@@ -78,7 +78,9 @@ public:
         nodes.reserve(50);
         index = 0;
         root = make_node();
-        set(root, cd, 0, 0, 0, (int) std::pow(2, std::ceil(std::log2(chunk::num_values.x))));
+        set(root, cd, 0, 0, 0, ((int) std::pow(2, std::ceil(std::log2(chunk::num_values.x))))/2.);
+        
+        std::cout << chunk::max_num_values.x * chunk::max_num_values.y * chunk::max_num_values.z * sizeof(float) << " " << (index+1) << " " << nodes.capacity() * sizeof(Node) << std::endl;
     }
     
     int make_node() {
@@ -108,14 +110,14 @@ public:
             for(int zi = 0; zi<2; zi++) {
                 for(int yi = 0; yi<2; yi++) {
                     for(int xi = 0; xi<2; xi++) {
-                        nodes[ind].ptrs[i] = make_node();
-                        set(nodes[ind].ptrs[i], cd, x + xi*hsize, y + yi*hsize, z + zi*hsize, hsize/2);
+                        nodes[ind].ptrs.get<int>(i) = make_node();
+                        set(nodes[ind].ptrs.get<int>(i), cd, x + xi*hsize, y + yi*hsize, z + zi*hsize, hsize/2);
                         
-                        float val = nodes[nodes[ind].ptrs[i]].value;
+                        float val = nodes[nodes[ind].ptrs.get<int>(i)].value;
                         sum += val;
                         if(i == 0) {
                             sign = std::signbit(val);
-                        } else if(sign != std::signbit(val) || nodes[nodes[ind].ptrs[i]].ptrs[0] != 0) {
+                        } else if(sign != std::signbit(val) || nodes[nodes[ind].ptrs.get<int>(i)].ptrs.get<int>(0) != 0) {
                             empty = false;
                         }
                         i++;
@@ -125,15 +127,18 @@ public:
             
             nodes[ind].value = sum/8.f;
             if(empty) {
-                set_index(nodes[ind].ptrs[0]);
-                nodes[ind].ptrs[0] = 0;
+                set_index(nodes[ind].ptrs.get<int>(0));
+                nodes[ind].ptrs.get<int>(0) = 0;
             }
             
         } else {
             
             if(x < chunk::max_num_values.x && y < chunk::max_num_values.y && z < chunk::max_num_values.z) {
                 nodes[ind].value = cd.data[x * chunk::max_num_values.y * chunk::max_num_values.z + z * chunk::max_num_values.y + y];
+            } else {
+                nodes[ind].value = -1.f;
             }
+            nodes[ind].ptrs.get<int>(0) = 0;
             
         }
     }

@@ -9,6 +9,7 @@
 #include <logic/components/camerac.h>
 #include <renderer/camera.h>
 #include "logic/components/global_chunk_data.h"
+#include "logic/components/sparse_chunk.h"
 
 void ChunkManagerSys::init() {
     reg.set<ChunkMap>();
@@ -52,7 +53,7 @@ void ChunkManagerSys::tick() {
                         reg.assign<GlobalChunkC>(global_entity, (chunk.pos/mul)*mul, chunk::max_lod);
                         global_map.set(global_entity, chunk.pos.x, chunk.pos.y, chunk.pos.z, chunk::max_mul/2);
                     }
-                    if(!reg.has<GlobalChunkData>(global_entity))
+                    if(!reg.has<SparseChunk>(global_entity))
                         reg.assign<entt::tag<"loading"_hs>>(global_entity);
                     
                     reg.assign<OuterGlobalChunk>(chunk_entity, global_entity);

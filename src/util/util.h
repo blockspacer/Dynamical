@@ -116,6 +116,21 @@ namespace Util {
     };
     
     
+    template<typename T1, typename T2, int count>
+    class DiTypedArray {
+    public:
+        static_assert(sizeof(T1) == sizeof(T2));
+        
+        template<typename T>
+        T& get(int i) {
+            static_assert(std::is_same_v<T, T1> || std::is_same_v<T, T2>);
+            return *(reinterpret_cast<T*> (&value[i]));
+        }
+        
+        T1 value[count];
+        
+    };
+    
 };
 
 #endif
