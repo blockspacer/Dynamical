@@ -6,7 +6,7 @@
 
 namespace chunk {
 
-    constexpr int base_cube_size = 1;
+    constexpr int base_cube_size = 32;
     constexpr int base_length = base_cube_size*8*5;
     constexpr int base_height = base_length;
     constexpr glm::ivec3 base_size(base_length, base_height, base_length);
@@ -14,8 +14,9 @@ namespace chunk {
     constexpr glm::ivec3 num_cubes = base_size/base_cube_size;
     constexpr int border = 1;
     constexpr glm::ivec3 num_values = num_cubes+1+2*border;
-    constexpr int max_lod = 5;
+    constexpr int max_lod = 0;
     constexpr int max_mul = Util::c_pow(lod_multiplier, max_lod);
+    constexpr glm::ivec3 max_num_values = num_values*max_mul;
     
 }
 

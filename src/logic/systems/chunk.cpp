@@ -46,7 +46,7 @@ void ChunkSys::tick() {
                 auto& global_chunk = reg.get<GlobalChunkData>(outer);
                 
                 ChunkData* chunkData = cd.data[ri] + cb.index;
-                memcpy(chunkData, global_chunk.data->values, sizeof(ChunkData));
+                memcpy(chunkData, global_chunk.data.data(), sizeof(ChunkData));
                 
             }
             

@@ -33,7 +33,6 @@ private:
     std::vector<std::unique_ptr<System>> systems;
     
     tf::Taskflow taskflow;
-    tf::Taskflow chunk_taskflow;
     
     entt::registry& reg;
     

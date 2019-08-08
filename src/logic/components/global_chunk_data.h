@@ -5,12 +5,10 @@
 
 #include "chunkc.h"
 
-#include "chunkdatac.h"
-
 class GlobalChunkData {
 public:
-    GlobalChunkData() : data(std::make_unique<ChunkData>()) {};
-    std::unique_ptr<ChunkData> data;
+    GlobalChunkData() : data(chunk::max_num_values.x * chunk::max_num_values.y * chunk::max_num_values.z) {};
+    std::vector<float> data;
 };
 
 class GlobalChunkEmpty {

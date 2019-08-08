@@ -69,8 +69,6 @@ void Systems::init() {
         sys->init();
     }
     
-    //reg.ctx<tf::Executor>().run_until(chunk_taskflow, [this]() {return !running;});
-    
 }
 
 void Systems::tick() {
