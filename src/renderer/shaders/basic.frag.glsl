@@ -6,7 +6,7 @@ layout(location = 2) in vec2 v_uv;
 
 layout(location = 0) out vec4 outColor;
 
-const int chunk_size = 1*8*5 * 2*2*2*2*2;
+const int chunk_size = 8*8*5;
 
 void main() {
     

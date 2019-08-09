@@ -9,14 +9,17 @@
 #include "logic/components/sparse_chunk.h"
 
 const static std::unique_ptr<FastNoiseSIMD> myNoise = std::unique_ptr<FastNoiseSIMD>(FastNoiseSIMD::NewFastNoiseSIMD());
-constexpr double frequency = 0.0001;
-constexpr double amplitude = 4000.;
+const static std::unique_ptr<FastNoiseSIMD> cavNoise = std::unique_ptr<FastNoiseSIMD>(FastNoiseSIMD::NewFastNoiseSIMD(2010));
+constexpr double frequency = 0.001;
+constexpr double amplitude = 400.;
 constexpr int octaves = 6;
 
 void ChunkGeneratorSys::init() {
     
     myNoise->SetFractalOctaves(octaves);
     myNoise->SetFrequency(frequency);
+    cavNoise->SetFractalOctaves(octaves);
+    cavNoise->SetFrequency(frequency);
     
 }
 
@@ -31,7 +34,7 @@ void ChunkGeneratorSys::tick() {
     });
     
     auto view = reg.view<GlobalChunkC, SparseChunk, GlobalChunkEmpty, entt::tag<"loading"_hs>>();
-    taskflow.parallel_for(view.begin(), view.end(), [&view] (const entt::entity entity) { 
+    taskflow.parallel_for(view.begin(), view.end(), [view](const entt::entity entity) { 
         
         auto& chunk = view.get<GlobalChunkC>(entity);
         auto& chunk_mean = view.get<GlobalChunkEmpty>(entity).mean;
@@ -41,7 +44,12 @@ void ChunkGeneratorSys::tick() {
         
         const int mul = chunk.getLOD();
         const auto cubeSize = chunk.getCubeSize();
+        
         myNoise->FillSimplexFractalSet(chunk_data.data.data(),
+            chunk::num_cubes.x * chunk.pos.x/mul - chunk::border, chunk::num_cubes.z * chunk.pos.z/mul - chunk::border, chunk::num_cubes.y * chunk.pos.y/mul - chunk::border,
+            chunk::max_num_values.x, chunk::max_num_values.z, chunk::max_num_values.y, cubeSize);
+        
+        float* cav = cavNoise->GetSimplexFractalSet(
             chunk::num_cubes.x * chunk.pos.x/mul - chunk::border, chunk::num_cubes.z * chunk.pos.z/mul - chunk::border, chunk::num_cubes.y * chunk.pos.y/mul - chunk::border,
             chunk::max_num_values.x, chunk::max_num_values.z, chunk::max_num_values.y, cubeSize);
         
@@ -60,7 +68,7 @@ void ChunkGeneratorSys::tick() {
                     int rz = chunk::base_size.z * chunk.pos.z + z * cubeSize;
                     int ry = chunk::base_size.y * chunk.pos.y + y * cubeSize;
                     
-                    float value = 70 - ry + amplitude * chunk_data.data[index];
+                    float value = std::min(70 - ry + amplitude * chunk_data.data[index], 70. - Util::s_sq(150.*cav[index]-50.));
                     
                     if(x == 0 && y == 0 && z == 0) {
                         sign = std::signbit(value);
@@ -74,6 +82,8 @@ void ChunkGeneratorSys::tick() {
                 }
             }
         }
+        
+        FastNoiseSIMD::FreeNoiseSet(cav);
         
         if(empty) {
             chunk_mean = sum/index;

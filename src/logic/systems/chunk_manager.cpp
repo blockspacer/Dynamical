@@ -53,11 +53,12 @@ void ChunkManagerSys::tick() {
                         reg.assign<GlobalChunkC>(global_entity, (chunk.pos/mul)*mul, chunk::max_lod);
                         global_map.set(global_entity, chunk.pos.x, chunk.pos.y, chunk.pos.z, chunk::max_mul/2);
                     }
-                    if(!reg.has<SparseChunk>(global_entity))
+                    if(!reg.has<SparseChunk>(global_entity) && !reg.has<GlobalChunkEmpty>(global_entity))
                         reg.assign<entt::tag<"loading"_hs>>(global_entity);
                     
                     reg.assign<OuterGlobalChunk>(chunk_entity, global_entity);
-                    reg.assign<entt::tag<"preparing"_hs>>(chunk_entity);
+                    if(!reg.has<GlobalChunkEmpty>(global_entity))
+                        reg.assign<entt::tag<"preparing"_hs>>(chunk_entity);
                     
                 }
                 

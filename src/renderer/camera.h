@@ -4,7 +4,7 @@
 #include "entt/entt.hpp"
 #include "glm/glm.hpp"
 
-constexpr float render_distance = 4000.f;
+constexpr float render_distance = 800.f;
 constexpr float render_min = 0.1f;
 constexpr float render_fov = 70.f;
 

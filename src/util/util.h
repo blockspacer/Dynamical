@@ -65,6 +65,11 @@ namespace Util {
     }
     
     template<typename T>
+    T s_sq(T v) {
+        return std::abs(v)*v;
+    }
+    
+    template<typename T>
     constexpr T c_sq(T v) {
         return v*v;
     }
@@ -115,21 +120,10 @@ namespace Util {
         std::mutex mutex;
     };
     
-    
-    template<typename T1, typename T2, int count>
-    class DiTypedArray {
-    public:
-        static_assert(sizeof(T1) == sizeof(T2));
-        
-        template<typename T>
-        T& get(int i) {
-            static_assert(std::is_same_v<T, T1> || std::is_same_v<T, T2>);
-            return *(reinterpret_cast<T*> (&value[i]));
-        }
-        
-        T1 value[count];
-        
-    };
+    // 0:a -> 1:b
+    inline float lerp(float a, float b, float r) {
+        return a * (1.f - r) + b * r;
+    }
     
 };
 
