@@ -8,6 +8,8 @@
 #include <cmath>
 #include "global_chunk_data.h"
 
+constexpr int mhsize = ((int) std::pow(2, std::ceil(std::log2(chunk::max_num_values.x)))/2.);
+
 class SparseChunk {
     
     class Node {
@@ -15,7 +17,7 @@ class SparseChunk {
         
         Node() {}
         
-        void get(SparseChunk* tree, GlobalChunkData& cd, int x, int y, int z) {
+        void get(SparseChunk* tree, GlobalChunkData& cd, int x, int y, int z, int hsize) {
             
             if(hsize == 1) {
                 
@@ -66,7 +68,7 @@ class SparseChunk {
                 for(int zi = 0; zi<2; zi++) {
                     for(int yi = 0; yi<2; yi++) {
                         for(int xi = 0; xi<2; xi++) {
-                            tree->nodes[ind[index++]].get(tree, cd, x + xi*hsize, y + yi*hsize, z + zi*hsize);
+                            tree->nodes[ind[index++]].get(tree, cd, x + xi*hsize, y + yi*hsize, z + zi*hsize, hsize/2);
                         }
                     }
                 }
@@ -76,7 +78,7 @@ class SparseChunk {
         
         template <class Archive>
         void serialize( Archive & ar ) {
-            ar(empty, ind, hsize);
+            ar(empty, ind);
         }
         
         bool empty;
@@ -84,7 +86,6 @@ class SparseChunk {
             std::array<int, 8> ind;
             std::array<float, 8> val;
         };
-        int hsize;
         
     };
     
@@ -95,7 +96,7 @@ public:
     }
     
     void get(GlobalChunkData& data) {
-        nodes[root].get(this, data, 0, 0, 0);
+        nodes[root].get(this, data, 0, 0, 0, mhsize);
     }
     
     void set(GlobalChunkData& cd) {
@@ -103,7 +104,7 @@ public:
         nodes.resize(32768);
         index = 0;
         root = make_node();
-        set(root, cd, 0, 0, 0, ((int) std::pow(2, std::ceil(std::log2(chunk::num_values.x)))/2.));
+        set(root, cd, 0, 0, 0, ((int) std::pow(2, std::ceil(std::log2(chunk::max_num_values.x)))/2.));
         
         nodes.resize(index+1);
         nodes.shrink_to_fit();
@@ -124,8 +125,6 @@ public:
     }
     
     float set(int ind, GlobalChunkData& cd, int x, int y, int z, int hsize) {
-        
-        nodes[ind].hsize = hsize;
         
         if(hsize > 1) {
             

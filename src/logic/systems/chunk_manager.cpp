@@ -21,14 +21,12 @@ void ChunkManagerSys::tick() {
     GlobalChunkMap& global_map = reg.ctx<GlobalChunkMap>();
     CameraC cam = reg.ctx<CameraC>();
     
-    ChunkC chunk;
-    const int lod = chunk::max_lod;
-    chunk.lod = lod;
-    const int mul = chunk.getLOD();
-    const int render_chunks = render_distance / (chunk.getSize().x)+1;
+    ChunkC g_chunk;
+    g_chunk.lod = chunk::max_mul;
+    const int render_chunks = render_distance / (g_chunk.getSize().x)+1;
     reg.view<ChunkC>().each([&](entt::entity entity, ChunkC& chunk) {
         if(glm::distance2(glm::vec3(chunk.getPosition()), cam.pos) > Util::sq(render_distance + chunk.getSize().x*2)) {
-            map.set(entt::null, chunk.pos.x, chunk.pos.y, chunk.pos.z, mul/2);
+            map.set(entt::null, chunk.pos.x, chunk.pos.y, chunk.pos.z, chunk::max_mul/2);
             if(!reg.has<entt::tag<"destroying"_hs>>(entity)) reg.assign<entt::tag<"destroying"_hs>>(entity);
         }
     });
@@ -37,28 +35,32 @@ void ChunkManagerSys::tick() {
         for(int z = -render_chunks; z<=render_chunks; z++) {
             for(int y = -render_chunks; y<=render_chunks; y++) {
                 
-                chunk.pos = glm::vec3(x + std::round(cam.pos.x/(mul*chunk::base_length)), y + std::round(cam.pos.y/(mul*chunk::base_length)), z + std::round(cam.pos.z/(mul*chunk::base_length))) * (float) mul;
+                g_chunk.pos = glm::vec3(x + std::round(cam.pos.x/(chunk::max_mul*chunk::base_length)), y + std::round(cam.pos.y/(chunk::max_mul*chunk::base_length)), z + std::round(cam.pos.z/(chunk::max_mul*chunk::base_length))) * (float) chunk::max_mul;
                 
-                if(map.get(chunk.pos.x, chunk.pos.y, chunk.pos.z, mul/2) == entt::null && glm::distance2(glm::vec3(chunk.getPosition()), cam.pos) < Util::sq(render_distance + chunk.getSize().x)) {
+                if(map.get(g_chunk.pos.x, g_chunk.pos.y, g_chunk.pos.z, chunk::max_mul/2) == entt::null && glm::distance2(glm::vec3(g_chunk.getPosition()), cam.pos) < Util::sq(render_distance + g_chunk.getSize().x)) {
                     
-                    auto chunk_entity = reg.create();
-                    ChunkC& cc = reg.assign<ChunkC>(chunk_entity);
-                    cc.pos = chunk.pos;
-                    cc.lod = chunk.lod;
-                    map.set(chunk_entity, chunk.pos.x, chunk.pos.y, chunk.pos.z, mul/2);
-                    
-                    entt::entity global_entity = global_map.get(chunk.pos.x, chunk.pos.y, chunk.pos.z, chunk::max_mul/2);
+                    entt::entity global_entity = global_map.get(g_chunk.pos.x, g_chunk.pos.y, g_chunk.pos.z, chunk::max_mul/2);
                     if(global_entity == entt::null) {
                         global_entity = reg.create();
-                        reg.assign<GlobalChunkC>(global_entity, (chunk.pos/mul)*mul, chunk::max_lod);
-                        global_map.set(global_entity, chunk.pos.x, chunk.pos.y, chunk.pos.z, chunk::max_mul/2);
+                        reg.assign<GlobalChunkC>(global_entity, (g_chunk.pos/chunk::max_mul)*chunk::max_mul, chunk::max_lod);
+                        global_map.set(global_entity, g_chunk.pos.x, g_chunk.pos.y, g_chunk.pos.z, chunk::max_mul/2);
                     }
                     if(!reg.has<SparseChunk>(global_entity) && !reg.has<GlobalChunkEmpty>(global_entity))
                         reg.assign<entt::tag<"loading"_hs>>(global_entity);
                     
+                    ChunkC chunk;
+                    chunk.lod = chunk::max_lod;
+                    chunk.pos = g_chunk.pos;
+                    int mul = chunk.getLOD();
+                    
+                    auto chunk_entity = reg.create();
+                    reg.assign<ChunkC>(chunk_entity, chunk);
+                    map.set(chunk_entity, chunk.pos.x, chunk.pos.y, chunk.pos.z, mul/2);
+                    
                     reg.assign<OuterGlobalChunk>(chunk_entity, global_entity);
                     if(!reg.has<GlobalChunkEmpty>(global_entity))
                         reg.assign<entt::tag<"preparing"_hs>>(chunk_entity);
+                    
                     
                 }
                 

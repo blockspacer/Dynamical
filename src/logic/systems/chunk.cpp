@@ -29,7 +29,7 @@ void ChunkSys::tick() {
     int& ri = reg.ctx<ChunkSync>().index;
     ri = (ri+1)%NUM_FRAMES;
     
-    auto view = reg.view<OuterGlobalChunk, entt::tag<"preparing"_hs>>();
+    auto view = reg.view<ChunkC, OuterGlobalChunk, entt::tag<"preparing"_hs>>();
     for(entt::entity entity : view) {
         
         entt::entity outer = view.get<OuterGlobalChunk>(entity).entity;
@@ -49,7 +49,18 @@ void ChunkSys::tick() {
                 GlobalChunkData chunk_data;
                 global_chunk.get(chunk_data);
                 ChunkData* chunkData = cd.data[ri] + cb.index;
-                memcpy(chunkData, chunk_data.data.data(), sizeof(ChunkData));
+                ChunkC& chunk = view.get<ChunkC>(entity);
+                int mul = chunk.getLOD();
+                
+                int index = 0;
+                for(int x = 0; x < chunk::num_values.x; x++) {
+                    for(int z = 0; z < chunk::num_values.z; z++) {
+                        for(int y = 0; y < chunk::num_values.y; y++) {
+                            glm::ivec3 coords = (glm::ivec3(x, y, z) - chunk::border) * mul + chunk::border * chunk::max_mul;
+                            chunkData->values[index++] = chunk_data.data[coords.x * chunk::max_num_values.y * chunk::max_num_values.z + coords.z * chunk::max_num_values.y + coords.y];
+                        }
+                    }
+                }
                 
             }
             
