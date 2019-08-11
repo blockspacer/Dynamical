@@ -25,25 +25,54 @@ void ChunkGeneratorSys::init() {
 
 void ChunkGeneratorSys::tick() {
     
-    tf::Executor& executor = reg.ctx<tf::Executor>();
-    tf::Taskflow taskflow;
+    struct GeneratingChunk {
+        GlobalChunkC chunk;
+    };
     
-    reg.view<entt::tag<"loading"_hs>>().each([this](const entt::entity entity, auto) {
-        reg.assign<SparseChunk>(entity);
-        reg.assign<GlobalChunkEmpty>(entity, 0.f);
+    tf::Executor& executor = reg.ctx<tf::Executor>();
+    
+    static std::future<void> callback;
+    static tf::Taskflow taskflow;
+    
+    if(callback.valid()) {
+        if(callback.wait_for(std::chrono::nanoseconds(0)) == std::future_status::ready) {
+            
+            auto endView = reg.view<GlobalChunkEmpty, entt::tag<"loading"_hs>>();
+            for(auto entity : endView) {
+                if(endView.get<GlobalChunkEmpty>(entity).mean != 0) {
+                    reg.remove<SparseChunk>(entity);
+                } else {
+                    reg.remove<GlobalChunkEmpty>(entity);
+                }
+                reg.remove<entt::tag<"loading"_hs>>(entity);
+                reg.assign<entt::tag<"loaded"_hs>>(entity);
+            }
+            reg.reset<GeneratingChunk>();
+            
+            taskflow.clear();
+            
+        } else {
+            return;
+        }
+    }
+    
+    reg.view<GlobalChunkC, entt::tag<"loading"_hs>>().each([this](const entt::entity entity, GlobalChunkC& chunk, auto) {
+        if(!reg.has<GeneratingChunk>(entity)) {
+            reg.assign<GeneratingChunk>(entity, chunk);
+            reg.assign<SparseChunk>(entity);
+            reg.assign<GlobalChunkEmpty>(entity, 0.f);
+        }
     });
     
-    auto view = reg.view<GlobalChunkC, SparseChunk, GlobalChunkEmpty, entt::tag<"loading"_hs>>();
+    
+    auto view = reg.view<SparseChunk, GlobalChunkEmpty, GeneratingChunk>();
     taskflow.parallel_for(view.begin(), view.end(), [view](const entt::entity entity) { 
         
-        auto& chunk = view.get<GlobalChunkC>(entity);
+        auto& chunk = view.get<GeneratingChunk>(entity).chunk;
         auto& chunk_mean = view.get<GlobalChunkEmpty>(entity).mean;
         chunk_mean = 0;
         
         GlobalChunkData chunk_data;
-        
-        const int mul = chunk.getLOD();
-        const auto cubeSize = chunk.getCubeSize();
         
         myNoise->FillSimplexFractalSet(chunk_data.data.data(),
             chunk::num_cubes.x * chunk.pos.x - chunk::border * chunk::max_mul,
@@ -99,17 +128,6 @@ void ChunkGeneratorSys::tick() {
         
     });
     
-    executor.run(taskflow).wait();
-    
-    auto endView = reg.view<GlobalChunkEmpty, entt::tag<"loading"_hs>>();
-    for(auto entity : endView) {
-        if(endView.get<GlobalChunkEmpty>(entity).mean != 0) {
-            reg.remove<SparseChunk>(entity);
-        } else {
-            reg.remove<GlobalChunkEmpty>(entity);
-        }
-        reg.remove<entt::tag<"loading"_hs>>(entity);
-        reg.assign<entt::tag<"loaded"_hs>>(entity);
-    }
+    callback = executor.run(taskflow);
     
 }
