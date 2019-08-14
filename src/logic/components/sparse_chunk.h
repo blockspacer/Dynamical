@@ -4,11 +4,26 @@
 #include <functional>
 #include <cereal/types/array.hpp>
 #include <cereal/types/vector.hpp>
+#include <cereal/types/bitset.hpp>
 
 #include <cmath>
 #include "global_chunk_data.h"
 
-constexpr int mhsize = ((int) std::pow(2, std::ceil(std::log2(chunk::max_num_values.x)))/2.);
+const int mhsize = ((int) std::pow(2, std::ceil(std::log2(chunk::max_num_values.x)))/2.);
+static int sum = 0;
+static int min = 0;
+static int compressed = 0;
+
+constexpr float out_of_range = 1000.f;
+
+union indval {
+    int ind;
+    float val;
+    template <class Archive>
+    void serialize( Archive & ar ) {
+        ar(ind);
+    }
+};
 
 class SparseChunk {
     
@@ -19,7 +34,11 @@ class SparseChunk {
         
         void get(SparseChunk* tree, GlobalChunkData& cd, int x, int y, int z, int hsize) {
             
+            sum++;
+            
             if(hsize == 1) {
+                
+                min++;
                 
                 int i = 0;
                 for(int zi = 0; zi<2; zi++) {
@@ -28,34 +47,7 @@ class SparseChunk {
                             
                             if(x + xi < chunk::max_num_values.x && y + yi < chunk::max_num_values.y && z + zi < chunk::max_num_values.z) {
                                 cd.data[(x+xi) * chunk::max_num_values.y * chunk::max_num_values.z + (z+zi) * chunk::max_num_values.y + (y+yi)]
-                                = val[i++];
-                            }
-                            
-                        }
-                    }
-                }
-                
-            } else if(empty) {
-                
-                for(int zi = 0; zi<hsize*2; zi++) {
-                    for(int yi = 0; yi<hsize*2; yi++) {
-                        for(int xi = 0; xi<hsize*2; xi++) {
-                            
-                            if(x + xi < chunk::max_num_values.x && y + yi < chunk::max_num_values.y && z + zi < chunk::max_num_values.z) {
-                                
-                                float x1 = Util::lerp(val[0], val[1], xi/(hsize*2-1));
-                                float x2 = Util::lerp(val[2], val[3], xi/(hsize*2-1));
-                                float x3 = Util::lerp(val[4], val[5], xi/(hsize*2-1));
-                                float x4 = Util::lerp(val[6], val[7], xi/(hsize*2-1));
-                                
-                                float y1 = Util::lerp(x1, x2, yi/(hsize*2-1));
-                                float y2 = Util::lerp(x3, x4, yi/(hsize*2-1));
-                                
-                                float value = Util::lerp(y1, y2, zi/(hsize*2-1));
-                                
-                                cd.data[(x+xi) * chunk::max_num_values.y * chunk::max_num_values.z + (z+zi) * chunk::max_num_values.y + (y+yi)]
-                                = value;
-                                
+                                = a[i++].val;
                             }
                             
                         }
@@ -68,24 +60,63 @@ class SparseChunk {
                 for(int zi = 0; zi<2; zi++) {
                     for(int yi = 0; yi<2; yi++) {
                         for(int xi = 0; xi<2; xi++) {
-                            tree->nodes[ind[index++]].get(tree, cd, x + xi*hsize, y + yi*hsize, z + zi*hsize, hsize/2);
+                            
+                            if(empty[index]) {
+                                
+                                if(a[index].val != out_of_range) set(cd, x + xi*hsize, y + yi*hsize, z + zi*hsize, hsize/2, a[index].val);
+                                
+                            } else {
+                                
+                                tree->nodes[a[index].ind].get(tree, cd, x + xi*hsize, y + yi*hsize, z + zi*hsize, hsize/2);
+                                
+                            }
+                            index++;
+                            
                         }
                     }
                 }
+                
             }
             
         }
         
-        template <class Archive>
-        void serialize( Archive & ar ) {
-            ar(empty, ind);
+        void set(GlobalChunkData& cd, int x, int y, int z, int hsize, float value) {
+            
+            for(int zi = 0; zi<hsize*2; zi++) {
+                for(int yi = 0; yi<hsize*2; yi++) {
+                    for(int xi = 0; xi<hsize*2; xi++) {
+                        
+                        if(x + xi < chunk::max_num_values.x && y + yi < chunk::max_num_values.y && z + zi < chunk::max_num_values.z) {
+                            
+                            /*
+                            float x1 = Util::lerp(val[0], val[1], xi/(hsize*2-1));
+                            float x2 = Util::lerp(val[2], val[3], xi/(hsize*2-1));
+                            float x3 = Util::lerp(val[4], val[5], xi/(hsize*2-1));
+                            float x4 = Util::lerp(val[6], val[7], xi/(hsize*2-1));
+                            
+                            float y1 = Util::lerp(x1, x2, yi/(hsize*2-1));
+                            float y2 = Util::lerp(x3, x4, yi/(hsize*2-1));
+                            
+                            float value = Util::lerp(y1, y2, zi/(hsize*2-1));
+                            */
+                            
+                            cd.data[(x+xi) * chunk::max_num_values.y * chunk::max_num_values.z + (z+zi) * chunk::max_num_values.y + (y+yi)]
+                            = value;
+                            
+                        }
+                        
+                    }
+                }
+            }
         }
         
-        bool empty;
-        union {
-            std::array<int, 8> ind;
-            std::array<float, 8> val;
-        };
+        template <class Archive>
+        void serialize( Archive & ar ) {
+            ar(empty, a);
+        }
+        
+        std::bitset<8> empty;
+        std::array<indval, 8> a;
         
     };
     
@@ -97,19 +128,22 @@ public:
     
     void get(GlobalChunkData& data) {
         nodes[root].get(this, data, 0, 0, 0, mhsize);
+        
+        sum = 0;
+        min = 0;
+        compressed = 0;
     }
     
     void set(GlobalChunkData& cd) {
         nodes.clear();
-        nodes.resize(32768);
+        nodes.resize(1);
         index = 0;
         root = make_node();
-        set(root, cd, 0, 0, 0, ((int) std::pow(2, std::ceil(std::log2(chunk::max_num_values.x)))/2.));
+        set(root, cd, 0, 0, 0, mhsize);
         
         nodes.resize(index+1);
         nodes.shrink_to_fit();
         
-        std::cout << chunk::max_num_values.x * chunk::max_num_values.y * chunk::max_num_values.z * sizeof(float) << " " << nodes.capacity() * sizeof(Node) << std::endl;
     }
     
     int make_node() {
@@ -126,9 +160,9 @@ public:
     
     float set(int ind, GlobalChunkData& cd, int x, int y, int z, int hsize) {
         
+        sum++;
+        
         if(hsize > 1) {
-            
-            std::array<float, 8> temp_val;
             
             float sum = 0.f;
             bool sign;
@@ -138,69 +172,86 @@ public:
                 for(int yi = 0; yi<2; yi++) {
                     for(int xi = 0; xi<2; xi++) {
                         int index = make_node();
-                        nodes[ind].ind[i] = index;
-                        float val = set(nodes[ind].ind[i], cd, x + xi*hsize, y + yi*hsize, z + zi*hsize, hsize/2);
+                        float val = set(index, cd, x + xi*hsize, y + yi*hsize, z + zi*hsize, hsize/2);
                         
-                        if(val == 0.f || !empty) {
+                        nodes[ind].empty[i] = (val != 0.0f);
+                        if(nodes[ind].empty[i]) {
                             
-                            empty = false;
+                            nodes[ind].a[i].val = val;
+                            set_index(index);
                             
                         } else {
+                            
+                            empty = false;
+                            nodes[ind].a[i].ind = index;
+                            
+                        }
                         
-                            temp_val[i] = nodes[nodes[ind].ind[i]].val[i];
-                            sum += val;
+                        if(empty) {
+                            
                             if(i == 0) {
                                 sign = std::signbit(val);
-                            } else if(sign != std::signbit(val)) {
-                                empty = false;
+                                sum = val;
+                            } else {
+                                if(sign != std::signbit(val))
+                                    empty = false;
+                                if(std::abs(val) < std::abs(sum))
+                                    sum = val;
                             }
                             
                         }
+                        
                         i++;
                     }
                 }
             }
             
-            nodes[ind].empty = empty;
             if(empty) {
-                set_index(nodes[ind].ind[0]);
-                nodes[ind].val = temp_val;
-                return sum/8.f;
+                return sum;
             } else {
                 return 0.f;
             }
             
         } else {
             
-            float sum = 0.f;
+            float sum = 0.0f;
             bool sign;
             bool empty = true;
             int i = 0;
             
+            int num = 0;
+            
             for(int zi = 0; zi<2; zi++) {
                 for(int yi = 0; yi<2; yi++) {
                     for(int xi = 0; xi<2; xi++) {
-                        float val = 0.f;
+                        
+                        float val = out_of_range;
                         if(x + xi < chunk::max_num_values.x && y + yi < chunk::max_num_values.y && z + zi < chunk::max_num_values.z) {
+                            
                             val = cd.data[(x + xi) * chunk::max_num_values.y * chunk::max_num_values.z + (z + zi) * chunk::max_num_values.y + (y+yi)];
+                            
+                            if(num == 0) {
+                                sign = std::signbit(val);
+                                sum = val;
+                            } else {
+                                if(sign != std::signbit(val))
+                                    empty = false;
+                                if(std::abs(val) < std::abs(sum))
+                                    sum = val;
+                            }
+                            
+                            num++;
+                            
                         }
                         
-                        sum += val;
-                        if(i == 0) {
-                            sign = std::signbit(val);
-                        } else if(sign != std::signbit(val)) {
-                            empty = false;
-                        }
-                        
-                        nodes[ind].val[i] = val;
+                        nodes[ind].a[i].val = val;
                         i++;
                     }
                 }
             }
             
-            nodes[ind].empty = empty;
             if(empty) {
-                return sum/8.f;
+                return num == 0 ? out_of_range : sum;
             } else {
                 return 0.f;
             }

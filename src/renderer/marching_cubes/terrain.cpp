@@ -11,7 +11,7 @@
 
 #include <iostream>
 
-constexpr uint32_t NUM_TRIANGLES = 50000/3;
+constexpr uint32_t NUM_TRIANGLES = 100000/3;
 constexpr uint32_t NUM_INDIRECT = 10;
 constexpr uint32_t MAX_CHUNKS = 5000;
 

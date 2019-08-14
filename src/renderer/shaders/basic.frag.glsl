@@ -6,7 +6,7 @@ layout(location = 2) in vec2 v_uv;
 
 layout(location = 0) out vec4 outColor;
 
-const int chunk_size = 8*8*5;
+const int chunk_size = 8*8*8;
 
 void main() {
     
@@ -14,8 +14,8 @@ void main() {
     vec3 spos = v_position/length(v_position);
     outColor = vec4(abs(spos.x), separator, abs(spos.z), 1);
     
-    //vec3 normal = normalize(cross(dFdx(v_position), dFdy(v_position)));
-    vec3 normal = normalize(v_normal);
+    vec3 normal = normalize(cross(dFdx(v_position), dFdy(v_position)));
+    //vec3 normal = normalize(v_normal);
     float light = max(dot(normal, vec3(0.5,-1.,0.5)), 0);
     outColor.rgb = outColor.rgb * (light*0.7 + 0.3);
     
