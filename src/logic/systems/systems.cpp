@@ -82,6 +82,7 @@ void Systems::finish() {
     tf::Executor& executor = reg.ctx<tf::Executor>();
     running = false;
     executor.wait_for_all();
+    taskflow.clear();
     
     for(std::unique_ptr<System>& sys : systems) {
         sys->finish();

@@ -40,10 +40,11 @@ void Game::update(float dt) {
 
 void Game::quit() {
     
+    std::cout << "hey" << std::endl;
     systems.finish();
     
 }
 
 Game::~Game() {
-    
+    std::cout << "wut" << std::endl;
 }
