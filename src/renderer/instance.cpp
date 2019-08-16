@@ -99,20 +99,20 @@ Instance::Instance(Windu& win) : win(win) {
     vk::ApplicationInfo appInfo("Test", VK_MAKE_VERSION(1, 0, 0), "Dynamical", VK_MAKE_VERSION(1, 0, 0), VK_MAKE_VERSION(1, 1, 0));
 
     std::vector<const char *> layerNames {};
-    
-    #ifndef NDEBUG
-        extensionNames.push_back("VK_EXT_debug_utils");
-        layerNames.push_back("VK_LAYER_KHRONOS_validation");
-        if(!checkLayers(layerNames)) {
-            std::vector<vk::LayerProperties> availables = vk::enumerateInstanceLayerProperties();
-            
-            for (vk::LayerProperties available : availables) {
-                std::cout << available.layerName << "\n";
-            }
-            
-            throw std::runtime_error("Validation layers requested, but not available!");
+
+#ifndef NDEBUG
+    extensionNames.push_back("VK_EXT_debug_utils");
+    layerNames.push_back("VK_LAYER_KHRONOS_validation");
+    if(!checkLayers(layerNames)) {
+        std::vector<vk::LayerProperties> availables = vk::enumerateInstanceLayerProperties();
+
+        for (vk::LayerProperties available : availables) {
+            std::cout << available.layerName << "\n";
         }
-    #endif
+
+        throw std::runtime_error("Validation layers requested, but not available!");
+    }
+#endif
     
     if(!checkInstanceExtensions(extensionNames)) {
         
@@ -126,17 +126,20 @@ Instance::Instance(Windu& win) : win(win) {
     }
 
     instance = vk::createInstance(vk::InstanceCreateInfo({}, &appInfo, layerNames.size(), layerNames.data(), extensionNames.size(), extensionNames.data()));
-    
+
+    Instance &instance = *this;
+
+#ifndef NDEBUG
     auto info = static_cast<VkDebugUtilsMessengerCreateInfoEXT> (vk::DebugUtilsMessengerCreateInfoEXT({},
                                          vk::DebugUtilsMessageSeverityFlagBitsEXT::eError | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning | vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo | vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose, 
                                          vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance | vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation, 
                                          &debugCallback, nullptr
                                         ));
-    
-    Instance &instance = *this;
+
     INST_LOAD(vkCreateDebugUtilsMessengerEXT);
     
     vkCreateDebugUtilsMessengerEXT(instance, &info, nullptr, &messenger);
+#endif
     
     VkSurfaceKHR surf;
     SDL_Vulkan_CreateSurface(win, instance, &surf);
@@ -156,13 +159,15 @@ bool Instance::supportsPresent(VkPhysicalDevice device, int i) {
 Instance::~Instance() {
     
     instance.destroy(win.surface);
-    
+
+#ifndef NDEBUG
     {
         Instance &instance = *this;
         INST_LOAD(vkDestroyDebugUtilsMessengerEXT);
         
         vkDestroyDebugUtilsMessengerEXT(instance, messenger, nullptr);
     }
+#endif
     
     instance.destroy();
 }
