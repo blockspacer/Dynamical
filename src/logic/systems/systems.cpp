@@ -4,6 +4,9 @@
 #include "renderer/renderer.h"
 #include "renderer/marching_cubes/terrain.h"
 #include "renderer/marching_cubes/marching_cubes.h"
+#include "logic/components/settings.h"
+#include "client_network.h"
+#include "server_network.h"
 
 #define MAKE_SYSTEM(TYPE, NAME) \
 systems.push_back(std::make_unique<TYPE>(reg)); \
@@ -16,17 +19,76 @@ Systems::Systems(entt::registry& reg) : reg(reg) {
     
     int i = 0;
     MAKE_SYSTEM(SettingSys, settings)
-    MAKE_SYSTEM(InputSys, input)
-    MAKE_SYSTEM(CameraSys, camera)
-    MAKE_SYSTEM(ChunkManagerSys, chunk_manager)
-    MAKE_SYSTEM(ChunkLoaderSys, chunk_loader)
-    MAKE_SYSTEM(ChunkGeneratorSys, chunk_generator)
-    MAKE_SYSTEM(ChunkSys, chunk)
-    MAKE_SYSTEM(Terrain, terrain)
-    MAKE_SYSTEM(MarchingCubes, marching_cubes)
-    MAKE_SYSTEM(Renderer, renderer)
+    Settings& s = reg.ctx<Settings>();
     
-    { // Main taskflow
+    if(s.server_side) {
+        
+        std::cout << "server_side" << std::endl;
+        MAKE_SYSTEM(ServerNetworkSys, server)
+        
+        taskflow.emplace([=]() {server->tick();});
+        
+    } else if(s.client_side) {
+        
+        MAKE_SYSTEM(InputSys, input)
+        MAKE_SYSTEM(CameraSys, camera)
+        MAKE_SYSTEM(ChunkManagerSys, chunk_manager)
+        MAKE_SYSTEM(ChunkLoaderSys, chunk_loader)
+        MAKE_SYSTEM(ChunkGeneratorSys, chunk_generator)
+        MAKE_SYSTEM(ChunkSys, chunk)
+        MAKE_SYSTEM(Terrain, terrain)
+        MAKE_SYSTEM(MarchingCubes, marching_cubes)
+        MAKE_SYSTEM(Renderer, renderer)
+        
+        std::cout << "client_side" << std::endl;
+        MAKE_SYSTEM(ClientNetworkSys, client)
+        
+        
+        tf::Task input_t = taskflow.emplace([=]() {input->tick();});
+        tf::Task camera_t = taskflow.emplace([=]() {camera->tick();});
+        
+        auto [chunk_manager_t, chunk_loader_t, chunk_generator_t, chunk_t, terrain_t, marching_cubes_t] = taskflow.emplace(
+            [=]() {chunk_manager->tick();},
+            [=]() {chunk_loader->tick();},
+            [=]() {chunk_generator->tick();},
+            [=]() {chunk->tick();},
+            [=]() {terrain->tick();},
+            [=]() {marching_cubes->tick();}
+        );
+        
+        taskflow.emplace([=]() {client->tick();});
+        
+        
+        
+        tf::Task renderer_t = taskflow.emplace([=]() {renderer->tick();});
+        
+        input_t.precede(camera_t);
+        
+        renderer_t.gather(camera_t);
+        
+        chunk_manager_t.gather(camera_t);
+        chunk_manager_t.precede(chunk_loader_t);
+        chunk_loader_t.precede(chunk_generator_t);
+        chunk_generator_t.precede(chunk_t);
+        chunk_t.precede(terrain_t);
+        terrain_t.precede(marching_cubes_t);
+    
+        
+    } else {
+        
+        MAKE_SYSTEM(InputSys, input)
+        MAKE_SYSTEM(CameraSys, camera)
+        MAKE_SYSTEM(ChunkManagerSys, chunk_manager)
+        MAKE_SYSTEM(ChunkLoaderSys, chunk_loader)
+        MAKE_SYSTEM(ChunkGeneratorSys, chunk_generator)
+        MAKE_SYSTEM(ChunkSys, chunk)
+        MAKE_SYSTEM(Terrain, terrain)
+        MAKE_SYSTEM(MarchingCubes, marching_cubes)
+        MAKE_SYSTEM(Renderer, renderer)
+        
+        std::cout << "singleplayer" << std::endl;
+        
+        
         tf::Task input_t = taskflow.emplace([=]() {input->tick();});
         tf::Task camera_t = taskflow.emplace([=]() {camera->tick();});
         
@@ -41,6 +103,7 @@ Systems::Systems(entt::registry& reg) : reg(reg) {
         
         tf::Task renderer_t = taskflow.emplace([=]() {renderer->tick();});
         
+        
         input_t.precede(camera_t);
         
         renderer_t.gather(camera_t);
@@ -51,6 +114,7 @@ Systems::Systems(entt::registry& reg) : reg(reg) {
         chunk_generator_t.precede(chunk_t);
         chunk_t.precede(terrain_t);
         terrain_t.precede(marching_cubes_t);
+        
     }
     
 }

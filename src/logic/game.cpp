@@ -30,21 +30,20 @@ void Game::start() {
 void Game::update(float dt) {
     
     systems.tick();
-    InputC& input = reg.ctx<InputC>();
-    if(input.on[Action::EXIT]) {
+    InputC* input = reg.try_ctx<InputC>();
+    if(input != nullptr && input->on[Action::EXIT]) {
         setQuitting();
-        input.on.set(Action::EXIT, false);
+        input->on.set(Action::EXIT, false);
     }
 
 }
 
 void Game::quit() {
     
-    std::cout << "hey" << std::endl;
     systems.finish();
     
 }
 
 Game::~Game() {
-    std::cout << "wut" << std::endl;
+    
 }

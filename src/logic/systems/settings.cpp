@@ -30,4 +30,5 @@ void synchronize(entt::registry& reg, Settings& settings) {
 SettingSys::SettingSys(entt::registry& reg) : System(reg) {
     auto& settings = reg.set<Settings>();
     synchronize(reg, settings);
+    settings.argument_override(reg.ctx<Arguments>());
 }
