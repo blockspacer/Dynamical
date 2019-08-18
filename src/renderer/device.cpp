@@ -141,6 +141,14 @@ Device::Device(Instance &inst) : instance(inst) {
     allocatorInfo.device = logical;
     vmaCreateAllocator(&allocatorInfo, &allocator);
     
+#ifndef NDEBUG
+    if(isDedicated()) {
+        std::cout << "memory is dedicated" << std::endl;
+    } else {
+        std::cout << "memory is local" << std::endl;
+    }
+#endif
+    
 }
 
     
@@ -184,6 +192,18 @@ uint32_t Device::getMemoryType(uint32_t typeBits, vk::MemoryPropertyFlags proper
     return 1000;
 }
 
+bool Device::isDedicated() {
+    
+    for(uint32_t i = 0; i < memoryProperties.memoryTypeCount; i++) {
+        if(
+            (memoryProperties.memoryTypes[i].propertyFlags & vk::MemoryPropertyFlagBits::eDeviceLocal) == vk::MemoryPropertyFlagBits::eDeviceLocal &&
+            (memoryProperties.memoryTypes[i].propertyFlags & vk::MemoryPropertyFlagBits::eHostVisible) == vk::MemoryPropertyFlags()
+        ) {
+            return true;
+        }
+    }
+    return false;
+}
 
 Device::~Device() {
     

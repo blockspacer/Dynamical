@@ -13,7 +13,7 @@
 
 std::mutex Chunk::mutex;
 
-MainRender::MainRender(Instance& instance, Device& device, Swapchain& swap, Camera& camera) : renderpass(device, swap), pipeline(device, swap, renderpass), instance(instance), device(device), swap(swap), camera(camera) {
+MainRender::MainRender(Instance& instance, Device& device, Transfer& transfer, Swapchain& swap, Camera& camera) : renderpass(device, swap), chunk_pipeline(device, transfer, swap, renderpass), instance(instance), device(device), transfer(transfer), swap(swap), camera(camera) {
     
     commandPool = device->createCommandPool(vk::CommandPoolCreateInfo(vk::CommandPoolCreateFlagBits::eResetCommandBuffer, device.g_i));
     
@@ -42,7 +42,7 @@ MainRender::MainRender(Instance& instance, Device& device, Swapchain& swap, Came
         auto bufInfo = vk::DescriptorBufferInfo(ubos[i], 0, ubos[i].size);
         
         device->updateDescriptorSets({
-            vk::WriteDescriptorSet(pipeline.descSets[i], 0, 0, 1, vk::DescriptorType::eUniformBuffer, nullptr, &bufInfo, nullptr)
+            vk::WriteDescriptorSet(chunk_pipeline.descSets[i], 0, 0, 1, vk::DescriptorType::eUniformBuffer, nullptr, &bufInfo, nullptr)
         }, {});
         
     }
@@ -85,9 +85,9 @@ void MainRender::render(entt::registry& reg, uint32_t index, std::vector<vk::Sem
     
     command.setScissor(0, vk::Rect2D(vk::Offset2D(), swap.extent));
     
-    command.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
+    command.bindPipeline(vk::PipelineBindPoint::eGraphics, chunk_pipeline);
     
-    command.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline, 0, {pipeline.descSets[ri.frame_index]}, {});
+    command.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, chunk_pipeline, 0, {chunk_pipeline.materialSet, chunk_pipeline.descSets[ri.frame_index]}, {});
     
     Chunk::mutex.lock();
     reg.view<Chunk, entt::tag<"ready"_hs>>().each([&](Chunk& chonk, auto) {

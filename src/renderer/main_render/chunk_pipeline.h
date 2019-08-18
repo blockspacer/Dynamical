@@ -3,14 +3,19 @@
 
 #include "vulkan/vulkan.hpp"
 
+#include "renderer/vmapp.h"
+
 class Device;
+class Transfer;
 class Swapchain;
 class Renderpass;
 
-class BasicPipeline {
+constexpr int num_textures = 2;
+
+class ChunkPipeline {
 public:
-    BasicPipeline(Device& device, Swapchain& swap, Renderpass& renderpass);
-    ~BasicPipeline();
+    ChunkPipeline(Device& device, Transfer& transfer, Swapchain& swap, Renderpass& renderpass);
+    ~ChunkPipeline();
     
     operator vk::Pipeline() { return pipeline; }
     operator vk::PipelineLayout() { return layout; }
@@ -19,11 +24,20 @@ public:
     vk::DescriptorSetLayout descLayout;
     std::vector<vk::DescriptorSet> descSets;
     
+    vk::DescriptorSetLayout materialLayout;
+    vk::DescriptorSet materialSet;
+    
+    VmaImage materialTexture;
+    vk::ImageView materialTextureView;
+    
+    vk::Sampler sampler;
+    
     vk::PipelineLayout layout;
     vk::Pipeline pipeline;
     
 private:
     Device& device;
+    Transfer& transfer;
     Swapchain& swap;
     Renderpass& renderpass;
     

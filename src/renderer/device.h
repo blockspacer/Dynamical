@@ -22,6 +22,8 @@ public :
     uint32_t getScore(vk::PhysicalDevice &device);
     uint32_t getMemoryType(uint32_t typeBits, vk::MemoryPropertyFlags properties);
     
+    bool isDedicated();
+    
     vk::Queue graphics, compute, transfer;
     uint32_t g_i = 0, c_i = 0, t_i = 0;
     std::mutex *g_mutex, *c_mutex, *t_mutex;

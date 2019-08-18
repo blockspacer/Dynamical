@@ -6,7 +6,7 @@
 #include "num_frames.h"
 #include "logic/components/renderinfo.h"
 
-Renderer::Renderer(entt::registry& reg) : System(reg), win(), instance(win), device(instance), swap(win, instance, device), camera(swap.extent.width, swap.extent.height), main_render(instance, device, swap, camera),
+Renderer::Renderer(entt::registry& reg) : System(reg), win(), instance(win), device(instance), transfer(device), swap(win, instance, device), camera(swap.extent.width, swap.extent.height), main_render(instance, device, transfer, swap, camera),
 waitsems(NUM_FRAMES), signalsems(NUM_FRAMES), computesems(NUM_FRAMES) {
     
     for(int i = 0; i < waitsems.size(); i++) {
@@ -14,6 +14,8 @@ waitsems(NUM_FRAMES), signalsems(NUM_FRAMES), computesems(NUM_FRAMES) {
         signalsems[i] = device->createSemaphore({});
         computesems[i] = device->createSemaphore({});
     }
+    
+    transfer.flush();
     
 }
 
@@ -47,6 +49,8 @@ void Renderer::tick() {
     }
     
     try {
+        
+        transfer.flush();
         
         camera.update(reg);
         

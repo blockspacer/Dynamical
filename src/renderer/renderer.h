@@ -4,6 +4,7 @@
 #include "windu.h"
 #include "instance.h"
 #include "device.h"
+#include "transfer.h"
 #include "swapchain.h"
 #include "camera.h"
 #include "main_render/main_render.h"
@@ -27,6 +28,7 @@ private:
     Windu win;
     Instance instance;
     Device device;
+    Transfer transfer;
     Swapchain swap;
     Camera camera;
     MainRender main_render;

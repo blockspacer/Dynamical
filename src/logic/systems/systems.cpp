@@ -21,9 +21,19 @@ Systems::Systems(entt::registry& reg) : reg(reg) {
     MAKE_SYSTEM(SettingSys, settings)
     Settings& s = reg.ctx<Settings>();
     
+#ifndef NDEBUG
+    if(s.server_side) {
+        std::cout << "server_side" << std::endl;
+    } else if(s.client_side) {
+        std::cout << "client_side" << std::endl;
+    } else {
+        std::cout << "single_player" << std::endl;
+    }
+#endif
+    
+    
     if(s.server_side) {
         
-        std::cout << "server_side" << std::endl;
         MAKE_SYSTEM(ServerNetworkSys, server)
         
         taskflow.emplace([=]() {server->tick();});
@@ -40,7 +50,6 @@ Systems::Systems(entt::registry& reg) : reg(reg) {
         MAKE_SYSTEM(MarchingCubes, marching_cubes)
         MAKE_SYSTEM(Renderer, renderer)
         
-        std::cout << "client_side" << std::endl;
         MAKE_SYSTEM(ClientNetworkSys, client)
         
         
@@ -85,9 +94,6 @@ Systems::Systems(entt::registry& reg) : reg(reg) {
         MAKE_SYSTEM(Terrain, terrain)
         MAKE_SYSTEM(MarchingCubes, marching_cubes)
         MAKE_SYSTEM(Renderer, renderer)
-        
-        std::cout << "singleplayer" << std::endl;
-        
         
         tf::Task input_t = taskflow.emplace([=]() {input->tick();});
         tf::Task camera_t = taskflow.emplace([=]() {camera->tick();});

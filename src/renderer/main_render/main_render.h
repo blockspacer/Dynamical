@@ -2,7 +2,7 @@
 #define MAIN_RENDER_H
 
 #include "renderpass.h"
-#include "basic_pipeline.h"
+#include "chunk_pipeline.h"
 
 #include "renderer/vmapp.h"
 
@@ -13,6 +13,7 @@
 #include "renderer/num_frames.h"
 
 class Instance;
+class Transfer;
 class Device;
 class Swapchain;
 class Camera;
@@ -28,7 +29,7 @@ struct UBO {
 
 class MainRender {
 public:
-    MainRender(Instance& instance, Device& device, Swapchain& swap, Camera& camera);
+    MainRender(Instance& instance, Device& device, Transfer& transfer, Swapchain& swap, Camera& camera);
     void setup();
     void rsetup();
     void render(entt::registry& reg, uint32_t index, std::vector<vk::Semaphore> waits, std::vector<vk::Semaphore> signals);
@@ -39,9 +40,10 @@ public:
     
 private:
     Renderpass renderpass;
-    BasicPipeline pipeline;
+    ChunkPipeline chunk_pipeline;
     Instance& instance;
     Device& device;
+    Transfer& transfer;
     Swapchain& swap;
     Camera& camera;
     

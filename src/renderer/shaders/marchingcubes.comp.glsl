@@ -144,7 +144,7 @@ void main() {
             ivec3 a1 = ivec3(gl_GlobalInvocationID.xyz) + offsets[edge], a2 = ivec3(gl_GlobalInvocationID.xyz) + offsets[edge+1];
             float density1 = values(a1);
             float density2 = values(a2);
-            vec3 vertex = mix(a1, a2, (-density1)/(density2 - density1));
+            vec3 vertex = mix(a1, a2, (-density1)/(density2 - density1)) * size + pos;
             
             vec3 norm1 = vec3(
             values(a1.x-1, a1.y, a1.z) - values(a1.x+1, a1.y, a1.z),
@@ -160,9 +160,9 @@ void main() {
             
             vec3 normal = normalize(-mix(norm1, norm2, (-density1)/(density2 - density1)));
             
-            vec2 uv = vec2(0, 0);
+            vec2 uv = vec2(vertex.xz/32.);
             
-            tril[(global_tri_index + local_tri_index+i)*2] = vec4(vertex * size + pos, normal.x);
+            tril[(global_tri_index + local_tri_index+i)*2] = vec4(vertex, normal.x);
             tril[(global_tri_index + local_tri_index+i)*2 + 1] = vec4(normal.yz, uv);
         }
         
