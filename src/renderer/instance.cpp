@@ -139,6 +139,7 @@ Instance::Instance(Windu& win) : win(win) {
     INST_LOAD(vkCreateDebugUtilsMessengerEXT);
     
     vkCreateDebugUtilsMessengerEXT(instance, &info, nullptr, &messenger);
+    
 #endif
     
     VkSurfaceKHR surf;

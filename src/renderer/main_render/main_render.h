@@ -2,11 +2,10 @@
 #define MAIN_RENDER_H
 
 #include "renderpass.h"
-#include "chunk_pipeline.h"
+#include "chunk_render/chunk_render.h"
+#include "ubo_descriptor.h"
 
 #include "renderer/vmapp.h"
-
-#include "glm/glm.hpp"
 
 #include "entt/entt.hpp"
 
@@ -18,14 +17,6 @@ class Device;
 class Swapchain;
 class Camera;
 class Terrain;
-
-
-struct UBO {
-    
-    glm::mat4 viewproj;
-    
-};
-
 
 class MainRender {
 public:
@@ -40,7 +31,8 @@ public:
     
 private:
     Renderpass renderpass;
-    ChunkPipeline chunk_pipeline;
+    UBODescriptor ubo;
+    ChunkRender chunk_render;
     Instance& instance;
     Device& device;
     Transfer& transfer;
@@ -50,9 +42,6 @@ private:
     vk::CommandPool commandPool;
     std::array<vk::CommandBuffer, NUM_FRAMES> commandBuffers;
     std::array<vk::Fence, NUM_FRAMES> fences;
-    
-    std::array<VmaBuffer, NUM_FRAMES> ubos;
-    std::array<UBO*, NUM_FRAMES> uboPointers;
     
 };
 

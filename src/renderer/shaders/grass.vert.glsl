@@ -18,9 +18,10 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 };
 
 void main() {
-
-    gl_Position = viewproj * vec4(a_pos, 1.0);
-    v_position = a_pos;
+    
+    vec3 position = a_pos - a_normal*5.;
+    gl_Position = viewproj * vec4(position, 1.0);
+    v_position = position;
     v_normal = a_normal;
     v_uv = a_uv;
     

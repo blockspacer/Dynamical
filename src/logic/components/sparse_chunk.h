@@ -10,9 +10,6 @@
 #include "global_chunk_data.h"
 
 const int mhsize = ((int) std::pow(2, std::ceil(std::log2(chunk::max_num_values.x)))/2.);
-static int sum = 0;
-static int min = 0;
-static int compressed = 0;
 
 constexpr float out_of_range = 1000.f;
 
@@ -34,11 +31,7 @@ class SparseChunk {
         
         void get(SparseChunk* tree, GlobalChunkData& cd, int x, int y, int z, int hsize) {
             
-            sum++;
-            
             if(hsize == 1) {
-                
-                min++;
                 
                 int i = 0;
                 for(int zi = 0; zi<2; zi++) {
@@ -128,10 +121,6 @@ public:
     
     void get(GlobalChunkData& data) {
         nodes[root].get(this, data, 0, 0, 0, mhsize);
-        
-        sum = 0;
-        min = 0;
-        compressed = 0;
     }
     
     void set(GlobalChunkData& cd) {
@@ -159,8 +148,6 @@ public:
     }
     
     float set(int ind, GlobalChunkData& cd, int x, int y, int z, int hsize) {
-        
-        sum++;
         
         if(hsize > 1) {
             

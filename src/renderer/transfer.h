@@ -8,22 +8,15 @@
 
 class Device;
 
-class ImageTarget {
-public:
-    ImageTarget(vk::Image image, int num_components = 4, int base_mip = 0, int base_array = 0) : image(image), num_components(num_components), base_mip(base_mip), base_array(base_array) {};
-    vk::Image image;
-    int num_components;
-    int base_mip;
-    int base_array;
-};
-
 class Transfer {
 public:
     Transfer(Device& device);
     void flush();
     vk::CommandBuffer getCommandBuffer();
     
-    void prepareImage(std::string str, ImageTarget image);
+    void prepareImage(std::string str, VmaImage& image, int num_components, int base_mip, int base_array);
+    void prepareImage(const void* data, VmaImage& image, vk::Extent3D sizes, int base_mip, int base_array);
+    bool prepareBuffer(const void* data, VmaBuffer& image);
     
     ~Transfer();
 private:

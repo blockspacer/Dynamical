@@ -111,7 +111,27 @@ Device::Device(Instance &inst) : instance(inst) {
     
     logical = physical.createDevice(vk::DeviceCreateInfo({}, countF, pqinfo.data(), 0, nullptr, requiredExtensions.size(), requiredExtensions.data(), &requiredFeatures));
     
+    
+#ifndef NDEBUG
+    
+    Device& device = *this;
+    DEV_LOAD(vkSetDebugUtilsObjectNameEXT)
+    this->vkSetDebugUtilsObjectNameEXT = vkSetDebugUtilsObjectNameEXT;
+    
+    if(isDedicated()) {
+        std::cout << "memory is dedicated" << std::endl;
+    } else {
+        std::cout << "memory is local" << std::endl;
+    }
+    
+#endif
+    
+    SET_NAME(vk::ObjectType::eDevice, (VkDevice) logical, main)
+    
     graphics = logical.getQueue(g_i, 0);
+    
+    SET_NAME(vk::ObjectType::eQueue, (VkQueue) graphics, graphics)
+    
     g_mutex_ = std::make_unique<std::mutex>();
     g_mutex = g_mutex_.get();
     
@@ -122,6 +142,7 @@ Device::Device(Instance &inst) : instance(inst) {
         compute = logical.getQueue(c_i, 0);
         c_mutex_ = std::make_unique<std::mutex>();
         c_mutex = c_mutex_.get();
+        SET_NAME(vk::ObjectType::eQueue, (VkQueue) compute, compute)
     }
     
     if(t_i == g_i) {
@@ -134,6 +155,7 @@ Device::Device(Instance &inst) : instance(inst) {
         transfer = logical.getQueue(t_i, 0);
         t_mutex_ = std::make_unique<std::mutex>();
         t_mutex = t_mutex_.get();
+        SET_NAME(vk::ObjectType::eQueue, (VkQueue) transfer, transfer)
     }
     
     VmaAllocatorCreateInfo allocatorInfo = {};
@@ -141,18 +163,7 @@ Device::Device(Instance &inst) : instance(inst) {
     allocatorInfo.device = logical;
     vmaCreateAllocator(&allocatorInfo, &allocator);
     
-#ifndef NDEBUG
-    if(isDedicated()) {
-        std::cout << "memory is dedicated" << std::endl;
-    } else {
-        std::cout << "memory is local" << std::endl;
-    }
-#endif
-    
 }
-
-    
-
 
 uint32_t Device::getScore(vk::PhysicalDevice &device) {
     // Get device properties

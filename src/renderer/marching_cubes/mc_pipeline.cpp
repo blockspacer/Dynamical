@@ -34,7 +34,7 @@ MCPipeline::MCPipeline(Device& device, vk::DescriptorSetLayout setlayout) : devi
     
     
     
-    auto computeShaderCode = Util::readFile("./shaders/marchingcubes.comp.glsl.spv");
+    auto computeShaderCode = Util::readFile("./resources/shaders/marchingcubes.comp.glsl.spv");
     vk::ShaderModule computeShader = device->createShaderModule(
         vk::ShaderModuleCreateInfo({}, computeShaderCode.size() * sizeof(char), reinterpret_cast<const uint32_t*>(computeShaderCode.data())));
     

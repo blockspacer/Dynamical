@@ -2,32 +2,24 @@
 
 #include "util/util.h"
 
+#include <fstream>
+
 #include "renderer/device.h"
 #include "renderer/transfer.h"
 #include "renderer/swapchain.h"
-#include "renderpass.h"
+#include "renderer/main_render/renderpass.h"
 #include "renderer/num_frames.h"
+#include "renderer/main_render/ubo_descriptor.h"
 
 #include "renderer/marching_cubes/terrain.h"
 
-ChunkPipeline::ChunkPipeline(Device& device, Transfer& transfer, Swapchain& swap, Renderpass& renderpass) : device(device), transfer(transfer), swap(swap), renderpass(renderpass) {
+ChunkPipeline::ChunkPipeline(Device& device, Transfer& transfer, Swapchain& swap, Renderpass& renderpass, UBODescriptor& ubo) : device(device), transfer(transfer), swap(swap), renderpass(renderpass) {
     
     {
         auto poolSizes = std::vector {
-            vk::DescriptorPoolSize(vk::DescriptorType::eUniformBuffer, NUM_FRAMES),
             vk::DescriptorPoolSize(vk::DescriptorType::eCombinedImageSampler, 1),
         };
-        descPool = device->createDescriptorPool(vk::DescriptorPoolCreateInfo({}, NUM_FRAMES + 1, poolSizes.size(), poolSizes.data()));
-    }
-    
-    {
-        auto bindings = std::vector {
-            vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex)
-        };
-        descLayout = device->createDescriptorSetLayout(vk::DescriptorSetLayoutCreateInfo({}, bindings.size(), bindings.data()));
-        
-        std::vector<vk::DescriptorSetLayout> layouts = Util::nTimes(NUM_FRAMES, descLayout);
-        descSets = device->allocateDescriptorSets(vk::DescriptorSetAllocateInfo(descPool, NUM_FRAMES, layouts.data()));
+        descPool = device->createDescriptorPool(vk::DescriptorPoolCreateInfo({}, 1, poolSizes.size(), poolSizes.data()));
     }
     
     {
@@ -42,23 +34,25 @@ ChunkPipeline::ChunkPipeline(Device& device, Transfer& transfer, Swapchain& swap
         bool concurrent = (device.g_i != device.c_i);
         uint32_t qfs[2] = {device.g_i, device.c_i};
         
-        VmaAllocationCreateInfo info{};
-        info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-        materialTexture = VmaImage(device, &info,
-            vk::ImageCreateInfo({}, vk::ImageType::e2D, vk::Format::eR8G8B8A8Unorm, vk::Extent3D(450, 450, 1), 1, num_textures, vk::SampleCountFlagBits::e1, vk::ImageTiling::eOptimal, vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst,
-            concurrent ? vk::SharingMode::eConcurrent : vk::SharingMode::eExclusive, concurrent ? 2 : 1, &qfs[0], vk::ImageLayout::eUndefined)
-        );
+        {
+            VmaAllocationCreateInfo info{};
+            info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+            materialTexture = VmaImage(device, &info,
+                vk::ImageCreateInfo({}, vk::ImageType::e2D, vk::Format::eR8G8B8A8Unorm, vk::Extent3D(450, 450, 1), 1, num_textures, vk::SampleCountFlagBits::e1, vk::ImageTiling::eOptimal, vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst,
+                concurrent ? vk::SharingMode::eConcurrent : vk::SharingMode::eExclusive, concurrent ? 2 : 1, &qfs[0], vk::ImageLayout::eUndefined)
+            );
+        }
         
-        transfer.prepareImage("./resources/grass.png", ImageTarget(materialTexture.image, 4, 0, 0));
-        transfer.prepareImage("./resources/rock.jpg", ImageTarget(materialTexture.image, 4, 0, 1));
+        transfer.prepareImage(std::string("./resources/grass.png"), materialTexture, 4, 0, 0);
+        transfer.prepareImage(std::string("./resources/rock.jpg"), materialTexture, 4, 0, 1);
         
         sampler = device->createSampler(vk::SamplerCreateInfo(
             {}, vk::Filter::eLinear, vk::Filter::eLinear, vk::SamplerMipmapMode::eLinear,
             vk::SamplerAddressMode::eRepeat, vk::SamplerAddressMode::eRepeat, vk::SamplerAddressMode::eRepeat
         ));
         
-        
         materialTextureView = device->createImageView(vk::ImageViewCreateInfo({}, materialTexture.image, vk::ImageViewType::e2DArray, vk::Format::eR8G8B8A8Unorm, vk::ComponentMapping(), vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, num_textures)));
+        
         
         const auto image_info = vk::DescriptorImageInfo(sampler, materialTextureView, vk::ImageLayout::eShaderReadOnlyOptimal);
         device->updateDescriptorSets({
@@ -68,10 +62,22 @@ ChunkPipeline::ChunkPipeline(Device& device, Transfer& transfer, Swapchain& swap
     }
     
     
+    struct Constants {
+        int chunk_size;
+    } constants;
+    constants.chunk_size = chunk::base_length * chunk::max_mul;
+    
+    auto mapEntries = std::array {
+        vk::SpecializationMapEntry(0, offsetof(Constants, chunk_size), sizeof(int))
+    };
+    
+    auto specConstants = vk::SpecializationInfo(mapEntries.size(), mapEntries.data(), sizeof(Constants), &constants);
+    
+    
     // PIPELINE INFO
     
-    auto vertShaderCode = Util::readFile("./shaders/chunk.vert.glsl.spv");
-    auto fragShaderCode = Util::readFile("./shaders/chunk.frag.glsl.spv");
+    auto vertShaderCode = Util::readFile("./resources/shaders/chunk.vert.glsl.spv");
+    auto fragShaderCode = Util::readFile("./resources/shaders/chunk.frag.glsl.spv");
     
     VkShaderModuleCreateInfo moduleInfo = {};
     moduleInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -95,6 +101,7 @@ ChunkPipeline::ChunkPipeline(Device& device, Transfer& transfer, Swapchain& swap
     fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
     fragShaderStageInfo.module = fragShaderModule;
     fragShaderStageInfo.pName = "main";
+    fragShaderStageInfo.pSpecializationInfo = reinterpret_cast<VkSpecializationInfo*> (&specConstants);
 
     VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
     
@@ -199,7 +206,7 @@ ChunkPipeline::ChunkPipeline(Device& device, Transfer& transfer, Swapchain& swap
     
     
     {
-        auto layouts = std::vector<vk::DescriptorSetLayout> {materialLayout, descLayout};
+        auto layouts = std::vector<vk::DescriptorSetLayout> {ubo.descLayout, materialLayout};
         
         layout = device->createPipelineLayout(vk::PipelineLayoutCreateInfo(
             {}, layouts.size(), layouts.data(), 0, nullptr
@@ -244,8 +251,6 @@ ChunkPipeline::~ChunkPipeline() {
     
     device->destroy(materialLayout);
     
-    
-    device->destroy(descLayout);
     
     device->destroy(descPool);
     

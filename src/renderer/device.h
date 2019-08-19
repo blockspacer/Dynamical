@@ -7,6 +7,13 @@
 
 class Instance;
 
+#ifndef NDEBUG
+#define SET_NAME(TYPE, HANDLE, STR) \
+device->setDebugUtilsObjectNameEXT(vk::DebugUtilsObjectNameInfoEXT(TYPE, (uint64_t) HANDLE, #STR), device);
+#else
+#define SET_NAME(TYPE, HANDLE, STR)
+#endif
+
 class Device {
 public :
     Device(Instance &inst);
@@ -41,6 +48,8 @@ public :
     vk::PhysicalDevice physical;
     vk::Device logical;
     VmaAllocator allocator;
+    
+    PFN_vkSetDebugUtilsObjectNameEXT vkSetDebugUtilsObjectNameEXT;
     
 private:
     Instance &instance;

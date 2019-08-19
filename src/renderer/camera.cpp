@@ -30,6 +30,8 @@ void Camera::update(entt::registry& reg) {
     
     viewProjection = projection * view;
     
+    position = cam.pos;
+    
 }
 
 glm::mat4 & Camera::getProjection() {
@@ -44,6 +46,9 @@ glm::mat4 & Camera::getViewProjection() {
     return viewProjection;
 }
 
+glm::vec3 Camera::getViewPosition() {
+    return position;
+}
 
 Camera::~Camera() {
     

@@ -42,45 +42,90 @@ void Transfer::flush() {
     
 }
 
-void Transfer::prepareImage(std::string str, ImageTarget image) {
+void Transfer::prepareImage(std::string str, VmaImage& image, int num_components = 4, int base_mip = 0, int base_array = 0) {
     
     int x, y, channels;
-    stbi_uc* data = stbi_load(str.c_str(), &x, &y, &channels, image.num_components);
+    stbi_uc* data = stbi_load(str.c_str(), &x, &y, &channels, num_components);
     
     if(data == nullptr) {
         std::cout << "image " << str << " could not be loaded because : " << stbi_failure_reason() << std::endl;
     }
     
+    prepareImage(data, image, vk::Extent3D(x, y, 1), base_mip, base_array);
+    
+    stbi_image_free(data);
+    
+}
+
+void Transfer::prepareImage(const void* data, VmaImage& image, vk::Extent3D sizes, int base_mip = 0, int base_array = 0) {
+    
     VmaAllocationCreateInfo info {};
     info.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
     info.usage = VMA_MEMORY_USAGE_CPU_ONLY;
     stagingBuffers[index].push_back(VmaBuffer(device, &info, vk::BufferCreateInfo(
-        {}, x * y * image.num_components * sizeof(stbi_uc), vk::BufferUsageFlagBits::eTransferSrc, vk::SharingMode::eExclusive, 1, &device.t_i
+        {}, image.size, vk::BufferUsageFlagBits::eTransferSrc, vk::SharingMode::eExclusive, 1, &device.t_i
     )));
     const VmaBuffer& stagingBuffer = stagingBuffers[index].back();
     
     VmaAllocationInfo inf;
     vmaGetAllocationInfo(device, stagingBuffer.allocation, &inf);
     
-    memcpy(inf.pMappedData, data, x * y * image.num_components * sizeof(stbi_uc));
-    
-    stbi_image_free(data);
+    memcpy(inf.pMappedData, data, image.size);
     
     vk::CommandBuffer buffer = getCommandBuffer();
     
     buffer.pipelineBarrier(vk::PipelineStageFlagBits::eAllCommands, vk::PipelineStageFlagBits::eTransfer, vk::DependencyFlagBits::eByRegion, {}, {}, vk::ImageMemoryBarrier(
         {}, vk::AccessFlagBits::eTransferWrite, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal,
-        0, 0, image.image, vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, image.base_mip, 1, image.base_array, 1)
+        0, 0, image.image, vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, base_mip, 1, base_array, 1)
     ));
     
     buffer.copyBufferToImage(stagingBuffer.buffer, image.image, vk::ImageLayout::eTransferDstOptimal,
-        vk::BufferImageCopy(0, x, y, vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, image.base_mip, image.base_array, 1), vk::Offset3D(0, 0, 0), vk::Extent3D(x, y, 1)));
+        vk::BufferImageCopy(0, 0, 0, vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, base_mip, base_array, 1), vk::Offset3D(0, 0, 0), vk::Extent3D(sizes.width, sizes.height, sizes.depth)));
     
     buffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eFragmentShader, vk::DependencyFlagBits::eByRegion, {}, {}, vk::ImageMemoryBarrier(
         vk::AccessFlagBits::eTransferWrite, vk::AccessFlagBits::eShaderRead,
         vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal,
-        0, 0, image.image, vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, image.base_mip, 1, image.base_array, 1)
+        0, 0, image.image, vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, base_mip, 1, base_array, 1)
     ));
+    
+}
+
+
+bool Transfer::prepareBuffer(const void* data, VmaBuffer& buffer) {
+    
+    bool needsStaging = device.isDedicated();
+    
+    
+    if(needsStaging) {
+        
+        VmaAllocationCreateInfo info {};
+        info.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
+        info.usage = VMA_MEMORY_USAGE_CPU_ONLY;
+        stagingBuffers[index].push_back(VmaBuffer(device, &info, vk::BufferCreateInfo(
+            {}, buffer.size, vk::BufferUsageFlagBits::eTransferSrc, vk::SharingMode::eExclusive, 1, &device.t_i
+        )));
+        const VmaBuffer& stagingBuffer = stagingBuffers[index].back();
+        
+        VmaAllocationInfo inf;
+        vmaGetAllocationInfo(device, stagingBuffer.allocation, &inf);
+        
+        memcpy(inf.pMappedData, data, buffer.size);
+        
+        vk::CommandBuffer commandBuffer = getCommandBuffer();
+        
+        commandBuffer.copyBuffer(stagingBuffer.buffer, buffer.buffer, vk::BufferCopy(0, 0, buffer.size));
+        
+    } else {
+        
+        void* dest = device->mapMemory(buffer.memory, buffer.offset, buffer.size, {});
+        
+        memcpy(dest, data, buffer.size);
+        
+        device->unmapMemory(buffer.memory);
+        
+    }
+    
+    return !needsStaging;
     
 }
 

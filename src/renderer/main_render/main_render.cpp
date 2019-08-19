@@ -13,7 +13,7 @@
 
 std::mutex Chunk::mutex;
 
-MainRender::MainRender(Instance& instance, Device& device, Transfer& transfer, Swapchain& swap, Camera& camera) : renderpass(device, swap), chunk_pipeline(device, transfer, swap, renderpass), instance(instance), device(device), transfer(transfer), swap(swap), camera(camera) {
+MainRender::MainRender(Instance& instance, Device& device, Transfer& transfer, Swapchain& swap, Camera& camera) : renderpass(device, swap), ubo(device), chunk_render(device, transfer, swap, renderpass, ubo), instance(instance), device(device), transfer(transfer), swap(swap), camera(camera) {
     
     commandPool = device->createCommandPool(vk::CommandPoolCreateInfo(vk::CommandPoolCreateFlagBits::eResetCommandBuffer, device.g_i));
     
@@ -24,26 +24,6 @@ MainRender::MainRender(Instance& instance, Device& device, Transfer& transfer, S
         commandBuffers[i] = temp[i];
         
         fences[i] = device->createFence(vk::FenceCreateInfo(vk::FenceCreateFlagBits::eSignaled));
-        
-    }
-    
-    VmaAllocationCreateInfo allocInfo = {};
-    allocInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
-    allocInfo.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
-    
-    for(int i = 0; i < ubos.size(); i++) {
-        
-        ubos[i] = VmaBuffer(device, &allocInfo, vk::BufferCreateInfo({}, sizeof(UBO), vk::BufferUsageFlagBits::eUniformBuffer, vk::SharingMode::eExclusive, 1, &device.g_i));
-        
-        VmaAllocationInfo inf;
-        vmaGetAllocationInfo(device, ubos[i].allocation, &inf);
-        uboPointers[i] = static_cast<UBO*> (inf.pMappedData);
-        
-        auto bufInfo = vk::DescriptorBufferInfo(ubos[i], 0, ubos[i].size);
-        
-        device->updateDescriptorSets({
-            vk::WriteDescriptorSet(chunk_pipeline.descSets[i], 0, 0, 1, vk::DescriptorType::eUniformBuffer, nullptr, &bufInfo, nullptr)
-        }, {});
         
     }
     
@@ -64,13 +44,14 @@ void MainRender::rsetup() {
 
 void MainRender::render(entt::registry& reg, uint32_t index, std::vector<vk::Semaphore> waits, std::vector<vk::Semaphore> signals) {
     
-    RenderInfo ri = reg.ctx<RenderInfo>();
+    auto& ri = reg.ctx<RenderInfo>();
     
     device->waitForFences(fences[ri.frame_index], VK_TRUE, std::numeric_limits<uint64_t>::max());
     
     device->resetFences(fences[ri.frame_index]);
     
-    uboPointers[ri.frame_index]->viewproj = camera.getViewProjection();
+    ubo.pointers[ri.frame_index]->viewproj = camera.getViewProjection();
+    ubo.pointers[ri.frame_index]->viewpos = glm::vec4(camera.getViewPosition(), 1.0);
     
     vk::CommandBuffer command = commandBuffers[ri.frame_index];
         
@@ -85,19 +66,7 @@ void MainRender::render(entt::registry& reg, uint32_t index, std::vector<vk::Sem
     
     command.setScissor(0, vk::Rect2D(vk::Offset2D(), swap.extent));
     
-    command.bindPipeline(vk::PipelineBindPoint::eGraphics, chunk_pipeline);
-    
-    command.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, chunk_pipeline, 0, {chunk_pipeline.materialSet, chunk_pipeline.descSets[ri.frame_index]}, {});
-    
-    Chunk::mutex.lock();
-    reg.view<Chunk, entt::tag<"ready"_hs>>().each([&](Chunk& chonk, auto) {
-        
-        command.bindVertexBuffers(0, {chonk.triangles}, {chonk.triangles_offset * sizeof(Triangle)});
-        
-        command.drawIndirect(chonk.indirect, chonk.indirect_offset * sizeof(vk::DrawIndirectCommand), 1, 0);
-        
-    });
-    Chunk::mutex.unlock();
+    chunk_render.render(reg, command, ubo.descSets[ri.frame_index]);
     
     command.endRenderPass();
     

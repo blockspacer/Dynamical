@@ -1,36 +1,36 @@
-#ifndef BASIC_PIPELINE_H
-#define BASIC_PIPELINE_H
+#ifndef GRASS_PIPELINE_H
+#define GRASS_PIPELINE_H
 
 #include "vulkan/vulkan.hpp"
 
 #include "renderer/vmapp.h"
 
+#include "glm/glm.hpp"
+
+#include "renderer/num_frames.h"
+
 class Device;
 class Transfer;
 class Swapchain;
 class Renderpass;
+class UBODescriptor;
 
-constexpr int num_textures = 2;
-
-class ChunkPipeline {
+class GrassPipeline {
 public:
-    ChunkPipeline(Device& device, Transfer& transfer, Swapchain& swap, Renderpass& renderpass);
-    ~ChunkPipeline();
+    GrassPipeline(Device& device, Transfer& transfer, Swapchain& swap, Renderpass& renderpass, UBODescriptor& ubo);
+    ~GrassPipeline();
     
     operator vk::Pipeline() { return pipeline; }
     operator vk::PipelineLayout() { return layout; }
     
     vk::DescriptorPool descPool;
     vk::DescriptorSetLayout descLayout;
-    std::vector<vk::DescriptorSet> descSets;
-    
-    vk::DescriptorSetLayout materialLayout;
-    vk::DescriptorSet materialSet;
-    
-    VmaImage materialTexture;
-    vk::ImageView materialTextureView;
+    vk::DescriptorSet descSet;
     
     vk::Sampler sampler;
+    
+    VmaImage raycastImage;
+    vk::ImageView raycastImageView;
     
     vk::PipelineLayout layout;
     vk::Pipeline pipeline;
