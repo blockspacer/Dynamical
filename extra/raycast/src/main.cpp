@@ -15,7 +15,7 @@
 #include <cmath>
 
 constexpr int num_objects = 8;
-constexpr double object_size = 0.2;
+constexpr double object_size = 0.1;
 
 glm::u8vec4 cast(double a, double x, double y) {
     
@@ -26,25 +26,51 @@ glm::u8vec4 cast(double a, double x, double y) {
     double min = 1000.;
     glm::dvec2 norm(0., 0.);
     
-    for(int cx = 0; cx < num_objects; cx++) {
-        for(int cy = 0; cy < num_objects; cy++) {
-            
-            glm::dvec2 cpos((cx + 0.5) * tile_size / num_objects, (cy + 0.5) * tile_size / num_objects);
-            
-            double t2 = (pos.x - cpos.x + (cpos.y - pos.y) * (dir.x/dir.y)) /
-                        (tangent.x * (1 + (dir.x*dir.x)/(dir.y*dir.y)));
-            
-            if(std::abs(t2) > object_size) continue;
-            
-            double t1 = (cpos.y - pos.y + tangent.y * t2) / dir.y;
-            
-            if(t1 < min && t1 >= 0) {
-                min = t1;
-                glm::dvec2 intersection = pos + dir * t1;
-                norm = glm::normalize(intersection - cpos);
+    glm::dvec2 tile(0., 0.);
+    
+    int iteration = 0;
+    while(min == 1000.) {
+        
+        for(int cx = 0; cx < num_objects; cx++) {
+            for(int cy = 0; cy < num_objects; cy++) {
+                
+                glm::dvec2 cpos = 1.*glm::dvec2(std::sin(cx+cy), std::cos(cx-cy)) + ((glm::dvec2(cx, cy) + 0.5) / (double) num_objects + tile) * (double) tile_size;
+                //position += ray * (min(min( max(tmin.x, tmax.x), max(tmin.y, tmax.y)), max(tmin.z, tmax.z)) + 0.001);
+                
+                double t2 = (pos.x - cpos.x + (cpos.y - pos.y) * (dir.x/dir.y)) /
+                            (tangent.x * (1 + (dir.x*dir.x)/(dir.y*dir.y)));
+                
+                if(std::abs(t2) > object_size) continue;
+                
+                double t1 = (cpos.y - pos.y + tangent.y * t2) / dir.y;
+                
+                if(t1 < min && t1 >= 0) {
+                    min = t1;
+                    glm::dvec2 intersection = pos + dir * t1;
+                    norm = glm::normalize(intersection - cpos);
+                }
+                
             }
+        }
+        
+        iteration++;
+        if(iteration >= 10) {
+            break;
+        }
+        
+        glm::dvec2 tmin = (tile * (double) tile_size - pos) / dir;
+        glm::dvec2 tmax = ((tile+1.) * (double) tile_size - pos) / dir;
+        
+        if(std::max(tmin.x, tmax.x) < std::max(tmin.y, tmax.y)) {
+            
+            tile.x += tmin.x > 0. ? -1. : 1.;
+            
+        } else {
+            
+            tile.y += tmin.y > 0. ? -1. : 1.;
             
         }
+        
     }
     
     return glm::u8vec4(1./(1.+min) * 255, norm.x * 255, 0, norm.y * 255);

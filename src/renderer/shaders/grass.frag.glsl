@@ -6,8 +6,8 @@ layout(location = 2) in vec2 v_uv;
 
 layout(location = 0) out vec4 outColor;
 
-layout(constant_id = 0) const int num_angles = 0;
-layout(constant_id = 1) const int num_samples = 0;
+layout(constant_id = 0) const int grass_height = 0;
+layout(constant_id = 1) const int tile_size = 0;
 
 layout(set = 1, binding = 0) uniform sampler3D u_raycast;
 
@@ -30,29 +30,51 @@ void main() {
     
     vec3 normal = normalize(v_normal);
     
-    if(-normal.y * normal.y * normal.y > 0.5) {
-    
-        vec3 dir = normalize(v_position.xyz - viewpos.xyz);
+    //if(-normal.y * normal.y * normal.y > 0.5) {
         
-        float angle = atan(dir.z, dir.x);
+        vec3 new_normal = normalize(vec3(5*sin((v_position.x+v_position.z)/10.), 0.2, cos((v_position.x-v_position.z)/10.)));
         
-        vec4 ray = texture(u_raycast, vec3(v_position.xz/10., angle/2/3.141));
         
-        float depth = (1/ray.r - 1) * -dir.y / length(dir.xz);
+        mat3 TBN = mat3(
+            1., 0, new_normal.x,
+            0,  0, new_normal.y,
+            0, 1., new_normal.z
+        );
         
-        if(depth < 5.) {
+        
+        vec3 precalc = TBN * v_position;
+        
+        vec3 dir = precalc - TBN * viewpos.xyz;
+        float viewdepth = length(dir);
+        dir /= viewdepth;
+        
+        float angle = atan(dir.y, dir.x);
+        
+        vec4 ray = texture(u_raycast, vec3(precalc.xy/tile_size, angle/2/3.141));
+        
+        float flatdir = length(dir.xy);
+        
+        float depth = (1/ray.r - 1) * -dir.z / flatdir;
+        
+        if(depth < grass_height + 1.) {
             
             normal = ray.gba;
             
-            outColor.rgb = vec3(0, 1., 0);
+            outColor.rgb = vec3(0, 0.7, 0);
             
-            float light = max(dot(normal, vec3(0.5,-1.,0.5)), 0.4);
+            float light = max(dot(normal, vec3(0.5,-1.,0.5)), 0.);
             outColor.rgb = outColor.rgb * (light*0.7 + 0.3);
+            
+            
+            vec4 v_clip_coord = viewproj * vec4(inverse(TBN) * (precalc + dir * (1/ray.r - 1) / flatdir), 1.0);
+            float f_ndc_depth = v_clip_coord.z / v_clip_coord.w;
+            gl_FragDepth = f_ndc_depth;
+            
             
             return;
         }
         
-    }
+    //}
     
     discard;
     

@@ -20,7 +20,7 @@ void CameraSys::tick() {
     
     const InputC& input = reg.ctx<InputC>();
     
-    constexpr float speed = 450.f/60;
+    constexpr float speed = 50.f/60;
     
     if(input.on[Action::FORWARD]) {
         camera.pos.x -= speed * std::sin(camera.yAxis);//*dt;

@@ -74,15 +74,15 @@ GrassPipeline::GrassPipeline(Device& device, Transfer& transfer, Swapchain& swap
     
     
     struct Constants {
-        int num_angles;
-        int num_samples;
+        int grass_height;
+        int tile_size;
     } constants;
-    constants.num_angles = num_angles;
-    constants.num_samples = num_samples;
+    constants.grass_height = grass_height;
+    constants.tile_size = tile_size;
     
     auto mapEntries = std::array {
-        vk::SpecializationMapEntry(0, offsetof(Constants, num_angles), sizeof(int)),
-        vk::SpecializationMapEntry(1, offsetof(Constants, num_samples), sizeof(int))
+        vk::SpecializationMapEntry(0, offsetof(Constants, grass_height), sizeof(int)),
+        vk::SpecializationMapEntry(1, offsetof(Constants, tile_size), sizeof(int))
     };
     
     auto specConstants = vk::SpecializationInfo(mapEntries.size(), mapEntries.data(), sizeof(Constants), &constants);
@@ -109,6 +109,7 @@ GrassPipeline::GrassPipeline(Device& device, Transfer& transfer, Swapchain& swap
     vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
     vertShaderStageInfo.module = vertShaderModule;
     vertShaderStageInfo.pName = "main";
+    vertShaderStageInfo.pSpecializationInfo = reinterpret_cast<VkSpecializationInfo*> (&specConstants);
 
     VkPipelineShaderStageCreateInfo fragShaderStageInfo = {};
     fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -166,8 +167,8 @@ GrassPipeline::GrassPipeline(Device& device, Transfer& transfer, Swapchain& swap
     rasterizer.rasterizerDiscardEnable = VK_FALSE;
     rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
     rasterizer.lineWidth = 1.0f;
-    rasterizer.cullMode = VK_CULL_MODE_NONE;
-    rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+    rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
+    rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
     rasterizer.depthBiasEnable = VK_FALSE;
 
     VkPipelineMultisampleStateCreateInfo multisampling = {};

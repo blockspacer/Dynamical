@@ -35,7 +35,7 @@ void main() {
     
     outColor = mix(
         rock_color,
-        texture(u_color, vec3(v_position.xz/32., 0)),
+        texture(u_color, vec3(v_position.xz/32., 1)),
         clamp(-normal.y * normal.y * normal.y, 0, 1)
     );
     

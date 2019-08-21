@@ -5,10 +5,11 @@
 #include "glm/glm.hpp"
 #include "cereal/types/array.hpp"
 
-constexpr size_t num_angles = 32;
-constexpr size_t num_samples = 128;
+constexpr int num_angles = 32;
+constexpr int num_samples = 128;
 
 constexpr int tile_size = 10;
+constexpr double grass_height = 3;
 
 class Sample {
 public:
