@@ -46,18 +46,18 @@ void Transfer::prepareImage(std::string str, VmaImage& image, int num_components
     
     int x, y, channels;
     stbi_uc* data = stbi_load(str.c_str(), &x, &y, &channels, num_components);
-    
+
     if(data == nullptr) {
         std::cout << "image " << str << " could not be loaded because : " << stbi_failure_reason() << std::endl;
     }
     
-    prepareImage(data, image, vk::Extent3D(x, y, 1), base_mip, base_array);
+	prepareImage(data, sizeof(stbi_uc) * x * y * num_components, image, vk::Extent3D(x, y, 1), base_mip, base_array);
     
     stbi_image_free(data);
     
 }
 
-void Transfer::prepareImage(const void* data, VmaImage& image, vk::Extent3D sizes, int base_mip = 0, int base_array = 0) {
+void Transfer::prepareImage(const void* data, size_t size, VmaImage& image, vk::Extent3D sizes, int base_mip = 0, int base_array = 0) {
     
     VmaAllocationCreateInfo info {};
     info.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
@@ -70,22 +70,22 @@ void Transfer::prepareImage(const void* data, VmaImage& image, vk::Extent3D size
     VmaAllocationInfo inf;
     vmaGetAllocationInfo(device, stagingBuffer.allocation, &inf);
     
-    memcpy(inf.pMappedData, data, image.size);
+    memcpy(inf.pMappedData, data, size);
     
     vk::CommandBuffer buffer = getCommandBuffer();
     
     buffer.pipelineBarrier(vk::PipelineStageFlagBits::eAllCommands, vk::PipelineStageFlagBits::eTransfer, vk::DependencyFlagBits::eByRegion, {}, {}, vk::ImageMemoryBarrier(
         {}, vk::AccessFlagBits::eTransferWrite, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal,
-        0, 0, image.image, vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, base_mip, 1, base_array, 1)
+		VK_QUEUE_FAMILY_IGNORED, VK_QUEUE_FAMILY_IGNORED, image.image, vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, base_mip, 1, base_array, 1)
     ));
     
     buffer.copyBufferToImage(stagingBuffer.buffer, image.image, vk::ImageLayout::eTransferDstOptimal,
         vk::BufferImageCopy(0, 0, 0, vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, base_mip, base_array, 1), vk::Offset3D(0, 0, 0), vk::Extent3D(sizes.width, sizes.height, sizes.depth)));
     
-    buffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eFragmentShader, vk::DependencyFlagBits::eByRegion, {}, {}, vk::ImageMemoryBarrier(
-        vk::AccessFlagBits::eTransferWrite, vk::AccessFlagBits::eShaderRead,
+    buffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTopOfPipe, vk::DependencyFlagBits::eByRegion, {}, {}, vk::ImageMemoryBarrier(
+		vk::AccessFlagBits::eTransferWrite, {},
         vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal,
-        0, 0, image.image, vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, base_mip, 1, base_array, 1)
+		VK_QUEUE_FAMILY_IGNORED, VK_QUEUE_FAMILY_IGNORED, image.image, vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, base_mip, 1, base_array, 1)
     ));
     
 }

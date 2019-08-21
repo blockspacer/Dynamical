@@ -35,8 +35,8 @@ GrassPipeline::GrassPipeline(Device& device, Transfer& transfer, Swapchain& swap
         descSet = device->allocateDescriptorSets(vk::DescriptorSetAllocateInfo(descPool, 1, &descLayout))[0];
         
         
-        bool concurrent = (device.g_i != device.c_i);
-        uint32_t qfs[2] = {device.g_i, device.c_i};
+        bool concurrent = (device.g_i != device.t_i);
+        uint32_t qfs[2] = {device.g_i, device.t_i};
         
         sampler = device->createSampler(vk::SamplerCreateInfo(
             {}, vk::Filter::eLinear, vk::Filter::eLinear, vk::SamplerMipmapMode::eLinear,
@@ -50,15 +50,15 @@ GrassPipeline::GrassPipeline(Device& device, Transfer& transfer, Swapchain& swap
                 {}, vk::ImageType::e3D, vk::Format::eR8G8B8A8Unorm, vk::Extent3D(num_samples, num_samples, num_angles), 1, 1, vk::SampleCountFlagBits::e1, vk::ImageTiling::eOptimal, vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled, 
                 concurrent ? vk::SharingMode::eConcurrent : vk::SharingMode::eExclusive, concurrent ? 2 : 1, &qfs[0], vk::ImageLayout::eUndefined)
             );
+			//SET_NAME(vk::ObjectType::eImage, (VkImage) raycastImage, Raycast3DTexture)
         }
-        
         
         std::ifstream is("./resources/raycast_data.bin");
         cereal::PortableBinaryInputArchive in(is);
         RaycastData* raycast = new RaycastData();
         in(*raycast);
         
-        transfer.prepareImage(raycast->data.data(), raycastImage, vk::Extent3D(num_samples, num_samples, num_angles), 0, 0);
+        transfer.prepareImage(raycast->data.data(), sizeof(uint8_t) * 4 * num_samples * num_samples * num_angles, raycastImage, vk::Extent3D(num_samples, num_samples, num_angles), 0, 0);
         
         delete raycast;
         
