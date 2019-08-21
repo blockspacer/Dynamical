@@ -15,7 +15,7 @@ public:
     vk::CommandBuffer getCommandBuffer();
     
     void prepareImage(std::string str, VmaImage& image, int num_components, int base_mip, int base_array);
-    void prepareImage(const void* data, VmaImage& image, vk::Extent3D sizes, int base_mip, int base_array);
+    void prepareImage(const void* data, size_t size, VmaImage& image, vk::Extent3D sizes, int base_mip, int base_array);
     bool prepareBuffer(const void* data, VmaBuffer& image);
     
     ~Transfer();

@@ -6,6 +6,8 @@
 #include "cereal/types/string.hpp"
 #include "arguments.h"
 
+#include <sstream>
+
 class Settings {
 public:
     const static char magic_number = 2;

@@ -11,7 +11,7 @@
 
 #include "../include/raycast_data.h"
 
-#define _USE_MATH_DEFINES
+#define M_PI 3.14159265359
 #include <cmath>
 
 constexpr int num_objects = 8;
@@ -52,35 +52,34 @@ glm::u8vec4 cast(double a, double x, double y) {
 
 void raycast(const char* output_file) {
     
-    RaycastData data;
-    
+    RaycastData* data = new RaycastData;
+
     for(int a = 0; a<num_angles; a++) {
         for(int z = 0; z<num_samples; z++) {
             for(int x = 0; x<num_samples; x++) {
                 
-                data.data[a * num_samples * num_samples + z * num_samples + x] =
+                data->data[a * num_samples * num_samples + z * num_samples + x] =
                 cast(a * 2. * M_PI / num_angles, (double) x * tile_size / num_samples, (double) z * tile_size / num_samples);
                 
             }
         }
     }
-    
+
     std::ofstream os(output_file);
     cereal::PortableBinaryOutputArchive out(os);
     
-    out(data);
+    out(*data);
     
+	delete data;
+
 }
 
 
 int main(int argc, char **argv) {
-    
+
     if(argc == 2) {
         
         raycast(argv[1]);
-        
-        
-        
         
         return 0;
     }

@@ -31,8 +31,8 @@ ChunkPipeline::ChunkPipeline(Device& device, Transfer& transfer, Swapchain& swap
         materialSet = device->allocateDescriptorSets(vk::DescriptorSetAllocateInfo(descPool, 1, &materialLayout))[0];
         
         
-        bool concurrent = (device.g_i != device.c_i);
-        uint32_t qfs[2] = {device.g_i, device.c_i};
+        bool concurrent = (device.g_i != device.t_i);
+        uint32_t qfs[2] = {device.g_i, device.t_i};
         
         {
             VmaAllocationCreateInfo info{};
