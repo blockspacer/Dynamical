@@ -12,6 +12,7 @@ enum Action : char {
     RIGHT,
     UP,
     DOWN,
+    SPRINT,
     PRIMARY,
     SECONDARY,
     RESIZE,

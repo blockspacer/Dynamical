@@ -18,64 +18,76 @@ layout(std140, set = 0, binding = 0) uniform UBO {
     vec4 viewpos;
 };
 
+const int num_layers = 3;
+const vec3 normals[num_layers] = {
+    vec3(-0.5, 10., 0.5),
+    vec3(0.5, 10., -0.5),
+    vec3(-0.5, 10., -0.5)
+};
+
 void main() {
-    
-    /*
-    float separator = min(length(1.0 - min(abs((ivec3(v_position.xyz)%chunk_size)/2.), 1.0)) * 1000., 1.0);
-    vec3 spos = v_position/length(v_position);
-    outColor = vec4(abs(spos.x), separator, abs(spos.z), 1);
-    */
     
     //vec3 normal = normalize(cross(dFdx(v_position), dFdy(v_position)));
     
+    float final_depth = 100.;
+    
     vec3 normal = normalize(v_normal);
     
-    //if(-normal.y * normal.y * normal.y > 0.5) {
+    for(int i = 0; i<num_layers; i++) {
         
-        vec3 new_normal = normalize(vec3(5*sin((v_position.x+v_position.z)/10.), 0.2, cos((v_position.x-v_position.z)/10.)));
+        vec3 new_normal = normals[i] + vec3(cos(v_position.x/10. + v_position.z/10. + viewpos.w/4. * 2.*3.141), 0, cos(v_position.x/10. + v_position.z/10. + viewpos.w/4. * 2.*3.141));
+        new_normal = normalize(new_normal)/tile_size;
         
+        mat3 TBN = (mat3(
+            1./tile_size, 0, new_normal.x,
+            0,            0, new_normal.y,
+            0, 1./tile_size, new_normal.z
+        ));
         
-        mat3 TBN = mat3(
-            1., 0, new_normal.x,
-            0,  0, new_normal.y,
-            0, 1., new_normal.z
-        );
-        
+        mat3 invTBN = inverse(TBN);
         
         vec3 precalc = TBN * v_position;
         
-        vec3 dir = precalc - TBN * viewpos.xyz;
-        float viewdepth = length(dir);
-        dir /= viewdepth;
+        vec3 world_dir = normalize(v_position - viewpos.xyz);
+        vec3 dir = transpose(invTBN) * world_dir;
         
         float angle = atan(dir.y, dir.x);
         
-        vec4 ray = texture(u_raycast, vec3(precalc.xy/tile_size, angle/2/3.141));
+        float dist;
+        {
+            
+            vec4 ray = texture(u_raycast, vec3(precalc.xy - new_normal.xz + i*vec2(0.5, 0.5), angle/2/3.141));
+            
+            normal = normalize(transpose(TBN) * ray.gba);
+            dist = 1/(ray.r + 0.00001) - 1;
+            
+        }
         
         float flatdir = length(dir.xy);
         
-        float depth = (1/ray.r - 1) * -dir.z / flatdir;
+        float depth = dist * abs(dir.z) / flatdir;
         
-        if(depth < grass_height + 1.) {
+        {
             
-            normal = ray.gba;
+            vec3 color = vec3(0.2, 0.8, 0.2);
             
-            outColor.rgb = vec3(0, 0.7, 0);
+            const vec3 lightdir = normalize(vec3(0.5,-1.0,0.5));
             
-            float light = max(dot(normal, vec3(0.5,-1.,0.5)), 0.);
-            outColor.rgb = outColor.rgb * (light*0.7 + 0.3);
+            float light = min(abs(dot(normal, lightdir)) * (1. - depth/grass_height/tile_size), 1.0);
+            color = color * (light*0.7 + 0.3);
             
+            vec4 v_clip_coord = viewproj * vec4(v_position + world_dir * (dist / flatdir * tile_size), 1.0);
+            float f_ndc_depth = v_clip_coord.z / (v_clip_coord.w);
             
-            vec4 v_clip_coord = viewproj * vec4(inverse(TBN) * (precalc + dir * (1/ray.r - 1) / flatdir), 1.0);
-            float f_ndc_depth = v_clip_coord.z / v_clip_coord.w;
-            gl_FragDepth = f_ndc_depth;
+            if(f_ndc_depth < final_depth) {
+                final_depth = f_ndc_depth;
+                outColor = vec4(color, 1.0);
+            }
             
-            
-            return;
         }
         
-    //}
+    }
     
-    discard;
-    
+    gl_FragDepth = final_depth;
+
 }

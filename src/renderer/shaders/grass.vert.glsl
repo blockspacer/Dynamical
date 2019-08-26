@@ -22,7 +22,7 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 
 void main() {
     
-    vec3 position = a_pos - vec3(0, -1, 0) * grass_height;
+    vec3 position = a_pos - vec3(0, -1, 0) * grass_height * normalize(vec3(0.5, 10, 1.5)).y / tile_size;
     gl_Position = viewproj * vec4(position, 1.0);
     v_position = position;
     v_normal = a_normal;

@@ -50,8 +50,11 @@ void MainRender::render(entt::registry& reg, uint32_t index, std::vector<vk::Sem
     
     device->resetFences(fences[ri.frame_index]);
     
+    static float t = 0.f;
+    t += 1.f/60.f;
+    
     ubo.pointers[ri.frame_index]->viewproj = camera.getViewProjection();
-    ubo.pointers[ri.frame_index]->viewpos = glm::vec4(camera.getViewPosition(), 1.0);
+    ubo.pointers[ri.frame_index]->viewpos = glm::vec4(camera.getViewPosition(), t);
     
     vk::CommandBuffer command = commandBuffers[ri.frame_index];
         

@@ -13,6 +13,7 @@ std::unordered_map<SDL_Scancode, Action> actionMap = {
     {SDL_SCANCODE_S, Action::BACKWARD},
     {SDL_SCANCODE_A, Action::LEFT},
     {SDL_SCANCODE_D, Action::RIGHT},
+    {SDL_SCANCODE_LCTRL, Action::SPRINT},
     {SDL_SCANCODE_SPACE, Action::UP},
     {SDL_SCANCODE_LSHIFT, Action::DOWN}
 };

@@ -10,6 +10,7 @@
 Device::Device(Instance &inst) : instance(inst) {
     
     requiredFeatures = vk::PhysicalDeviceFeatures();
+    requiredFeatures.samplerAnisotropy = true;
     // HERE : enable needed features (if present in 'features')
     
     requiredExtensions = {};
@@ -187,6 +188,14 @@ uint32_t Device::getScore(vk::PhysicalDevice &device) {
     
     auto prop2 = device.getProperties2<vk::PhysicalDeviceProperties2, vk::PhysicalDeviceSubgroupProperties>();
     auto subgroup = prop2.get<vk::PhysicalDeviceSubgroupProperties>();
+    
+    if(!(subgroup.supportedOperations & vk::SubgroupFeatureFlagBits::eArithmetic && subgroup.supportedOperations & vk::SubgroupFeatureFlagBits::eBallot)) {
+        score = 0;
+    }
+    
+    if(!features.samplerAnisotropy) {
+        score = 0;
+    }
     
     return score;
 }

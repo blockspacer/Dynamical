@@ -38,10 +38,20 @@ GrassPipeline::GrassPipeline(Device& device, Transfer& transfer, Swapchain& swap
         bool concurrent = (device.g_i != device.t_i);
         uint32_t qfs[2] = {device.g_i, device.t_i};
         
+        /*
+        sampler = device->createSampler(vk::SamplerCreateInfo(
+            {}, vk::Filter::eNearest, vk::Filter::eNearest, vk::SamplerMipmapMode::eNearest,
+            vk::SamplerAddressMode::eRepeat, vk::SamplerAddressMode::eRepeat, vk::SamplerAddressMode::eRepeat
+        ));
+        */
+        
+        
         sampler = device->createSampler(vk::SamplerCreateInfo(
             {}, vk::Filter::eLinear, vk::Filter::eLinear, vk::SamplerMipmapMode::eLinear,
             vk::SamplerAddressMode::eRepeat, vk::SamplerAddressMode::eRepeat, vk::SamplerAddressMode::eRepeat
+            //, 0, VK_TRUE, device.properties.limits.maxSamplerAnisotropy
         ));
+        
         
         {
             VmaAllocationCreateInfo info {};
@@ -179,7 +189,6 @@ GrassPipeline::GrassPipeline(Device& device, Transfer& transfer, Swapchain& swap
     VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
     colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
     colorBlendAttachment.blendEnable = VK_FALSE;
-    colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
     colorBlendAttachment.srcColorBlendFactor=VK_BLEND_FACTOR_SRC_ALPHA;
     colorBlendAttachment.dstColorBlendFactor=VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
     colorBlendAttachment.colorBlendOp=VK_BLEND_OP_ADD;

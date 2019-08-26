@@ -20,24 +20,41 @@ void CameraSys::tick() {
     
     const InputC& input = reg.ctx<InputC>();
     
-    constexpr float speed = 50.f/60;
+    constexpr float base_speed = 2.f/60;
     
+    if(input.on[Action::SPRINT]) {
+        camera.sprinting = true;
+    }
+    
+    float speed = camera.sprinting ? base_speed * 50. : base_speed;
+    
+    bool moving = false;
     if(input.on[Action::FORWARD]) {
         camera.pos.x -= speed * std::sin(camera.yAxis);//*dt;
         camera.pos.z -= speed * std::cos(camera.yAxis);//*dt;
+        moving = true;
     } if(input.on[Action::BACKWARD]) {
         camera.pos.x += speed * std::sin(camera.yAxis);//*dt;
         camera.pos.z += speed * std::cos(camera.yAxis);//*dt;
+        moving = true;
     } if(input.on[Action::LEFT]) {
-        camera.pos.x -= speed * std::sin(M_PI/2.0f + camera.yAxis);//*dt;
+        camera.pos.x -= speed * std::sin(M_PI/2.0 + camera.yAxis);//*dt;
         camera.pos.z -= speed * std::cos(M_PI/2.0 + camera.yAxis);//*dt;
+        moving = true;
     } if(input.on[Action::RIGHT]) {
         camera.pos.x += speed * std::sin(M_PI/2.0 + camera.yAxis);//*dt;
         camera.pos.z += speed * std::cos(M_PI/2.0 + camera.yAxis);//*dt;
+        moving = true;
     } if(input.on[Action::UP]) {
         camera.pos.y += speed;
+        moving = true;
     } if(input.on[Action::DOWN]) {
         camera.pos.y -= speed;
+        moving = true;
+    }
+    
+    if(!moving) {
+        camera.sprinting = false;
     }
     
     camera.yAxis -= (input.mouseDiff.x) * (M_PI*0.1/180.);

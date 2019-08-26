@@ -10,6 +10,7 @@ public:
     glm::vec3 pos;
     float yAxis;
     float xAxis;
+    bool sprinting;
 };
 
 #endif
