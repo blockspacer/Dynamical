@@ -13,7 +13,7 @@
 
 std::mutex Chunk::mutex;
 
-MainRender::MainRender(Instance& instance, Device& device, Transfer& transfer, Swapchain& swap, Camera& camera) : renderpass(device, swap), ubo(device), chunk_render(device, transfer, swap, renderpass, ubo), instance(instance), device(device), transfer(transfer), swap(swap), camera(camera) {
+MainRender::MainRender(Instance& instance, Device& device, Transfer& transfer, Swapchain& swap, Camera& camera) : renderpass(device, swap), ubo(device), chunk_render(device, transfer, swap, renderpass, ubo), ui_render(device, swap, transfer, renderpass), instance(instance), device(device), transfer(transfer), swap(swap), camera(camera) {
     
     commandPool = device->createCommandPool(vk::CommandPoolCreateInfo(vk::CommandPoolCreateFlagBits::eResetCommandBuffer, device.g_i));
     
@@ -70,6 +70,8 @@ void MainRender::render(entt::registry& reg, uint32_t index, std::vector<vk::Sem
     command.setScissor(0, vk::Rect2D(vk::Offset2D(), swap.extent));
     
     chunk_render.render(reg, command, ubo.descSets[ri.frame_index]);
+    
+    ui_render.render(command, ri.frame_index);
     
     command.endRenderPass();
     

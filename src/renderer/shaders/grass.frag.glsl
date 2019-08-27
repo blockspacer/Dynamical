@@ -35,7 +35,7 @@ void main() {
     
     for(int i = 0; i<num_layers; i++) {
         
-        vec3 new_normal = normals[i] + vec3(cos(v_position.x/10. + v_position.z/10. + viewpos.w/4. * 2.*3.141), 0, cos(v_position.x/10. + v_position.z/10. + viewpos.w/4. * 2.*3.141));
+        vec3 new_normal = normals[i] + vec3(0.5*sin(v_position.x/10. + v_position.z/10. + viewpos.w/4. * 2.*3.141), 0, cos(v_position.x/10. + v_position.z/10. + viewpos.w/4. * 2.*3.141));
         new_normal = normalize(new_normal)/tile_size;
         
         mat3 TBN = (mat3(

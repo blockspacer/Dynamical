@@ -40,6 +40,9 @@ public:
         buffer.device = nullptr;
         return *this;
     };
+    operator bool() {
+        return device != nullptr;
+    }
     
     VmaAllocation allocation;
     vk::Buffer buffer;
@@ -82,6 +85,9 @@ public:
         this->memory = image.memory;
         image.device = nullptr;
         return *this;
+    }
+    operator bool() {
+        return device != nullptr;
     }
     
     VmaAllocation allocation;

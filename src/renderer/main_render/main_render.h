@@ -3,6 +3,7 @@
 
 #include "renderpass.h"
 #include "chunk_render/chunk_render.h"
+#include "ui_render.h"
 #include "ubo_descriptor.h"
 
 #include "renderer/vmapp.h"
@@ -33,6 +34,7 @@ private:
     Renderpass renderpass;
     UBODescriptor ubo;
     ChunkRender chunk_render;
+    UIRender ui_render;
     Instance& instance;
     Device& device;
     Transfer& transfer;
