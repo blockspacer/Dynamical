@@ -98,7 +98,7 @@ void raycast(const char* output_file) {
             for(int x = 0; x<num_samples; x++) {
                 
                 data->data[a * num_samples * num_samples + z * num_samples + x] =
-                cast(((double) a / num_angles) * 2. * M_PI + 0.00000000001, (double) x * tile_size / num_samples, (double) z * tile_size / num_samples);
+                cast(((double) a / num_angles) * 2. * M_PI + 0.00000000001, (double) x / num_samples, (double) z / num_samples);
                 
             }
         }

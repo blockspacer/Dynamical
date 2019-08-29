@@ -12,12 +12,7 @@
 
 UIRender::UIRender(Device &device, Swapchain& swap, Transfer& transfer, Renderpass& renderpass) : device(device), swap(swap), transfer(transfer) {
     
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGui::StyleColorsDark();
-    auto& io = ImGui::GetIO(); (void) io;
-    io.Fonts->AddFontDefault();
-    //io.Fonts->AddFontFromFileTTF("./resources/fonts/aniron.ttf", 50.0f, NULL, io.Fonts->GetGlyphRangesDefault());
+    auto& io = ImGui::GetIO();
     
     unsigned char* tex_pixels = NULL;
     int tex_w, tex_h;
@@ -91,15 +86,6 @@ void UIRender::createOrResizeBuffer(vk::Buffer& buffer, vk::DeviceMemory& buffer
 }
 
 void UIRender::render(vk::CommandBuffer commandBuffer, uint32_t i) {
-    
-    ImGuiIO& io = ImGui::GetIO();
-    io.DisplaySize = ImVec2(swap.extent.width, swap.extent.height);
-    io.MousePos = ImVec2(0, 0);
-    io.IniFilename = nullptr;
-    
-    ImGui::NewFrame();
-    
-    ImGui::ShowDemoWindow();
 
     ImGui::Render();
     

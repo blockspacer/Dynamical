@@ -8,8 +8,11 @@ layout(location = 0) out vec3 v_position;
 layout(location = 1) out vec3 v_normal;
 layout(location = 2) out vec2 v_uv;
 
-layout(constant_id = 0) const int grass_height = 0;
-layout(constant_id = 1) const int tile_size = 0;
+layout(push_constant ) uniform Args {
+    vec4 base_normal;
+    float tile_size;
+    float grass_height;
+};
 
 out gl_PerVertex {
     vec4 gl_Position;
@@ -21,8 +24,8 @@ layout(std140, set = 0, binding = 0) uniform UBO {
 };
 
 void main() {
-    
-    vec3 position = a_pos - vec3(0, -1, 0) * grass_height * normalize(vec3(0.5, 10, 1.5)).y / tile_size;
+
+    vec3 position = a_pos - vec3(0, -1, 0) * grass_height * normalize(vec3(0.5, 10, 1.5)).y;
     gl_Position = viewproj * vec4(position, 1.0);
     v_position = position;
     v_normal = a_normal;

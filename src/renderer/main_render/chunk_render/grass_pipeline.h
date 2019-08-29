@@ -15,9 +15,16 @@ class Swapchain;
 class Renderpass;
 class UBODescriptor;
 
+struct GrassPC {
+    float base_normal[4];
+    float tile_size;
+    float grass_height;
+};
+
 class GrassPipeline {
 public:
     GrassPipeline(Device& device, Transfer& transfer, Swapchain& swap, Renderpass& renderpass, UBODescriptor& ubo);
+    void makeDebugWindow();
     ~GrassPipeline();
     
     operator vk::Pipeline() { return pipeline; }
@@ -34,6 +41,8 @@ public:
     
     vk::PipelineLayout layout;
     vk::Pipeline pipeline;
+    
+    GrassPC pc;
     
 private:
     Device& device;

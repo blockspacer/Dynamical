@@ -6,23 +6,24 @@ layout(location = 2) in vec2 v_uv;
 
 layout(location = 0) out vec4 outColor;
 
-layout(constant_id = 0) const int grass_height = 0;
-layout(constant_id = 1) const int tile_size = 0;
+layout(push_constant ) uniform Args {
+    vec4 base_normal;
+    float tile_size;
+    float grass_height;
+};
 
 layout(set = 1, binding = 0) uniform sampler3D u_raycast;
-
-layout(constant_id = 2) const int chunk_size = 8*8*8;
 
 layout(std140, set = 0, binding = 0) uniform UBO {
     mat4 viewproj;
     vec4 viewpos;
 };
 
-const int num_layers = 3;
+const int num_layers = 1;
 const vec3 normals[num_layers] = {
-    vec3(-0.5, 10., 0.5),
-    vec3(0.5, 10., -0.5),
-    vec3(-0.5, 10., -0.5)
+    //vec3(10, 2., -11),
+    //vec3(10, 2., -10),
+    vec3(0, 1, 0)
 };
 
 void main() {
@@ -35,8 +36,8 @@ void main() {
     
     for(int i = 0; i<num_layers; i++) {
         
-        vec3 new_normal = normals[i] + vec3(0.5*sin(v_position.x/10. + v_position.z/10. + viewpos.w/4. * 2.*3.141), 0, cos(v_position.x/10. + v_position.z/10. + viewpos.w/4. * 2.*3.141));
-        new_normal = normalize(new_normal)/tile_size;
+        vec3 new_normal = base_normal.xyz + normals[i] + 0.1*vec3(0.5*sin(v_position.x/10. + v_position.z/10. + viewpos.w/4. * 2.*3.141), 0, cos(v_position.x/10. + v_position.z/10. + viewpos.w/4. * 2.*3.141));
+        new_normal = normalize(new_normal);
         
         mat3 TBN = (mat3(
             1./tile_size, 0, new_normal.x,
@@ -69,7 +70,7 @@ void main() {
         
         {
             
-            vec3 color = vec3(0.2, 0.8, 0.2);
+            vec3 color = vec3(0, 1, 0);
             
             const vec3 lightdir = normalize(vec3(0.5,-1.0,0.5));
             

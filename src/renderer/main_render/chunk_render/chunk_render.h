@@ -17,6 +17,7 @@ public:
     ChunkRender(Device& device, Transfer& transfer, Swapchain& swap, Renderpass& renderpass, UBODescriptor& ubo);
     void render(entt::registry& reg, vk::CommandBuffer commandBuffer, vk::DescriptorSet set);
     ~ChunkRender();
+    
 private:
     ChunkPipeline chunk_pipeline;
     GrassPipeline grass_pipeline;

@@ -16,8 +16,16 @@
 #include "raycast/include/raycast_data.h"
 
 #include "cereal/archives/portable_binary.hpp"
+#include "imgui/imgui.h"
 
 GrassPipeline::GrassPipeline(Device& device, Transfer& transfer, Swapchain& swap, Renderpass& renderpass, UBODescriptor& ubo) : device(device), transfer(transfer), swap(swap), renderpass(renderpass) {
+    
+    pc.tile_size = 1;
+    pc.grass_height = 1;
+    pc.base_normal[0] = 0;
+    pc.base_normal[1] = 1;
+    pc.base_normal[2] = 0;
+    pc.base_normal[3] = 0;
     
     {
         auto poolSizes = std::vector {
@@ -82,7 +90,7 @@ GrassPipeline::GrassPipeline(Device& device, Transfer& transfer, Swapchain& swap
         
     }
     
-    
+    /*
     struct Constants {
         int grass_height;
         int tile_size;
@@ -96,7 +104,7 @@ GrassPipeline::GrassPipeline(Device& device, Transfer& transfer, Swapchain& swap
     };
     
     auto specConstants = vk::SpecializationInfo(mapEntries.size(), mapEntries.data(), sizeof(Constants), &constants);
-    
+    */
     
     // PIPELINE INFO
     
@@ -119,14 +127,14 @@ GrassPipeline::GrassPipeline(Device& device, Transfer& transfer, Swapchain& swap
     vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
     vertShaderStageInfo.module = vertShaderModule;
     vertShaderStageInfo.pName = "main";
-    vertShaderStageInfo.pSpecializationInfo = reinterpret_cast<VkSpecializationInfo*> (&specConstants);
+    //vertShaderStageInfo.pSpecializationInfo = reinterpret_cast<VkSpecializationInfo*> (&specConstants);
 
     VkPipelineShaderStageCreateInfo fragShaderStageInfo = {};
     fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
     fragShaderStageInfo.module = fragShaderModule;
     fragShaderStageInfo.pName = "main";
-    fragShaderStageInfo.pSpecializationInfo = reinterpret_cast<VkSpecializationInfo*> (&specConstants);
+    //fragShaderStageInfo.pSpecializationInfo = reinterpret_cast<VkSpecializationInfo*> (&specConstants);
 
     VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
     
@@ -232,8 +240,10 @@ GrassPipeline::GrassPipeline(Device& device, Transfer& transfer, Swapchain& swap
     {
         auto layouts = std::vector<vk::DescriptorSetLayout> {ubo.descLayout, descLayout};
         
+        auto pc = vk::PushConstantRange(vk::ShaderStageFlagBits::eFragment | vk::ShaderStageFlagBits::eVertex, 0, sizeof(GrassPC));
+        
         layout = device->createPipelineLayout(vk::PipelineLayoutCreateInfo(
-            {}, layouts.size(), layouts.data(), 0, nullptr
+            {}, layouts.size(), layouts.data(), 1, &pc
         ));
     }
     
@@ -261,6 +271,21 @@ GrassPipeline::GrassPipeline(Device& device, Transfer& transfer, Swapchain& swap
     device->destroyShaderModule(static_cast<vk::ShaderModule> (vertShaderModule));
     
 }
+
+void GrassPipeline::makeDebugWindow() {
+    
+    ImGui::Begin("Grass Debug Window");
+    
+    ImGui::SliderFloat("tile_size", &pc.tile_size, 0.01, 1);
+    
+    ImGui::SliderFloat("grass_height", &pc.grass_height, 0.01, 5);
+    
+    ImGui::SliderFloat3("base_normal", &pc.base_normal[0], -1, 1);
+    
+    ImGui::End();
+    
+}
+
 
 GrassPipeline::~GrassPipeline() {
     
