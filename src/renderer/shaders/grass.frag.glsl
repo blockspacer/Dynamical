@@ -14,6 +14,8 @@ layout(push_constant ) uniform Args {
 
 layout(set = 1, binding = 0) uniform sampler3D u_raycast;
 
+layout(set = 1, binding = 1) uniform sampler2D u_noise;
+
 layout(std140, set = 0, binding = 0) uniform UBO {
     mat4 viewproj;
     vec4 viewpos;
@@ -49,6 +51,8 @@ void main() {
         
         vec3 precalc = TBN * v_position;
         
+        float noise_val = texture(u_noise, precalc.xy/2.).r/2.;
+        
         vec3 world_dir = normalize(v_position - viewpos.xyz);
         vec3 dir = transpose(invTBN) * world_dir;
         
@@ -57,7 +61,7 @@ void main() {
         float dist;
         {
             
-            vec4 ray = texture(u_raycast, vec3(precalc.xy - new_normal.xz + i*vec2(0.5, 0.5), angle/2/3.141));
+            vec4 ray = texture(u_raycast, vec3(precalc.xy - new_normal.xz + i*vec2(0.5, 0.5), angle/2/3.141) + noise_val);
             
             normal = normalize(transpose(TBN) * ray.gba);
             dist = 1/(ray.r + 0.00001) - 1;

@@ -18,6 +18,10 @@
 #include "cereal/archives/portable_binary.hpp"
 #include "imgui/imgui.h"
 
+#include "util/tiled_noise.h"
+
+constexpr int noiseSize = 512;
+
 GrassPipeline::GrassPipeline(Device& device, Transfer& transfer, Swapchain& swap, Renderpass& renderpass, UBODescriptor& ubo) : device(device), transfer(transfer), swap(swap), renderpass(renderpass) {
     
     pc.tile_size = 1;
@@ -29,14 +33,15 @@ GrassPipeline::GrassPipeline(Device& device, Transfer& transfer, Swapchain& swap
     
     {
         auto poolSizes = std::vector {
-            vk::DescriptorPoolSize(vk::DescriptorType::eCombinedImageSampler, 1),
+            vk::DescriptorPoolSize(vk::DescriptorType::eCombinedImageSampler, 2),
         };
         descPool = device->createDescriptorPool(vk::DescriptorPoolCreateInfo({}, 1, poolSizes.size(), poolSizes.data()));
     }
     
     {
         auto bindings = std::vector {
-            vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment)
+            vk::DescriptorSetLayoutBinding(0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment),
+            vk::DescriptorSetLayoutBinding(1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment)
         };
         descLayout = device->createDescriptorSetLayout(vk::DescriptorSetLayoutCreateInfo({}, bindings.size(), bindings.data()));
         
@@ -68,7 +73,10 @@ GrassPipeline::GrassPipeline(Device& device, Transfer& transfer, Swapchain& swap
                 {}, vk::ImageType::e3D, vk::Format::eR8G8B8A8Unorm, vk::Extent3D(num_samples, num_samples, num_angles), 1, 1, vk::SampleCountFlagBits::e1, vk::ImageTiling::eOptimal, vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled, 
                 concurrent ? vk::SharingMode::eConcurrent : vk::SharingMode::eExclusive, concurrent ? 2 : 1, &qfs[0], vk::ImageLayout::eUndefined)
             );
-			//SET_NAME(vk::ObjectType::eImage, (VkImage) raycastImage, Raycast3DTexture)
+            //SET_NAME(vk::ObjectType::eImage, (VkImage) raycastImage, Raycast3DTexture)
+            
+            raycastImageView = device->createImageView(vk::ImageViewCreateInfo({}, raycastImage.image, vk::ImageViewType::e3D, vk::Format::eR8G8B8A8Unorm, vk::ComponentMapping(), vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1)));
+            
         }
         
         std::ifstream is("./resources/raycast_data.bin");
@@ -80,12 +88,40 @@ GrassPipeline::GrassPipeline(Device& device, Transfer& transfer, Swapchain& swap
         
         delete raycast;
         
-        raycastImageView = device->createImageView(vk::ImageViewCreateInfo({}, raycastImage.image, vk::ImageViewType::e3D, vk::Format::eR8G8B8A8Unorm, vk::ComponentMapping(), vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1)));
         
+        
+        {
+            VmaAllocationCreateInfo info {};
+            info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+            noiseImage = VmaImage(device, &info, vk::ImageCreateInfo(
+                {}, vk::ImageType::e2D, vk::Format::eR32Sfloat, vk::Extent3D(noiseSize, noiseSize, 1), 1, 1, vk::SampleCountFlagBits::e1, vk::ImageTiling::eOptimal, vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled, 
+                concurrent ? vk::SharingMode::eConcurrent : vk::SharingMode::eExclusive, concurrent ? 2 : 1, &qfs[0], vk::ImageLayout::eUndefined)
+            );
+            //SET_NAME(vk::ObjectType::eImage, (VkImage) raycastImage, Raycast3DTexture)
+            
+            noiseImageView = device->createImageView(vk::ImageViewCreateInfo({}, noiseImage, vk::ImageViewType::e2D, vk::Format::eR32Sfloat, vk::ComponentMapping(), vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1)));
+            
+        }
+        
+        Util::TiledNoise* noise = new Util::TiledNoise();
+        
+        float* noiseData = new float[noiseSize*noiseSize];
+        
+        for(int x = 0; x<noiseSize; x++) {
+            for(int y = 0; y<noiseSize; y++) {
+                noiseData[x*noiseSize+y] = noise->noise(x*10./noiseSize, y*10./noiseSize, 0);
+            }
+        }
+        
+        transfer.prepareImage(noiseData, sizeof(float) * noiseSize * noiseSize, noiseImage, vk::Extent3D(noiseSize, noiseSize, 1), 0, 0);
+        
+        delete[] noiseData;
         
         const auto raycast_info = vk::DescriptorImageInfo(sampler, raycastImageView, vk::ImageLayout::eShaderReadOnlyOptimal);
+        const auto noise_info = vk::DescriptorImageInfo(sampler, noiseImageView, vk::ImageLayout::eShaderReadOnlyOptimal);
         device->updateDescriptorSets({
-            vk::WriteDescriptorSet(descSet, 0, 0, 1, vk::DescriptorType::eCombinedImageSampler, &raycast_info, nullptr, nullptr)
+            vk::WriteDescriptorSet(descSet, 0, 0, 1, vk::DescriptorType::eCombinedImageSampler, &raycast_info, nullptr, nullptr),
+            vk::WriteDescriptorSet(descSet, 1, 0, 1, vk::DescriptorType::eCombinedImageSampler, &noise_info, nullptr, nullptr)
         }, {});
         
     }
@@ -293,6 +329,8 @@ GrassPipeline::~GrassPipeline() {
     
     device->destroy(layout);
     
+    
+    device->destroy(noiseImageView);
     
     device->destroy(raycastImageView);
     

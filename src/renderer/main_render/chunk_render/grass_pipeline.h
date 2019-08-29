@@ -39,6 +39,9 @@ public:
     VmaImage raycastImage;
     vk::ImageView raycastImageView;
     
+    VmaImage noiseImage;
+    vk::ImageView noiseImageView;
+    
     vk::PipelineLayout layout;
     vk::Pipeline pipeline;
     
