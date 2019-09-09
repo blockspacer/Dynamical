@@ -22,7 +22,7 @@ void CameraSys::tick() {
     
     if(input.mouseFree) return;
     
-    constexpr float base_speed = 2.f/60;
+    constexpr float base_speed = 100.f/60;
     
     if(input.on[Action::SPRINT]) {
         camera.sprinting = true;
