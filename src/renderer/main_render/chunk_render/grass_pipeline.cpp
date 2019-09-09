@@ -30,6 +30,8 @@ GrassPipeline::GrassPipeline(Device& device, Transfer& transfer, Swapchain& swap
     pc.base_normal[1] = 1;
     pc.base_normal[2] = 0;
     pc.base_normal[3] = 0;
+    pc.noise_frequency = 0.0001;
+    pc.noise_amplitude = 0.1;
     
     {
         auto poolSizes = std::vector {
@@ -94,26 +96,28 @@ GrassPipeline::GrassPipeline(Device& device, Transfer& transfer, Swapchain& swap
             VmaAllocationCreateInfo info {};
             info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
             noiseImage = VmaImage(device, &info, vk::ImageCreateInfo(
-                {}, vk::ImageType::e2D, vk::Format::eR32Sfloat, vk::Extent3D(noiseSize, noiseSize, 1), 1, 1, vk::SampleCountFlagBits::e1, vk::ImageTiling::eOptimal, vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled, 
+                {}, vk::ImageType::e2D, vk::Format::eR8G8B8Snorm, vk::Extent3D(noiseSize, noiseSize, 1), 1, 1, vk::SampleCountFlagBits::e1, vk::ImageTiling::eOptimal, vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled, 
                 concurrent ? vk::SharingMode::eConcurrent : vk::SharingMode::eExclusive, concurrent ? 2 : 1, &qfs[0], vk::ImageLayout::eUndefined)
             );
             //SET_NAME(vk::ObjectType::eImage, (VkImage) raycastImage, Raycast3DTexture)
             
-            noiseImageView = device->createImageView(vk::ImageViewCreateInfo({}, noiseImage, vk::ImageViewType::e2D, vk::Format::eR32Sfloat, vk::ComponentMapping(), vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1)));
+            noiseImageView = device->createImageView(vk::ImageViewCreateInfo({}, noiseImage, vk::ImageViewType::e2D, vk::Format::eR8G8B8Snorm, vk::ComponentMapping(), vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1)));
             
         }
         
         Util::TiledNoise* noise = new Util::TiledNoise();
         
-        float* noiseData = new float[noiseSize*noiseSize];
+        int8_t* noiseData = new int8_t[3*noiseSize*noiseSize];
         
         for(int x = 0; x<noiseSize; x++) {
             for(int y = 0; y<noiseSize; y++) {
-                noiseData[x*noiseSize+y] = noise->noise(x*10./noiseSize, y*10./noiseSize, 0);
+                noiseData[(x*noiseSize+y) * 3] = static_cast<int8_t> (std::clamp(noise->octaveNoise(x*10./noiseSize, y*10./noiseSize, 0, 2) * 128., -127., 127.));
+                noiseData[(x*noiseSize+y) * 3 + 1] = static_cast<int8_t> (std::clamp(noise->octaveNoise(x*10./noiseSize, y*10./noiseSize, 1000, 2) * 128., -127., 127.));
+                noiseData[(x*noiseSize+y) * 3 + 2] = static_cast<int8_t> (std::clamp(noise->octaveNoise(x*10./noiseSize, y*10./noiseSize, 2000, 2) * 128., -127., 127.));
             }
         }
         
-        transfer.prepareImage(noiseData, sizeof(float) * noiseSize * noiseSize, noiseImage, vk::Extent3D(noiseSize, noiseSize, 1), 0, 0);
+        transfer.prepareImage(noiseData, 3 * sizeof(int8_t) * noiseSize * noiseSize, noiseImage, vk::Extent3D(noiseSize, noiseSize, 1), 0, 0);
         
         delete[] noiseData;
         
@@ -317,6 +321,10 @@ void GrassPipeline::makeDebugWindow() {
     ImGui::SliderFloat("grass_height", &pc.grass_height, 0.01, 5);
     
     ImGui::SliderFloat3("base_normal", &pc.base_normal[0], -1, 1);
+    
+    ImGui::SliderFloat("noise_frequency", &pc.noise_frequency, 0.0001, 1, "%.5g", 10);
+    
+    ImGui::SliderFloat("noise_amplitude", &pc.noise_amplitude, 0.0001, 1, "%.5g", 10);
     
     ImGui::End();
     

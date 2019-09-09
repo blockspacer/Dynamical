@@ -10,9 +10,11 @@ ChunkRender::ChunkRender(Device& device, Transfer& transfer, Swapchain& swap, Re
 
 void ChunkRender::render(entt::registry& reg, vk::CommandBuffer command, vk::DescriptorSet set) {
     
+    /*
     if(reg.try_ctx<ShowDebug>() != nullptr) {
         grass_pipeline.makeDebugWindow();
     }
+    */
     
     Chunk::mutex.lock();
     command.bindPipeline(vk::PipelineBindPoint::eGraphics, chunk_pipeline);
@@ -29,6 +31,7 @@ void ChunkRender::render(entt::registry& reg, vk::CommandBuffer command, vk::Des
         
     });
     
+    /*
     command.bindPipeline(vk::PipelineBindPoint::eGraphics, grass_pipeline);
     
     command.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, grass_pipeline, 0, {set}, {});
@@ -44,6 +47,7 @@ void ChunkRender::render(entt::registry& reg, vk::CommandBuffer command, vk::Des
         command.drawIndirect(chonk.indirect, chonk.indirect_offset * sizeof(vk::DrawIndirectCommand), 1, 0);
         
     });
+    */
     
     Chunk::mutex.unlock();
     

@@ -10,6 +10,8 @@ layout(push_constant ) uniform Args {
     vec4 base_normal;
     float tile_size;
     float grass_height;
+    float noise_frequency;
+    float noise_amplitude;
 };
 
 layout(set = 1, binding = 0) uniform sampler3D u_raycast;
@@ -21,10 +23,10 @@ layout(std140, set = 0, binding = 0) uniform UBO {
     vec4 viewpos;
 };
 
-const int num_layers = 1;
+const int num_layers = 3;
 const vec3 normals[num_layers] = {
-    //vec3(10, 2., -11),
-    //vec3(10, 2., -10),
+    vec3(0, 1, 0),
+    vec3(0, 1, 0),
     vec3(0, 1, 0)
 };
 
@@ -50,8 +52,9 @@ void main() {
         mat3 invTBN = inverse(TBN);
         
         vec3 precalc = TBN * v_position;
+        precalc.xy += i*vec2(1, 1) * 1000.;
         
-        float noise_val = texture(u_noise, precalc.xy/2.).r/2.;
+        vec3 noise_val = texture(u_noise, precalc.xy*noise_frequency).rgb*noise_amplitude;
         
         vec3 world_dir = normalize(v_position - viewpos.xyz);
         vec3 dir = transpose(invTBN) * world_dir;
@@ -61,7 +64,7 @@ void main() {
         float dist;
         {
             
-            vec4 ray = texture(u_raycast, vec3(precalc.xy - new_normal.xz + i*vec2(0.5, 0.5), angle/2/3.141) + noise_val);
+            vec4 ray = texture(u_raycast, vec3(precalc.xy - new_normal.xz, angle/2/3.141));
             
             normal = normalize(transpose(TBN) * ray.gba);
             dist = 1/(ray.r + 0.00001) - 1;
