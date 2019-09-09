@@ -6,7 +6,7 @@
 #include "steam/isteamnetworkingsockets.h"
 #include "steam/steamnetworkingsockets.h"
 
-class ServerNetworkSys : public System {
+class ServerNetworkSys : public System, public ISteamNetworkingSocketsCallbacks {
 public:
     ServerNetworkSys(entt::registry& reg);
     void preinit() override;
@@ -14,16 +14,9 @@ public:
     void tick() override;
     void finish() override;
     ~ServerNetworkSys() override;
-    const char* name() override {return "ServerNetwork";};
+    const char* name() override {return "ServerNetwork";}
+    void OnSteamNetConnectionStatusChanged(SteamNetConnectionStatusChangedCallback_t * ) override;
 private:
-    
-    class Callbacks : public ISteamNetworkingSocketsCallbacks {
-    public:
-        void OnSteamNetConnectionStatusChanged( SteamNetConnectionStatusChangedCallback_t * ) override;
-        ISteamNetworkingSockets* net;
-        HSteamListenSocket socket;
-    } callbacks;
-    
     ISteamNetworkingSockets* net;
     HSteamListenSocket socket;
 };
