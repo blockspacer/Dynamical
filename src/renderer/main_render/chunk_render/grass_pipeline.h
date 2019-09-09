@@ -19,6 +19,8 @@ struct GrassPC {
     float base_normal[4];
     float tile_size;
     float grass_height;
+    float noise_frequency;
+    float noise_amplitude;
 };
 
 class GrassPipeline {

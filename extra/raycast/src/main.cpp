@@ -36,7 +36,7 @@ glm::u8vec4 cast(double a, double x, double y) {
         for(int cx = 0; cx < num_objects; cx++) {
             for(int cy = 0; cy < num_objects; cy++) {
                 
-                glm::dvec2 cpos = (glm::dvec2(std::sin((cx+cy)*100.), std::cos((cx+cy)*100.)) / (2. * num_objects) + ((glm::dvec2(cx, cy) + 0.5) / (double) num_objects + tile));
+                glm::dvec2 cpos = (glm::dvec2(std::sin((cx+cy)*100.), std::cos((cx+cy)*100.)) / (2. * num_objects) * 2. + ((glm::dvec2(cx, cy) + 0.5) / (double) num_objects + tile));
                 
                 double t1, t2;
                 
