@@ -25,4 +25,19 @@ std::vector<char> Util::readFile(const char* filename) {
     return {};
 }
 
+std::ostream & Util::log(Util::Level l) {
+    switch(l) {
+        case TRACE:
+        case DEBUG:
+        case INFO:
+            return std::cout;
+        case WARNING:
+        case ERROR:
+        case CRITICAL:
+            return std::cerr;
+        default:
+            return std::cout;
+    }
+}
+
 

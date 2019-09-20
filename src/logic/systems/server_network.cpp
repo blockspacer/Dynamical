@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include "logic/components/client_connection.h"
+#include <util/util.h>
 
 ServerNetworkSys::ServerNetworkSys(entt::registry& reg) : System(reg) {
     
@@ -38,10 +39,10 @@ void ServerNetworkSys::tick() {
         auto& connection = view.get(entity).connection;
         int received = net->ReceiveMessagesOnConnection(connection, messages.data(), MESSAGE_BUFFER);
         if(received == -1) {
-            std::cerr << "OOF CAN'T RECEOVE ÙESSAGES" << std::endl;
+            Util::log(Util::ERROR) << "OOF CAN'T RECEOVE ÙESSAGES" << std::endl;
         } else {
             for(int i = 0; i < received; ++i) {
-                std::cout << (char*) messages[i]->m_pData << std::endl;
+                Util::log() << (char*) messages[i]->m_pData << std::endl;
             }
         }
         net->SendMessageToConnection(connection, &index_jaipasenviedecmetijeorj, sizeof(uint32_t), k_nSteamNetworkingSend_Reliable);

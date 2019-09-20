@@ -14,6 +14,9 @@ constexpr double frequency = 0.001;
 constexpr double amplitude = 400.;
 constexpr int octaves = 5;
 
+static std::future<void> callback;
+static tf::Taskflow taskflow;
+
 void ChunkGeneratorSys::init() {
     
     myNoise->SetFractalOctaves(octaves);
@@ -31,8 +34,6 @@ void ChunkGeneratorSys::tick() {
     
     tf::Executor& executor = reg.ctx<tf::Executor>();
     
-    static std::future<void> callback;
-    static tf::Taskflow taskflow;
     
     if(callback.valid()) {
         if(callback.wait_for(std::chrono::nanoseconds(0)) == std::future_status::ready) {
@@ -129,5 +130,15 @@ void ChunkGeneratorSys::tick() {
     });
     
     callback = executor.run(taskflow);
+    
+}
+
+void ChunkGeneratorSys::finish() {
+    
+    if(callback.valid()) {
+        if(callback.wait_for(std::chrono::seconds(5)) != std::future_status::ready) {
+            std::cerr << "" << std::endl;
+        }
+    }
     
 }

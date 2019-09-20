@@ -6,22 +6,29 @@
 
 #include "entt/entt.hpp"
 
-#include "systems/systems.h"
-#include "systems/argument_parser.h"
+#include "systems/settings.h"
 
-class Game : GameLoop {
+class UISys;
+class Renderer;
+class GameSet;
+
+class Game {
 public:
     Game(int argc, char** argv);
     void init();
     void start();
-    virtual void update(float dt) override;
-    virtual void quit() override;
     ~Game();
     
-private:
     entt::registry reg;
-    ArgumentParser argument_parser;
-    Systems systems;
+    
+    GameLoop game_loop;
+    SettingSys settings;
+    
+    std::unique_ptr<UISys> ui;
+    
+    std::unique_ptr<Renderer> renderer;
+    
+    std::unique_ptr<GameSet> game_set;
     
 };
 

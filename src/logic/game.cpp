@@ -2,45 +2,45 @@
 
 #include <iostream>
 
-#include "renderer/renderer.h"
-
 #include "components/inputc.h"
 
-#include "components/chunkc.h"
-#include "components/positionc.h"
+#include "systems/ui.h"
+#include "renderer/renderer.h"
 
-Game::Game(int argc, char** argv) : reg(), argument_parser(reg, argc, argv), systems(reg) {
+#include "systems/game_set.h"
+
+Game::Game(int argc, char** argv) : reg(), settings(reg, argc, argv),
+ui(std::make_unique<UISys>(reg)),
+renderer(std::make_unique<Renderer>(reg)) {
+    
+    
     
 }
 
 void Game::init() {
     
-    systems.preinit();
+    game_set = std::make_unique<GameSet>(*this);
     
-    systems.init();
+    game_set->preinit();
+    
+    game_set->init();
     
 }
 
 void Game::start() {
     
-    run();
+    game_loop.run([this](float dt) {
+        
+        game_set->tick();
+        InputC* input = reg.try_ctx<InputC>();
+        if(input != nullptr && input->on[Action::EXIT]) {
+            game_loop.setQuitting();
+            input->on.set(Action::EXIT, false);
+        }
+        
+    });
     
-}
-
-void Game::update(float dt) {
-    
-    systems.tick();
-    InputC* input = reg.try_ctx<InputC>();
-    if(input != nullptr && input->on[Action::EXIT]) {
-        setQuitting();
-        input->on.set(Action::EXIT, false);
-    }
-
-}
-
-void Game::quit() {
-    
-    systems.finish();
+    game_set->finish();
     
 }
 

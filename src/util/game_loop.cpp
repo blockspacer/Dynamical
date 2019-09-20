@@ -9,7 +9,7 @@ using namespace std::chrono_literals;
 // we use a fixed timestep of 1 / (60 fps) = 16 milliseconds
 constexpr std::chrono::nanoseconds timestep(16666666ns);
 
-void GameLoop::run() {
+void GameLoop::run(std::function<void(float)> update) {
     
     using clock = std::chrono::high_resolution_clock;
 
@@ -42,8 +42,6 @@ void GameLoop::run() {
         }
 
     }
-    
-    quit();
     
 }
 

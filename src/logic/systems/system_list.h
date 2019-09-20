@@ -22,15 +22,6 @@ public:
     const char* name() override {return "Debug";};
 };
 
-class UISys : public System {
-public:
-    UISys(entt::registry& reg);
-    void init() override;
-    void tick() override;
-    ~UISys() override;
-    const char* name() override {return "UI";};
-};
-
 class CameraSys : public System {
 public:
     CameraSys(entt::registry& reg) : System(reg) {};
@@ -60,6 +51,7 @@ public:
     ChunkGeneratorSys(entt::registry& reg) : System(reg) {};
     void init() override;
     void tick() override;
+    void finish() override;
     const char* name() override {return "ChunkGenerator";};
 };
 
@@ -69,15 +61,6 @@ public:
     void init() override;
     void tick() override;
     const char* name() override {return "Chunk";};
-};
-
-class SettingSys : public System {
-public:
-    SettingSys(entt::registry& reg);
-    void preinit() override {};
-    void init() override {};
-    void tick() override {};
-    const char* name() override {return "Setting";};
 };
 
 #endif

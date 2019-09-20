@@ -1,11 +1,6 @@
-#include "system_list.h"
-
-#include "imgui/imgui.h"
+#include "ui.h"
 
 #include "logic/components/inputc.h"
-
-static SDL_Cursor* g_MouseCursors[ImGuiMouseCursor_COUNT] = {0};
-static Uint64 g_Time = 0;
 
 UISys::UISys(entt::registry& reg) : System(reg) {
     

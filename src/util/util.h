@@ -9,6 +9,12 @@ namespace Util {
     
     std::vector<char> readFile(char const* filename);
     
+    enum Level {TRACE, DEBUG, INFO, WARNING, ERROR, CRITICAL};
+    
+    std::ostream& log(Level l = Level::TRACE);
+    
+    
+    
     template<typename T>
     std::vector<T> nTimes(int n, T t) {
         std::vector<T> vec(n);
@@ -124,6 +130,18 @@ namespace Util {
     inline float lerp(float a, float b, float r) {
         return a * (1.f - r) + b * r;
     }
+    
+    
+    template<typename name, typename T>
+    class Alias {
+    public:
+        Alias(T t) : value(t) {};
+        operator T() {
+            return value;
+        }
+    private:
+        T value;
+    };
     
 };
 

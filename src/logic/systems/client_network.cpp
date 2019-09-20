@@ -5,8 +5,9 @@ ClientNetworkSys::ClientNetworkSys(entt::registry& reg) : System(reg) {
     SteamNetworkingIdentity identity;
     identity.Clear();
     SteamNetworkingErrMsg error;
-    GameNetworkingSockets_Init(&identity, error);
-    std::cout << error << std::endl;
+    if(!GameNetworkingSockets_Init(&identity, error)) {
+        std::cout << "EH FRER FAIT GAFFE YA UNE ERREUR DE RÉSEAU" << error << std::endl;
+    }
     
     net = SteamNetworkingSockets();
     

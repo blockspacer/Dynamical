@@ -1,14 +1,13 @@
-#ifndef SETTINGS_H
-#define SETTINGS_H
+#ifndef SETTINGSC_H
+#define SETTINGSC_H
 
 #include <string>
 
 #include "cereal/types/string.hpp"
-#include "arguments.h"
 
 #include <sstream>
 
-class Settings {
+class SettingsC {
 public:
     const static char magic_number = 2;
     int window_width = 0;
@@ -33,13 +32,13 @@ public:
         );
     }
     
-    void argument_override(Arguments& args) {
+    void argument_override(int argc, char** argv) {
         
 #define ARGUMENT(T, value) \
 if(key == #T) T = value;
         
-        for(int i  = 0; i<args.argc; i++) {
-            std::string arg = args.argv[i];
+        for(int i  = 0; i<argc; i++) {
+            std::string arg = argv[i];
             std::stringstream ss(arg);
             std::string key;
             std::getline(ss, key, '=');
