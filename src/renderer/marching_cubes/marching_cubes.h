@@ -18,7 +18,7 @@ public:
     uint32_t index;
 };
 
-constexpr int max_per_frame = 20;
+constexpr int max_per_frame = 10;
 
 class MarchingCubes : public System {
 public:

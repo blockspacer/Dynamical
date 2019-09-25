@@ -3,7 +3,7 @@
 #extension GL_KHR_shader_subgroup_arithmetic: enable
 #extension GL_KHR_shader_subgroup_ballot: enable
 
-layout(local_size_x_id = 0) in;               
+layout(local_size_x_id = 0) in;
 layout(local_size_y_id = 1) in;
 layout(local_size_z_id = 2) in;
 

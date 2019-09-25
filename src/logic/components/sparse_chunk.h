@@ -13,6 +13,8 @@ const int mhsize = ((int) std::pow(2, std::ceil(std::log2(chunk::max_num_values.
 
 constexpr float out_of_range = 1000.f;
 
+#if 0
+
 union indval {
     int ind;
     float val;
@@ -71,6 +73,15 @@ class SparseChunk {
                 
             }
             
+        }
+        
+        float get(SparseChunk* tree, int x, int y, int z, int hsize) {
+            int index = (z>=hsize) * 4 + (y>=hsize) * 2 + (x>=hsize);
+            if(empty[index] || hsize == 1) {
+                return a[index].val;
+            } else {
+                return tree->nodes[a[index].ind].get(tree, x, y, z, hsize/2.);
+            }
         }
         
         void set(GlobalChunkData& cd, int x, int y, int z, int hsize, float value) {
@@ -133,6 +144,10 @@ public:
         nodes.resize(index+1);
         nodes.shrink_to_fit();
         
+    }
+    
+    float get(int x, int y, int z) {
+        return nodes[root].get(this, x, y, z, mhsize);
     }
     
     int make_node() {
@@ -266,6 +281,32 @@ private:
     
     int index = 0;
 
+};
+#endif
+
+
+class SparseChunk {
+public:
+    
+    SparseChunk() {
+        
+    }
+    
+    void get(GlobalChunkData& data) {
+        data = this->data;
+    }
+    
+    void set(GlobalChunkData& cd) {
+        data = cd;
+    }
+    
+    float get(int x, int y, int z) {
+        return data.data[x * chunk::max_num_values.y * chunk::max_num_values.z + z * chunk::max_num_values.y + y];
+    }
+    
+private:
+    GlobalChunkData data;
+    
 };
 
 #endif

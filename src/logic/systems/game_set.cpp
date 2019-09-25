@@ -27,7 +27,6 @@ GameSet::GameSet(Game& game) : SystemSet(game.reg) {
     
     reg.set<tf::Executor>();
     
-    int i = 0;
     SettingsC& s = reg.ctx<SettingsC>();
     
 #ifndef NDEBUG
@@ -39,7 +38,6 @@ GameSet::GameSet(Game& game) : SystemSet(game.reg) {
         Util::log(Util::INFO) << "single_player" << std::endl;
     }
 #endif
-    
     bool server = s.server_side;
     bool client = s.client_side;
     bool multiplayer = server || client;
@@ -58,8 +56,8 @@ GameSet::GameSet(Game& game) : SystemSet(game.reg) {
     }
     
     MAKE_SYSTEM(PhysicsSys, physics)
-    if(server) MAKE_SYSTEM(ServerNetworkSys, server_network)
-    if(client) MAKE_SYSTEM(ClientNetworkSys, client_network)
+    if(server) {MAKE_SYSTEM(ServerNetworkSys, server_network)}
+    if(client) {MAKE_SYSTEM(ClientNetworkSys, client_network)}
     
     if(user) {
         MAKE_SYSTEM(ChunkSys, chunk)

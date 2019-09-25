@@ -15,6 +15,10 @@ layout(std140, set = 0, binding = 0) uniform UBO {
     vec4 viewpos;
 };
 
+layout( push_constant ) uniform Args {
+    vec3 color;
+};
+
 void main() {
     
     /*
@@ -28,19 +32,19 @@ void main() {
     vec3 normal = normalize(v_normal);
     
     vec4 rock_color = max(mix(
-            texture(u_color, vec3(v_position.yx/32., 1)),
-            texture(u_color, vec3(v_position.yz/32., 1)),
+            texture(u_color, vec3(v_position.yx/3., 1)),
+            texture(u_color, vec3(v_position.yz/3., 1)),
             (normal.x * normal.x) / (normal.x * normal.x + normal.z * normal.z)
         ), 0);
     
     outColor = mix(
         rock_color,
-        texture(u_color, vec3(v_position.xz/32., 0)),
+        texture(u_color, vec3(v_position.xz/3., 0)),
         clamp(-normal.y * normal.y * normal.y, 0, 1)
     );
     
     
     float light = max(dot(normal, vec3(0.5,-1.,0.5)), 0.4);
-    outColor.rgb = outColor.rgb * (light*0.7 + 0.3);
+    outColor.rgb = outColor.rgb * (light*0.7 + 0.3) + color;
     
 }

@@ -38,6 +38,10 @@ public:
     vk::PipelineLayout layout;
     vk::Pipeline pipeline;
     
+    struct PC {
+        glm::vec3 color;
+    };
+    
 private:
     Device& device;
     Transfer& transfer;

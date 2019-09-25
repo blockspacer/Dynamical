@@ -1,8 +1,11 @@
 #include "chunk_render.h"
 
+#include "util/entt_util.h"
+
 #include "renderer/marching_cubes/chunk.h"
 #include "renderer/marching_cubes/terrain.h"
 #include "logic/components/show_debug.h"
+#include "logic/components/positionc.h"
 
 ChunkRender::ChunkRender(Device& device, Transfer& transfer, Swapchain& swap, Renderpass& renderpass, UBODescriptor& ubo) : chunk_pipeline(device, transfer, swap, renderpass, ubo), grass_pipeline(device, transfer, swap, renderpass, ubo), device(device), transfer(transfer), swap(swap), renderpass(renderpass) {
     
@@ -26,6 +29,9 @@ void ChunkRender::render(entt::registry& reg, vk::CommandBuffer command, vk::Des
     reg.view<Chunk, entt::tag<"ready"_hs>>().each([&](Chunk& chonk, auto) {
         
         command.bindVertexBuffers(0, {chonk.triangles}, {chonk.triangles_offset * sizeof(Triangle)});
+        
+        ChunkPipeline::PC pc {glm::vec3(0, 0, 0)};
+        command.pushConstants(chunk_pipeline, vk::ShaderStageFlagBits::eFragment, 0, sizeof(ChunkPipeline::PC), &pc);
         
         command.drawIndirect(chonk.indirect, chonk.indirect_offset * sizeof(vk::DrawIndirectCommand), 1, 0);
         

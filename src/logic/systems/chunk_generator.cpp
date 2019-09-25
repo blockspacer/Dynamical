@@ -10,12 +10,14 @@
 
 const static std::unique_ptr<FastNoiseSIMD> myNoise = std::unique_ptr<FastNoiseSIMD>(FastNoiseSIMD::NewFastNoiseSIMD());
 const static std::unique_ptr<FastNoiseSIMD> cavNoise = std::unique_ptr<FastNoiseSIMD>(FastNoiseSIMD::NewFastNoiseSIMD(2010));
-constexpr double frequency = 0.001;
+constexpr double frequency = 0.0006;
 constexpr double amplitude = 400.;
-constexpr int octaves = 5;
+constexpr int octaves = 4;
 
 static std::future<void> callback;
 static tf::Taskflow taskflow;
+
+constexpr int max_threads = 20;
 
 void ChunkGeneratorSys::init() {
     
@@ -34,7 +36,7 @@ void ChunkGeneratorSys::tick() {
     
     tf::Executor& executor = reg.ctx<tf::Executor>();
     
-    
+    static int current = 0;
     if(callback.valid()) {
         if(callback.wait_for(std::chrono::nanoseconds(0)) == std::future_status::ready) {
             
@@ -51,6 +53,7 @@ void ChunkGeneratorSys::tick() {
             reg.reset<GeneratingChunk>();
             
             taskflow.clear();
+            current = 0;
             
         } else {
             return;
@@ -58,10 +61,11 @@ void ChunkGeneratorSys::tick() {
     }
     
     reg.view<GlobalChunkC, entt::tag<"loading"_hs>>().each([this](const entt::entity entity, GlobalChunkC& chunk, auto) {
-        if(!reg.has<GeneratingChunk>(entity)) {
+        if(current < max_threads && !reg.has<GeneratingChunk>(entity)) {
             reg.assign<GeneratingChunk>(entity, chunk);
             reg.assign<SparseChunk>(entity);
             reg.assign<GlobalChunkEmpty>(entity, 0.f);
+            current++;
         }
     });
     

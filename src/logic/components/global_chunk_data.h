@@ -9,6 +9,7 @@ class GlobalChunkData {
 public:
     GlobalChunkData() : data(chunk::max_num_values.x * chunk::max_num_values.y * chunk::max_num_values.z) {};
     std::vector<float> data;
+    
 };
 
 class GlobalChunkEmpty {

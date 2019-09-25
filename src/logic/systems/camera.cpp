@@ -3,55 +3,60 @@
 #define _USE_MATH_DEFINES
 #include <cmath>
 
-#include "logic/components/inputc.h"
+#include "util/entt_util.h"
 
+#include "logic/components/inputc.h"
 #include "logic/components/camerac.h"
-#include "util/util.h"
+#include "logic/components/playerc.h"
+#include "logic/components/positionc.h"
 
 void CameraSys::init() {
     
-    reg.set<CameraC>();
+    auto player = reg.ctx<Util::Entity<"player"_hs>>();
+    reg.assign<CameraC>(player);
     
 }
 
 void CameraSys::tick() {
     
-    CameraC& camera = reg.ctx<CameraC>();
+    auto player = reg.ctx<Util::Entity<"player"_hs>>();
+    CameraC& camera = reg.get<CameraC>(player);
+    auto& pos = reg.get<PositionC>(player).pos;
     
     const InputC& input = reg.ctx<InputC>();
     
     if(input.mouseFree) return;
     
-    constexpr float base_speed = 100.f/60;
+    constexpr float base_speed = 6.f/60;
     
     if(input.on[Action::SPRINT]) {
         camera.sprinting = true;
     }
     
-    float speed = camera.sprinting ? base_speed * 50. : base_speed;
+    float speed = camera.sprinting ? base_speed * 10. : base_speed;
     
     bool moving = false;
     if(input.on[Action::FORWARD]) {
-        camera.pos.x -= speed * std::sin(camera.yAxis);//*dt;
-        camera.pos.z -= speed * std::cos(camera.yAxis);//*dt;
+        pos.x -= speed * std::sin(camera.yAxis);//*dt;
+        pos.z -= speed * std::cos(camera.yAxis);//*dt;
         moving = true;
     } if(input.on[Action::BACKWARD]) {
-        camera.pos.x += speed * std::sin(camera.yAxis);//*dt;
-        camera.pos.z += speed * std::cos(camera.yAxis);//*dt;
+        pos.x += speed * std::sin(camera.yAxis);//*dt;
+        pos.z += speed * std::cos(camera.yAxis);//*dt;
         moving = true;
     } if(input.on[Action::LEFT]) {
-        camera.pos.x -= speed * std::sin(M_PI/2.0 + camera.yAxis);//*dt;
-        camera.pos.z -= speed * std::cos(M_PI/2.0 + camera.yAxis);//*dt;
+        pos.x -= speed * std::sin(M_PI/2.0 + camera.yAxis);//*dt;
+        pos.z -= speed * std::cos(M_PI/2.0 + camera.yAxis);//*dt;
         moving = true;
     } if(input.on[Action::RIGHT]) {
-        camera.pos.x += speed * std::sin(M_PI/2.0 + camera.yAxis);//*dt;
-        camera.pos.z += speed * std::cos(M_PI/2.0 + camera.yAxis);//*dt;
+        pos.x += speed * std::sin(M_PI/2.0 + camera.yAxis);//*dt;
+        pos.z += speed * std::cos(M_PI/2.0 + camera.yAxis);//*dt;
         moving = true;
     } if(input.on[Action::UP]) {
-        camera.pos.y += speed;
+        pos.y += speed;
         moving = true;
     } if(input.on[Action::DOWN]) {
-        camera.pos.y -= speed;
+        pos.y -= speed;
         moving = true;
     }
     

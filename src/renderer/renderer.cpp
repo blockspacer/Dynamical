@@ -60,7 +60,7 @@ void Renderer::tick() {
         
         swap.present(signalsems[ri.frame_index]);
         
-    } catch(vk::OutOfDateKHRError) {
+    } catch(vk::OutOfDateKHRError&) {
         
         resize();
         

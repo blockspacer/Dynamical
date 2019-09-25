@@ -208,8 +208,10 @@ ChunkPipeline::ChunkPipeline(Device& device, Transfer& transfer, Swapchain& swap
     {
         auto layouts = std::vector<vk::DescriptorSetLayout> {ubo.descLayout, materialLayout};
         
+        auto pcl = vk::PushConstantRange(vk::ShaderStageFlagBits::eFragment, 0, sizeof(PC));
+        
         layout = device->createPipelineLayout(vk::PipelineLayoutCreateInfo(
-            {}, layouts.size(), layouts.data(), 0, nullptr
+            {}, layouts.size(), layouts.data(), 1, &pcl
         ));
     }
     

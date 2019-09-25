@@ -131,18 +131,6 @@ namespace Util {
         return a * (1.f - r) + b * r;
     }
     
-    
-    template<typename name, typename T>
-    class Alias {
-    public:
-        Alias(T t) : value(t) {};
-        operator T() {
-            return value;
-        }
-    private:
-        T value;
-    };
-    
 };
 
 #endif

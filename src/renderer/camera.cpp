@@ -3,10 +3,12 @@
 #include "device.h"
 #include "swapchain.h"
 
-#include "logic/components/camerac.h"
-
 #include "glm/gtc/matrix_transform.hpp"
-#include "util/util.h"
+
+#include "util/entt_util.h"
+
+#include "logic/components/positionc.h"
+#include "logic/components/camerac.h"
 
 Camera::Camera(int width, int height) {
     setup(width, height);
@@ -20,17 +22,20 @@ void Camera::setup(int width, int height) {
 
 void Camera::update(entt::registry& reg) {
     
-    CameraC cam = reg.ctx<CameraC>();
+    auto player = reg.ctx<Util::Entity<"player"_hs>>();
+    CameraC& cam = reg.get<CameraC>(player);
+    auto pos = reg.get<PositionC>(player).pos;
+    pos.y += 1.80f;
     
     view = glm::mat4(1.0);
-    view = glm::translate(view, cam.pos);
+    view = glm::translate(view, pos);
     view = glm::rotate(view, (float) cam.yAxis, glm::vec3(0.0f, 1.0f, 0.0f));
     view = glm::rotate(view, (float) cam.xAxis, glm::vec3(1.0f, 0.0f, 0.0f));
     view = glm::inverse(view);
     
     viewProjection = projection * view;
     
-    position = cam.pos;
+    position = pos;
     
 }
 

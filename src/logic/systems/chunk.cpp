@@ -22,12 +22,12 @@ void ChunkSys::init() {
     
 }
 
-
 void ChunkSys::tick() {
     
     auto& cd = reg.ctx<ChunkDataC>();
     int& ri = reg.ctx<ChunkSync>().index;
     ri = (ri+1)%NUM_FRAMES;
+    
     
     auto view = reg.view<ChunkC, OuterGlobalChunk, entt::tag<"preparing"_hs>>();
     for(entt::entity entity : view) {
@@ -62,11 +62,12 @@ void ChunkSys::tick() {
                     }
                 }
                 
+                reg.remove<entt::tag<"preparing"_hs>>(entity);
+
             }
             
-            reg.remove<entt::tag<"preparing"_hs>>(entity);
-            
         }
+        
     }
     
 }
